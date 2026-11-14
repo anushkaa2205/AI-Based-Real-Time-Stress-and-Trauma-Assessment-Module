@@ -14,7 +14,8 @@
     "seed": "tsx scripts/seed.ts",
     "db:indexes": "tsx scripts/sync-indexes.ts",
     "jobs": "tsx scripts/jobs.ts",
-    "eval": "tsx ../evaluation/run_eval.ts"
+    "eval": "tsx ../evaluation/run_eval.ts",
+    "i18n:check": "tsx scripts/check-i18n.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

@@ -1,0 +1,140 @@
+{
+  "app": {
+    "name": "NHAA Assist",
+    "helpline": "National Helpline Against Atrocities 14566"
+  },
+  "common": {
+    "quickExit": "Quick exit",
+    "quickExitHint": "Leave this page at once",
+    "skip": "Skip this question",
+    "continue": "Continue",
+    "send": "Send",
+    "yes": "Yes",
+    "no": "No",
+    "listen": "Listen",
+    "stop": "Stop",
+    "loading": "Please wait…",
+    "errorRetry": "Something did not work. Please try again.",
+    "sessionEnded": "This conversation has ended. You can start again at any time.",
+    "startAgain": "Start again",
+    "typeHere": "Type here",
+    "finish": "Finish"
+  },
+  "start": {
+    "chooseLanguage": "Choose your language",
+    "title": "We are here to listen",
+    "intro": "You can tell us what happened in your own words. You can skip any question, take a break, or leave at any time.",
+    "aiDisclosure": "An automated tool helps our human team understand how to support you. A person from our team reads what you share. The tool never decides anything on its own.",
+    "start": "Start"
+  },
+  "consent": {
+    "title": "Before we begin",
+    "what": "If you agree, we look at what you type (and your voice, if you choose to speak) to understand how you are feeling and what support may help.",
+    "why": "This helps us reach people who need urgent help first, and connect you with counselling, legal aid, medical care or protection.",
+    "who": "Only the helpline team and, if you agree, a counsellor can see what you share. Police and other offices only receive a short request for action, never your story.",
+    "howLong": "We keep what you share for up to one year, then it is deleted. Voice recordings are not kept unless you allow it.",
+    "refuse": "Saying no will not affect your complaint in any way. Your complaint will still be registered.",
+    "withdraw": "You can change your mind and stop at any time.",
+    "choose": "Please choose:",
+    "textAnalysis": "Look at what I type",
+    "voiceAnalysis": "Listen to my voice if I choose to speak",
+    "shareWithCounsellor": "Share what I tell you with a counsellor",
+    "followUpContact": "You may contact me later to check on me",
+    "audioRetention": "Keep my voice recordings (usually not needed)",
+    "submit": "Continue",
+    "stopAnalysis": "Stop looking at what I share",
+    "stopped": "Done. We will not look at what you share from now on. Your complaint stays registered."
+  },
+  "flow": {
+    "safety": {
+      "intro": "First, a few short questions about your safety right now."
+    },
+    "screenerIntro": "Next, a few short questions about how you have been feeling. You can skip any question.",
+    "scalePrompt": "Over the last 2 weeks, how often have you been bothered by:",
+    "pastMonthPrompt": "In the past month, because of what happened, have you:",
+    "screener": {
+      "SAFETY_SAFE_NOW": "Are you in a safe place right now?",
+      "SAFETY_ACCUSED_NEARBY": "Is the person who harmed you near you right now?",
+      "SAFETY_SUICIDAL_THOUGHTS": "Are you having thoughts of ending your life?",
+      "SAFETY_SUICIDAL_INTENT": "Are you thinking of acting on these thoughts, or have you made a plan?",
+      "PHQ2_1": "Little interest or pleasure in doing things",
+      "PHQ2_2": "Feeling down or hopeless",
+      "GAD2_1": "Feeling nervous, worried or on edge",
+      "GAD2_2": "Not being able to stop worrying",
+      "PCPTSD5_1": "Had bad dreams about it, or thought about it when you did not want to?",
+      "PCPTSD5_2": "Tried hard not to think about it, or stayed away from things that remind you of it?",
+      "PCPTSD5_3": "Felt constantly on guard, watchful or easily startled?",
+      "PCPTSD5_4": "Felt numb or cut off from people, activities or your surroundings?",
+      "PCPTSD5_5": "Felt guilty, or unable to stop blaming yourself or others?",
+      "CSSRS_1": "In the past month, have you wished you were dead, or wished you could go to sleep and not wake up?",
+      "CSSRS_2": "In the past month, have you had thoughts of killing yourself?",
+      "CSSRS_3": "Have you thought about how you might do this?",
+      "CSSRS_4": "Have you had these thoughts and had some intention of acting on them?",
+      "CSSRS_5": "Have you started to work out the details of how to do it, or do you plan to?",
+      "CSSRS_6": "In the past 3 months, have you done anything, or prepared to do anything, to end your life?"
+    },
+    "scale": {
+      "0": "Not at all",
+      "1": "Several days",
+      "2": "More than half the days",
+      "3": "Nearly every day"
+    },
+    "context": {
+      "intro": "If you wish, tell us a little about your situation. Every question is optional.",
+      "offenceCategory": "What happened? (optional)",
+      "offence": {
+        "THREAT_INTIMIDATION": "Threats or being scared off",
+        "PHYSICAL_ATTACK": "Physical attack",
+        "SEXUAL_VIOLENCE": "Sexual violence",
+        "SOCIAL_BOYCOTT": "Social boycott",
+        "PROPERTY_DAMAGE": "Damage to home or property",
+        "OTHER": "Something else"
+      },
+      "ageGroup": "Your age",
+      "age": {
+        "UNDER_18": "Under 18",
+        "18_59": "18 to 59",
+        "60_PLUS": "60 or older"
+      },
+      "gender": "Gender",
+      "genderOption": {
+        "F": "Woman",
+        "M": "Man",
+        "OTHER": "Other",
+        "UNDISCLOSED": "Prefer not to say"
+      },
+      "hasDisability": "Do you have a disability?",
+      "supportPersonPresent": "Is someone with you who supports you?",
+      "ongoingThreats": "Are you still receiving threats?",
+      "pressureToWithdraw": "Is anyone pressuring you to take back your complaint?",
+      "displaced": "Have you had to leave your home because of this?",
+      "familyMemberKilled": "Has a family member lost their life because of this?",
+      "submit": "Continue",
+      "skipAll": "Skip these questions"
+    },
+    "narrative": {
+      "open": "In your own words, tell us what happened and how you are feeling. Share only what you are comfortable with.",
+      "more": "Thank you for telling us. Is there anything else you would like us to know?"
+    },
+    "close": "Thank you. You are not alone. A member of our team will look at what you have shared and contact you if you agreed to it."
+  },
+  "emergency": {
+    "title": "Help is available right now",
+    "message": "If you are in danger or thinking of ending your life, please call now. You are not alone.",
+    "police": "Police / Emergency",
+    "teleManas": "Tele-MANAS (mental health support)",
+    "nhaa": "NHAA helpline",
+    "call": "Call",
+    "callback": "Call me back now",
+    "callbackPhone": "Your phone number",
+    "callbackSend": "Request a call back",
+    "callbackSent": "We will call you back as soon as possible."
+  },
+  "done": {
+    "title": "Thank you for reaching out",
+    "docket": "Your reference number",
+    "keep": "Keep this number to follow up on your complaint.",
+    "closing": "Your complaint is registered. You are not alone, and help is available.",
+    "track": "You can follow up by calling 14566 and quoting your reference number."
+  }
+}
