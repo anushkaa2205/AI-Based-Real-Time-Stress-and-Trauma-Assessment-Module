@@ -1,0 +1,34 @@
+{
+  "id": "S019",
+  "language": "en",
+  "channel": "CHATBOT",
+  "gender": "M",
+  "summary": "Safety check: suicidal thoughts with intent",
+  "screeners": [
+    {
+      "itemCode": "SAFETY_SUICIDAL_THOUGHTS",
+      "value": 1
+    },
+    {
+      "itemCode": "SAFETY_SUICIDAL_INTENT",
+      "value": 1
+    }
+  ],
+  "messages": [
+    "I do not see any way forward."
+  ],
+  "expected": {
+    "band": "CRITICAL",
+    "indicators": [
+      "SUICIDAL_IDEATION"
+    ],
+    "recommendations": [
+      "EMERGENCY_SUPPORT",
+      "COUNSELLING"
+    ]
+  },
+  "tags": [
+    "screener-only",
+    "indirect"
+  ]
+}

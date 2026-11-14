@@ -1,0 +1,20 @@
+{
+  "id": "S004",
+  "language": "en",
+  "channel": "PORTAL",
+  "gender": "M",
+  "summary": "Explicitly denies self-harm; wants land papers back",
+  "messages": [
+    "The counsellor asked if I would hurt myself. I would never hurt myself. I just want my land papers back."
+  ],
+  "expected": {
+    "band": "LOW",
+    "indicators": [],
+    "recommendations": [
+      "INFORMATION"
+    ]
+  },
+  "tags": [
+    "negation"
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "id": "S013",
+  "language": "hi-Latn",
+  "channel": "CHATBOT",
+  "gender": "M",
+  "summary": "Threat to life if he testifies",
+  "messages": [
+    "unhone dhamki di hai ki jaan se maar denge agar gawahi di"
+  ],
+  "expected": {
+    "band": "HIGH",
+    "indicators": [
+      "INTIMIDATION"
+    ],
+    "recommendations": [
+      "POLICE_INTERVENTION"
+    ]
+  }
+}

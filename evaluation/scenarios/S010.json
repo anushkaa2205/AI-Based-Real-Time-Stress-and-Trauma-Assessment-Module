@@ -1,0 +1,30 @@
+{
+  "id": "S010",
+  "language": "hi",
+  "channel": "CHATBOT",
+  "gender": "F",
+  "summary": "Complaint refused by police; worried and unsure where to go",
+  "messages": [
+    "पुलिस ने शिकायत नहीं ली। क्या करूँ, कुछ समझ नहीं आ रहा।"
+  ],
+  "screeners": [
+    {
+      "itemCode": "GAD2_1",
+      "value": 2
+    },
+    {
+      "itemCode": "GAD2_2",
+      "value": 1
+    }
+  ],
+  "expected": {
+    "band": "MODERATE",
+    "indicators": [
+      "FEAR_ANXIETY"
+    ],
+    "recommendations": [
+      "LEGAL_AID",
+      "COUNSELLING"
+    ]
+  }
+}

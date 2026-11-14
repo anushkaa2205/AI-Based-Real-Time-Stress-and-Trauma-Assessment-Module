@@ -1,0 +1,41 @@
+{
+  "id": "S009",
+  "language": "en",
+  "channel": "PORTAL",
+  "gender": "M",
+  "summary": "Trauma symptoms (bad dreams, avoidance) without danger",
+  "messages": [
+    "I keep having bad dreams about that day and I avoid going near the market."
+  ],
+  "screeners": [
+    {
+      "itemCode": "PCPTSD5_1",
+      "value": 1
+    },
+    {
+      "itemCode": "PCPTSD5_2",
+      "value": 1
+    },
+    {
+      "itemCode": "PCPTSD5_3",
+      "value": 1
+    },
+    {
+      "itemCode": "PCPTSD5_4",
+      "value": 0
+    },
+    {
+      "itemCode": "PCPTSD5_5",
+      "value": 0
+    }
+  ],
+  "expected": {
+    "band": "MODERATE",
+    "indicators": [
+      "SEVERE_TRAUMA"
+    ],
+    "recommendations": [
+      "COUNSELLING"
+    ]
+  }
+}

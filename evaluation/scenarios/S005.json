@@ -1,0 +1,18 @@
+{
+  "id": "S005",
+  "language": "hi-Latn",
+  "channel": "CHATBOT",
+  "gender": "F",
+  "summary": "Police did not register the complaint; unsure what to do",
+  "messages": [
+    "police ne FIR nahi likhi. kya karun samajh nahi aa raha."
+  ],
+  "expected": {
+    "band": "LOW",
+    "indicators": [],
+    "recommendations": [
+      "LEGAL_AID",
+      "INFORMATION"
+    ]
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "id": "S014",
+  "language": "en",
+  "channel": "PORTAL",
+  "gender": "F",
+  "summary": "Parent reports sexual offence against a minor daughter",
+  "context": {
+    "offenceCategory": "SEXUAL_VIOLENCE",
+    "ageGroup": "UNDER_18"
+  },
+  "messages": [
+    "My daughter is scared to go to school now."
+  ],
+  "expected": {
+    "band": "HIGH",
+    "indicators": [
+      "EXTREME_VULNERABILITY"
+    ],
+    "recommendations": [
+      "MEDICAL_ASSISTANCE",
+      "COUNSELLING"
+    ]
+  },
+  "tags": [
+    "context-only"
+  ]
+}

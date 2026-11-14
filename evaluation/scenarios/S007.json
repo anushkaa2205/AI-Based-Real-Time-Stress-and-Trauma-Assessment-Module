@@ -1,0 +1,30 @@
+{
+  "id": "S007",
+  "language": "hi",
+  "channel": "CHATBOT",
+  "gender": "M",
+  "summary": "Constant fear and poor sleep; case running for years",
+  "messages": [
+    "घटना के बाद से मुझे नींद नहीं आती और हर समय डर लगा रहता है। सालों से केस चल रहा है।"
+  ],
+  "screeners": [
+    {
+      "itemCode": "GAD2_1",
+      "value": 2
+    },
+    {
+      "itemCode": "GAD2_2",
+      "value": 2
+    }
+  ],
+  "expected": {
+    "band": "MODERATE",
+    "indicators": [
+      "FEAR_ANXIETY"
+    ],
+    "recommendations": [
+      "COUNSELLING",
+      "LEGAL_AID"
+    ]
+  }
+}

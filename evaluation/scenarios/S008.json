@@ -1,0 +1,19 @@
+{
+  "id": "S008",
+  "language": "hi-Latn",
+  "channel": "CHATBOT",
+  "gender": "F",
+  "summary": "Forced out of the village, staying with relatives",
+  "messages": [
+    "hume gaon se nikal diya, ab rishtedaar ke ghar reh rahe hain. bachche school nahi ja pa rahe."
+  ],
+  "expected": {
+    "band": "MODERATE",
+    "indicators": [
+      "SOCIAL_ISOLATION"
+    ],
+    "recommendations": [
+      "REHABILITATION_RELIEF"
+    ]
+  }
+}

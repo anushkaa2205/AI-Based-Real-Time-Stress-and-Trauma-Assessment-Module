@@ -1,0 +1,20 @@
+{
+  "id": "S011",
+  "language": "en",
+  "channel": "CHATBOT",
+  "gender": "M",
+  "summary": "Pressured to withdraw the complaint",
+  "messages": [
+    "They told me to withdraw the complaint or face consequences."
+  ],
+  "expected": {
+    "band": "HIGH",
+    "indicators": [
+      "INTIMIDATION"
+    ],
+    "recommendations": [
+      "WITNESS_PROTECTION",
+      "POLICE_INTERVENTION"
+    ]
+  }
+}

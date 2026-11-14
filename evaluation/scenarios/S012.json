@@ -1,0 +1,22 @@
+{
+  "id": "S012",
+  "language": "hi",
+  "channel": "CHATBOT",
+  "gender": "F",
+  "summary": "Indirect wish to be gone (family better without me)",
+  "messages": [
+    "कभी-कभी लगता है कि मेरे बिना घरवाले ज़्यादा खुश रहेंगे।"
+  ],
+  "expected": {
+    "band": "HIGH",
+    "indicators": [
+      "SUICIDAL_IDEATION"
+    ],
+    "recommendations": [
+      "COUNSELLING"
+    ]
+  },
+  "tags": [
+    "indirect"
+  ]
+}

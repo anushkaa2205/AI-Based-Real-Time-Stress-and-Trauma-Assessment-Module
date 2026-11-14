@@ -1,0 +1,17 @@
+{
+  "id": "S003",
+  "language": "hi-Latn",
+  "channel": "CHATBOT",
+  "gender": "F",
+  "summary": "Romanised Hindi status query, no distress",
+  "messages": [
+    "meri shikayat ka kya hua, bas yeh puchna tha. abhi koi pareshani nahi hai."
+  ],
+  "expected": {
+    "band": "LOW",
+    "indicators": [],
+    "recommendations": [
+      "INFORMATION"
+    ]
+  }
+}

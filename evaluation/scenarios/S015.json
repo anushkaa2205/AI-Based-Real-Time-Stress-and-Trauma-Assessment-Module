@@ -1,0 +1,24 @@
+{
+  "id": "S015",
+  "language": "hi",
+  "channel": "CHATBOT",
+  "gender": "M",
+  "summary": "Daily threats and pressure to withdraw (context + text)",
+  "context": {
+    "ongoingThreats": true,
+    "pressureToWithdraw": true
+  },
+  "messages": [
+    "रोज़ कोई न कोई आकर धमका जाता है।"
+  ],
+  "expected": {
+    "band": "HIGH",
+    "indicators": [
+      "INTIMIDATION"
+    ],
+    "recommendations": [
+      "WITNESS_PROTECTION",
+      "POLICE_INTERVENTION"
+    ]
+  }
+}

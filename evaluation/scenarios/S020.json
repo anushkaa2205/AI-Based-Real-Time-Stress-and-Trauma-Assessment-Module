@@ -1,0 +1,20 @@
+{
+  "id": "S020",
+  "language": "hi",
+  "channel": "CHATBOT",
+  "gender": "F",
+  "summary": "Current injury, needs hospital",
+  "messages": [
+    "मेरा हाथ टूट गया है और खून बह रहा है, अस्पताल की ज़रूरत है"
+  ],
+  "expected": {
+    "band": "CRITICAL",
+    "indicators": [
+      "SEVERE_TRAUMA"
+    ],
+    "recommendations": [
+      "EMERGENCY_SUPPORT",
+      "MEDICAL_ASSISTANCE"
+    ]
+  }
+}

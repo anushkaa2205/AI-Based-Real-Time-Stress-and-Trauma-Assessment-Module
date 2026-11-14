@@ -1,0 +1,31 @@
+{
+  "id": "S006",
+  "language": "en",
+  "channel": "CHATBOT",
+  "gender": "F",
+  "summary": "Family boycotted by the village; low mood",
+  "messages": [
+    "Since the complaint, our family has been boycotted. We are not allowed to take water from the village tap. I feel sad most days."
+  ],
+  "screeners": [
+    {
+      "itemCode": "PHQ2_1",
+      "value": 2
+    },
+    {
+      "itemCode": "PHQ2_2",
+      "value": 2
+    }
+  ],
+  "expected": {
+    "band": "MODERATE",
+    "indicators": [
+      "SOCIAL_ISOLATION",
+      "DEPRESSION"
+    ],
+    "recommendations": [
+      "REHABILITATION_RELIEF",
+      "COUNSELLING"
+    ]
+  }
+}

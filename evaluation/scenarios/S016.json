@@ -1,0 +1,21 @@
+{
+  "id": "S016",
+  "language": "hi",
+  "channel": "CHATBOT",
+  "gender": "F",
+  "summary": "Accused outside the house now, demanding withdrawal",
+  "messages": [
+    "वो लोग अभी घर के बाहर खड़े हैं, कह रहे हैं केस वापस लो"
+  ],
+  "expected": {
+    "band": "CRITICAL",
+    "indicators": [
+      "INTIMIDATION"
+    ],
+    "recommendations": [
+      "EMERGENCY_SUPPORT",
+      "POLICE_INTERVENTION",
+      "WITNESS_PROTECTION"
+    ]
+  }
+}

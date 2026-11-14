@@ -1,0 +1,20 @@
+{
+  "id": "S017",
+  "language": "en",
+  "channel": "CHATBOT",
+  "gender": "M",
+  "summary": "States a decision to end life tonight",
+  "messages": [
+    "I have decided to end my life tonight. I can't take this anymore."
+  ],
+  "expected": {
+    "band": "CRITICAL",
+    "indicators": [
+      "SUICIDAL_IDEATION"
+    ],
+    "recommendations": [
+      "EMERGENCY_SUPPORT",
+      "COUNSELLING"
+    ]
+  }
+}

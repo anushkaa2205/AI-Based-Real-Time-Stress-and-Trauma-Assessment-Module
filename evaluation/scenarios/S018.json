@@ -1,0 +1,20 @@
+{
+  "id": "S018",
+  "language": "hi-Latn",
+  "channel": "CHATBOT",
+  "gender": "F",
+  "summary": "Locked in a room, not allowed out",
+  "messages": [
+    "mujhe kamre mein band kar diya hai, bahar nahi jaane de rahe"
+  ],
+  "expected": {
+    "band": "CRITICAL",
+    "indicators": [
+      "INTIMIDATION"
+    ],
+    "recommendations": [
+      "EMERGENCY_SUPPORT",
+      "POLICE_INTERVENTION"
+    ]
+  }
+}
