@@ -13,7 +13,7 @@ Update this table as work finishes.
 | 1. Foundation: data, security, staff login | M1 Walking skeleton | Done (verified on Atlas: indexes, seed, all 10 roles log in, police 403) |
 | 2. Scoring core (no AI) | M2 Text MVP | Done (2.1–2.10; coverage 98% on scoring folders) |
 | 3. Victim text flow | M2 Text MVP | Done (unit + Playwright on desktop and mobile; rules-only baseline 75% recorded) |
-| 4. AI text analysis | M2 Text MVP | Not started |
+| 4. AI text analysis | M2 Text MVP | In progress: 4.1–4.9 done and verified live (Groq + Gemini overflow); 4.10 results recorded, weight tuning waits for reviewed labels; text latency p95 4.2 s in dev (target 3 s) |
 | 5. Responder dashboards and live alerts | M3 Responder loop | Not started |
 | 6. Recommendations, referrals, stakeholder views | M3 Responder loop | Not started |
 | 7. Voice, operator console, IVRS | M4 Voice | Not started |
@@ -174,15 +174,15 @@ Update this table as work finishes.
 **Goal:** add language detection, translation, LLM-based indicator extraction with evidence, and text emotion; keep the fallback working.
 **Effort:** 5–6 days. **Depends on:** Phase 3. Provider: Groq (D3).
 
-- [ ] **4.1 Service security.** HMAC signature and timestamp check on every request to `analysis-service`.
-- [ ] **4.2 Language ID and translation.** Unicode script detection plus the LLM (same call as 4.3) for language and Romanised Hindi; English translation returned by the same LLM call. (FR-NLP-06, FR-LANG-03)
-- [ ] **4.3 Indicator extraction.** Prompt with strict JSON schema output: for each of the 8 dimensions, score, confidence, exact evidence quote, `negated` flag and a short rationale; temperature 0; compact few-shot examples (keep the whole prompt ≤ 1,500 tokens because of Groq's 8K tokens/minute free limit), including negation and indirect phrasing; the prompt forbids diagnostic wording. Fall back to Gemini on HTTP 429. Map English evidence back to the original-language span. (FR-NLP-01…08)
-- [ ] **4.4 Text emotion.** Six classes (fear, sadness, anger, shame, shock/numbness, neutral) with confidence. (FR-EMO-01)
-- [ ] **4.5 Endpoint.** `POST /v1/analyze/text` exactly as in `API_CONTRACTS.md` §8.1, with pytest tests using recorded model responses. Cache responses by input hash (on disk) so evaluation re-runs do not use up the free quota.
-- [ ] **4.6 Analysis client.** `src/core/analysis-client/`: typed client, 2.5 s timeout, circuit breaker, returns `{degraded: true}` on failure.
-- [ ] **4.7 Guardrails.** Validate the response against the Zod schema; drop any indicator whose quote is not found word-for-word at the given span; clamp scores; reject unknown dimensions. (AC-NLP-05)
-- [ ] **4.8 Pipeline v2.** Redact → call AI in parallel with nothing blocking the lexicon → merge indicators → store translation. On failure: continue, mark `limitedConfidence`, queue a `rescore` job. (NFR-REL-01)
-- [ ] **4.9 Case summary.** `POST /v1/summarize`; neutral summary stored encrypted when the interaction ends. **(S)** (FR-NLP-09)
+- [x] **4.1 Service security.** HMAC signature and timestamp check on every request to `analysis-service`.
+- [x] **4.2 Language ID and translation.** Unicode script detection plus the LLM (same call as 4.3) for language and Romanised Hindi; English translation returned by the same LLM call. (FR-NLP-06, FR-LANG-03)
+- [x] **4.3 Indicator extraction.** Prompt with strict JSON schema output: for each of the 8 dimensions, score, confidence, exact evidence quote, `negated` flag and a short rationale; temperature 0; compact few-shot examples (keep the whole prompt ≤ 1,500 tokens because of Groq's 8K tokens/minute free limit), including negation and indirect phrasing; the prompt forbids diagnostic wording. Fall back to Gemini on HTTP 429. Map English evidence back to the original-language span. (FR-NLP-01…08)
+- [x] **4.4 Text emotion.** Six classes (fear, sadness, anger, shame, shock/numbness, neutral) with confidence. (FR-EMO-01)
+- [x] **4.5 Endpoint.** `POST /v1/analyze/text` exactly as in `API_CONTRACTS.md` §8.1, with pytest tests using recorded model responses. Cache responses by input hash (on disk) so evaluation re-runs do not use up the free quota.
+- [x] **4.6 Analysis client.** `src/core/analysis-client/`: typed client, 2.5 s timeout, circuit breaker, returns `{degraded: true}` on failure.
+- [x] **4.7 Guardrails.** Validate the response against the Zod schema; drop any indicator whose quote is not found word-for-word at the given span; clamp scores; reject unknown dimensions. (AC-NLP-05)
+- [x] **4.8 Pipeline v2.** Redact → call AI in parallel with nothing blocking the lexicon → merge indicators → store translation. On failure: continue, mark `limitedConfidence`, queue a `rescore` job. (NFR-REL-01)
+- [x] **4.9 Case summary.** `POST /v1/summarize`; neutral summary stored encrypted when the interaction ends. **(S)** (FR-NLP-09)
 - [ ] **4.10 Tuning.** Run the evaluation set; adjust prompt, lexicon and weights; record results.
 
 **Done when:** AC-NLP-01 and AC-NLP-02 (100% recall for suicidal ideation and immediate danger), AC-NLP-03, AC-NLP-04, AC-NLP-06 (lexicon alone still catches them with the AI switched off), AC-NLP-07, AC-REL-01 and AC-SVI-02 (text within 3 s) pass. **Milestone M2.**
