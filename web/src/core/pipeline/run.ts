@@ -10,14 +10,20 @@
  * life-safety overrides from the lexicon and the safety check can raise the
  * band, alert staff and show the emergency panel.
  *
- * The AI path (Phase 4) and real-time events after commit (Phase 5) plug in here.
+ * Pipeline v2 (task 4.8): the AI runs on redacted text as a second, independent path;
+ * if it fails the turn is scored by rules only, marked limited confidence and a
+ * `rescore` job is queued. Real-time events after commit arrive in Phase 5.
  * Logs never contain victim text (rule 9).
  */
+import { randomUUID } from "node:crypto";
 import mongoose, { type ClientSession, Types } from "mongoose";
+import { analyzeText } from "@/core/analysis-client/client";
+import { checkAnalysis, type CheckedAnalysis } from "@/core/analysis-client/guardrails";
 import { record } from "@/core/audit/record";
 import { allowsScreeners, allowsTextAnalysis, currentConsent, resolveMode } from "@/core/consent/mode";
 import { flowStateOf, type FlowState } from "@/core/conversation/flow";
 import { encrypt } from "@/core/privacy/crypto";
+import { redact } from "@/core/privacy/redact";
 import { dueAt, evaluateRecommendations, type Proposal } from "@/core/recommendations/evaluate";
 import { LEXICON_VERSION, lexiconSignals } from "@/core/safety-lexicon/engine";
 import { activeConfig } from "@/core/scoring/activeConfig";
@@ -187,11 +193,42 @@ export async function runPipeline(input: RunInput): Promise<RunResult> {
   await db();
   const now = new Date();
 
-  // Pure work outside the transaction: lexicon scan and encryption.
+  // Work outside the transaction: lexicon scan, AI call on REDACTED text, encryption.
   const text = input.message?.text ?? "";
   const lexicon = text ? lexiconSignals(text) : null;
   const textEnc = text ? encrypt(text) : null;
   const quotesEnc = new Map((lexicon?.indicators ?? []).map((i) => [i.id, encrypt(i.evidence.quote)]));
+
+  // Second, independent path (task 4.8): the AI. Its failure never blocks the turn (NFR-REL-01).
+  let ai: { checked: CheckedAnalysis; quotesEnc: Map<string, string>; translationEnc: string | null } | null = null;
+  let aiDegraded = false;
+  if (text) {
+    const pre = await Interaction.findById(input.interactionId).select("mode uiLanguage context").lean();
+    const replay =
+      input.message?.idempotencyKey &&
+      (await Message.exists({ interactionId: input.interactionId, idempotencyKey: input.message.idempotencyKey }));
+    if (pre && !replay && allowsTextAnalysis(pre.mode)) {
+      const ctx = (pre.context ?? {}) as CaseContextInput;
+      const redacted = redact(text).text; // NFR-SEC-05: no phones, e-mails, IDs or PIN codes leave the app
+      const r = await analyzeText({
+        requestId: input.message?.idempotencyKey ?? randomUUID(),
+        text: redacted,
+        languageHint: pre.uiLanguage,
+        context: { isSexualOffence: ctx.isSexualOffence === true, isMinor: isMinor(ctx) },
+      });
+      if (r.degraded) {
+        aiDegraded = true;
+        console.warn(`[pipeline] analysis degraded (${r.reason}); continuing with rules only`);
+      } else {
+        const checked = checkAnalysis(r.result, text, redacted);
+        ai = {
+          checked,
+          quotesEnc: new Map(checked.indicators.map((i) => [i.id!, encrypt(i.evidence.quote)])),
+          translationEnc: checked.translationEn ? encrypt(checked.translationEn) : null,
+        };
+      }
+    }
+  }
 
   const session = await mongoose.startSession();
   let result: RunResult = { messageId: null, showEmergencyPanel: false, replayed: false };
@@ -229,7 +266,9 @@ export async function runPipeline(input: RunInput): Promise<RunResult> {
                 sender: "VICTIM",
                 modality: "TEXT",
                 textEnc: textEnc ?? undefined,
-                language: interaction.uiLanguage,
+                translationEnc: ai?.translationEnc ?? undefined,
+                language: ai?.checked.language ?? interaction.uiLanguage,
+                emotion: ai ? ai.checked.emotion : undefined,
                 promptKey: input.message.promptKey,
                 idempotencyKey: input.message.idempotencyKey,
               },
@@ -238,6 +277,9 @@ export async function runPipeline(input: RunInput): Promise<RunResult> {
           );
           messageId = msg!._id;
           flow.narrativeTurns += 1;
+          if (ai && !interaction.detectedLanguages.includes(ai.checked.language)) {
+            interaction.detectedLanguages.push(ai.checked.language);
+          }
         }
         if (input.skipNarrative) flow.narrativeDone = true;
 
@@ -291,6 +333,44 @@ export async function runPipeline(input: RunInput): Promise<RunResult> {
               { session },
             );
           }
+          // AI indicators: only if consent still allows text analysis at write time (ARCHITECTURE §6.5).
+          if (ai && messageId && allowsTextAnalysis(mode) && ai.checked.indicators.length) {
+            await Indicator.insertMany(
+              ai.checked.indicators.map((i) => ({
+                interactionId: interaction._id,
+                caseId: caseDoc._id,
+                dimension: i.dimension,
+                source: "TEXT_NLP",
+                score: i.score,
+                confidence: i.confidence,
+                negated: i.negated ?? false,
+                flags: i.flags ?? [],
+                label: i.rationale || undefined,
+                evidence: {
+                  type: "TEXT_SPAN",
+                  messageId,
+                  spanStart: i.evidence.start,
+                  spanEnd: i.evidence.end,
+                  quoteEnc: ai!.quotesEnc.get(i.id!),
+                },
+                modelVersion: ai!.checked.modelVersion,
+              })),
+              { session },
+            );
+          }
+          // NFR-REL-01: limited confidence while any message still waits for AI analysis.
+          if (aiDegraded && messageId) {
+            await Job.create(
+              [{ type: "rescore", payload: { interactionId: ID(interaction._id), messageId: ID(messageId) }, runAt: new Date(now.getTime() + 60_000) }],
+              { session },
+            );
+          }
+          const pendingRescore = await Job.exists({
+            type: "rescore",
+            "payload.interactionId": ID(interaction._id),
+            doneAt: null,
+          }).session(session);
+          const limitedConfidence = aiDegraded || !!pendingRescore;
           const stored = await Indicator.find({ interactionId: interaction._id, status: { $ne: "REJECTED" } })
             .select("dimension source score confidence negated status review flags label")
             .session(session)
@@ -307,7 +387,7 @@ export async function runPipeline(input: RunInput): Promise<RunResult> {
             indicators: [...stored.map(toInput), ...lexiconFlagsOnly, ...screener.indicators, ...context.indicators],
             config,
             lockedBand: (caseDoc.overrideLockedBand ?? null) as RiskBand | null,
-            limitedConfidence: false,
+            limitedConfidence,
           });
 
           interaction.assessmentSeq = (interaction.assessmentSeq ?? 0) + 1;
@@ -332,7 +412,7 @@ export async function runPipeline(input: RunInput): Promise<RunResult> {
                 })),
                 explanation: draft.explanation.en,
                 configVersion: draft.configVersion,
-                modelVersions: { lexicon: LEXICON_VERSION, nlp: null },
+                modelVersions: { lexicon: LEXICON_VERSION, nlp: ai?.checked.modelVersion ?? null },
               },
             ],
             { session },
@@ -344,7 +424,7 @@ export async function runPipeline(input: RunInput): Promise<RunResult> {
           caseDoc.currentSvi = draft.svi;
           caseDoc.latestAssessmentId = assessment!._id;
           caseDoc.overrideLockedBand = draft.lockedBand ?? undefined;
-          caseDoc.limitedConfidence = false;
+          caseDoc.limitedConfidence = limitedConfidence;
 
           const proposals = evaluateRecommendations(
             { band: draft.band, overridesFired: draft.overridesFired, dimensions: draft.dimensions, facts },

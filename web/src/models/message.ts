@@ -11,6 +11,8 @@ const MessageSchema = new Schema(
     modality: { type: String, enum: MESSAGE_MODALITIES, required: true },
     textEnc: { type: String, required: true },
     translationEnc: String, // EN/HI for responders (FR-LANG-06)
+    // Added in task 4.8 (not yet in DATABASE.md): text emotion for the emotion timeline (FR-EMO-01/03)
+    emotion: { label: String, confidence: Number },
     language: String,
     sttConfidence: Number,
     promptKey: String, // SYSTEM messages: i18n key of the scripted prompt
