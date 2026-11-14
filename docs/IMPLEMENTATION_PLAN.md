@@ -11,7 +11,7 @@ Update this table as work finishes.
 |---|---|---|
 | 0. Project setup | M1 Walking skeleton | In progress: 0.1–0.5, 0.8 done; 0.6 (accounts) with the team; 0.7 not yet run on GitHub |
 | 1. Foundation: data, security, staff login | M1 Walking skeleton | In progress: code for all tasks written; 1.3–1.5, 1.7–1.9 done; 1.1, 1.2, 1.6, 1.10, 1.11 wait for an Atlas check |
-| 2. Scoring core (no AI) | M2 Text MVP | Not started |
+| 2. Scoring core (no AI) | M2 Text MVP | Done (2.1–2.10; coverage 98% on scoring folders) |
 | 3. Victim text flow | M2 Text MVP | Not started |
 | 4. AI text analysis | M2 Text MVP | Not started |
 | 5. Responder dashboards and live alerts | M3 Responder loop | Not started |
@@ -120,16 +120,16 @@ Update this table as work finishes.
 **Goal:** the deterministic heart of the system: lexicon → indicators → dimension scores → SVI → band → overrides → recommendations. Pure TypeScript, no database.
 **Effort:** 5–6 days. **Depends on:** Phase 0 (can run in parallel with Phase 1).
 
-- [ ] **2.1 Types and config.** `src/core/scoring/types.ts`; `defaultConfig.ts` with the weights, thresholds, voice-only cap, override rules and recommendation rules from the appendices; a Zod schema that rejects weights not summing to 1 or thresholds out of order.
-- [ ] **2.2 Screener scoring.** `src/core/screeners/`: item definitions and scoring for the safety check, PHQ-2, GAD-2, PC-PTSD-5 and the suicide-risk screen; mapping from screener results to dimensions. (FR-SCR-02, AC-SCR-02)
-- [ ] **2.3 Context mapping.** `contextToIndicators()`: case context → EXTREME_VULNERABILITY, INTIMIDATION and others. (FR-IND-02)
-- [ ] **2.4 Fusion.** `fuse.ts`: maximum within a source, confidence-weighted average across sources, reviewed indicators replace AI values, rejected and negated ones excluded, voice-only cap of 0.6. (FR-IND-03, FR-VOI-08)
-- [ ] **2.5 SVI and bands.** `svi.ts`, `bands.ts`: 0–100 integer, per-dimension contributions that add up to the SVI (±1), overall confidence. (FR-SVI-01/03/04, FR-RISK-01)
-- [ ] **2.6 Safety overrides.** `overrides.ts`: rules OV-1…OV-8, raise-only, respects a locked band. (FR-RISK-02/03)
-- [ ] **2.7 Explanation.** `explain.ts`: one plain sentence per assessment in English and Hindi. (FR-RISK-04)
-- [ ] **2.8 Safety lexicon.** `src/core/safety-lexicon/engine.ts` + `rules/en.json`, `hi.json`, `hinglish.json`: suicidal ideation (explicit and indirect), immediate danger, threats, pressure to withdraw, isolation; negation window; Romanised spelling variants. Returns indicators with exact character spans. (FR-NLP-10, FR-NLP-08)
-- [ ] **2.9 Recommendation engine.** `src/core/recommendations/evaluate.ts`: assessment + indicators → proposed recommendations with reason, urgency, responsible role and legal basis. (FR-REC-01…04)
-- [ ] **2.10 Unit tests.** At least: 10 hand-calculated SVI examples; one test per override; determinism (same input twice → identical output); lexicon positives, negatives and negation cases per language; all six support types reachable. Coverage ≥ 80% for these folders.
+- [x] **2.1 Types and config.** `src/core/scoring/types.ts`; `defaultConfig.ts` with the weights, thresholds, voice-only cap, override rules and recommendation rules from the appendices; a Zod schema that rejects weights not summing to 1 or thresholds out of order.
+- [x] **2.2 Screener scoring.** `src/core/screeners/`: item definitions and scoring for the safety check, PHQ-2, GAD-2, PC-PTSD-5 and the suicide-risk screen; mapping from screener results to dimensions. (FR-SCR-02, AC-SCR-02)
+- [x] **2.3 Context mapping.** `contextToIndicators()`: case context → EXTREME_VULNERABILITY, INTIMIDATION and others. (FR-IND-02)
+- [x] **2.4 Fusion.** `fuse.ts`: maximum within a source, confidence-weighted average across sources, reviewed indicators replace AI values, rejected and negated ones excluded, voice-only cap of 0.6. (FR-IND-03, FR-VOI-08)
+- [x] **2.5 SVI and bands.** `svi.ts`, `bands.ts`: 0–100 integer, per-dimension contributions that add up to the SVI (±1), overall confidence. (FR-SVI-01/03/04, FR-RISK-01)
+- [x] **2.6 Safety overrides.** `overrides.ts`: rules OV-1…OV-8, raise-only, respects a locked band. (FR-RISK-02/03)
+- [x] **2.7 Explanation.** `explain.ts`: one plain sentence per assessment in English and Hindi. (FR-RISK-04)
+- [x] **2.8 Safety lexicon.** `src/core/safety-lexicon/engine.ts` + `rules/en.json`, `hi.json`, `hinglish.json`: suicidal ideation (explicit and indirect), immediate danger, threats, pressure to withdraw, isolation; negation window; Romanised spelling variants. Returns indicators with exact character spans. (FR-NLP-10, FR-NLP-08)
+- [x] **2.9 Recommendation engine.** `src/core/recommendations/evaluate.ts`: assessment + indicators → proposed recommendations with reason, urgency, responsible role and legal basis. (FR-REC-01…04)
+- [x] **2.10 Unit tests.** At least: 10 hand-calculated SVI examples; one test per override; determinism (same input twice → identical output); lexicon positives, negatives and negation cases per language; all six support types reachable. Coverage ≥ 80% for these folders.
 
 **Done when:** AC-SVI-01, AC-SVI-03, AC-SVI-04, AC-RISK-02, AC-RISK-03 and AC-MNT-01 pass as unit tests; the lexicon runs in under 50 ms per message (NFR-PERF-04).
 
