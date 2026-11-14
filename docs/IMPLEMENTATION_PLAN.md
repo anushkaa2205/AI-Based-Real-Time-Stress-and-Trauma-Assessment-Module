@@ -14,7 +14,7 @@ Update this table as work finishes.
 | 2. Scoring core (no AI) | M2 Text MVP | Done (2.1–2.10; coverage 98% on scoring folders) |
 | 3. Victim text flow | M2 Text MVP | Done (unit + Playwright on desktop and mobile; rules-only baseline 75% recorded) |
 | 4. AI text analysis | M2 Text MVP | In progress: 4.1–4.9 done and verified live (Groq + Gemini overflow); 4.10 results recorded, weight tuning waits for reviewed labels; text latency p95 4.2 s in dev (target 3 s) |
-| 5. Responder dashboards and live alerts | M3 Responder loop | Not started |
+| 5. Responder dashboards and live alerts | M3 Responder loop | Done (5.1–5.9; verified with Pusher: Critical alert on screen in under 5 s; 13 Playwright tests pass. 5.5 auto-assignment (S) deferred) |
 | 6. Recommendations, referrals, stakeholder views | M3 Responder loop | Not started |
 | 7. Voice, operator console, IVRS | M4 Voice | Not started |
 | 8. Languages, analytics, integration API, admin | M5 Feature complete | Not started |
@@ -194,15 +194,15 @@ Update this table as work finishes.
 **Goal:** counsellors and operators see cases in risk order, with evidence, and are alerted the moment a case becomes Critical.
 **Effort:** 6–7 days. **Depends on:** Phases 1 and 3 (Phase 4 is not required to start).
 
-- [ ] **5.1 Real-time layer.** `src/lib/realtime.ts` with two drivers (Pusher, local SSE); `POST /api/v1/realtime/auth` applying the same policies as REST; event envelope from `API_CONTRACTS.md` §7. Pipeline publishes after commit.
-- [ ] **5.2 Case queue.** `GET /staff/cases` with filters and cursor pagination, sorted band ↓, SVI ↓, waiting time ↑. Queue page with band shown as colour **and** text, top reason, waiting time, live updates. (FR-CASE-01, FR-RISK-05)
-- [ ] **5.3 Case detail.** `GET /staff/cases/{id}` and the interaction endpoints (transcript, assessments, indicators). Page shows: SVI gauge and timeline, dimension breakdown, indicators with highlighted evidence in the original text and translation, screener results, consent status, context. (FR-CASE-03, FR-SVI-03/05, FR-LANG-06)
-- [ ] **5.4 Indicator review.** `PATCH /staff/indicators/{id}`: confirm, reject or adjust with a reason; SVI recalculated immediately; original value kept. (FR-IND-05)
-- [ ] **5.5 Band override, notes, status, assignment.** `POST /cases/{id}/band-override` (reason required), notes, `PATCH /cases/{id}`; auto-assignment by language, district and workload **(S)**. (FR-CASE-02/04/05)
-- [ ] **5.6 Alerts.** Create an alert when the band rises to High or Critical; banner with sound for Critical on any staff page; acknowledge and resolve endpoints; polling fallback every 10 s if real time is down. (FR-ALR-01/02/04)
-- [ ] **5.7 Job runner.** `src/core/jobs/runDue()`: claims up to 5 due jobs atomically and runs handlers for `alert.escalate` (counsellors → supervisor → district) and `rescore`. Called at the end of `GET /staff/alerts` (polled every 10 s by every staff dashboard) and from `POST /api/v1/internal/jobs/run` (secret-protected); `npm run jobs` loops it locally. No separate worker process. (FR-ALR-03)
-- [ ] **5.8 Audit.** Audit entries for case view, transcript view, identity view, review, override. Identity endpoint with consent check.
-- [ ] **5.9 Tests.** Playwright with two browser sessions: a victim message that triggers Critical appears on the counsellor screen within 5 s without refresh; unacknowledged alert escalates; override without a reason is blocked; queue order with 20 seeded cases.
+- [x] **5.1 Real-time layer.** `src/lib/realtime.ts` with two drivers (Pusher, local SSE); `POST /api/v1/realtime/auth` applying the same policies as REST; event envelope from `API_CONTRACTS.md` §7. Pipeline publishes after commit.
+- [x] **5.2 Case queue.** `GET /staff/cases` with filters and cursor pagination, sorted band ↓, SVI ↓, waiting time ↑. Queue page with band shown as colour **and** text, top reason, waiting time, live updates. (FR-CASE-01, FR-RISK-05)
+- [x] **5.3 Case detail.** `GET /staff/cases/{id}` and the interaction endpoints (transcript, assessments, indicators). Page shows: SVI gauge and timeline, dimension breakdown, indicators with highlighted evidence in the original text and translation, screener results, consent status, context. (FR-CASE-03, FR-SVI-03/05, FR-LANG-06)
+- [x] **5.4 Indicator review.** `PATCH /staff/indicators/{id}`: confirm, reject or adjust with a reason; SVI recalculated immediately; original value kept. (FR-IND-05)
+- [x] **5.5 Band override, notes, status, assignment.** `POST /cases/{id}/band-override` (reason required), notes, `PATCH /cases/{id}`; auto-assignment by language, district and workload **(S)**. (FR-CASE-02/04/05) *Done except the (S) auto-assignment, which is deferred; assignment is manual.*
+- [x] **5.6 Alerts.** Create an alert when the band rises to High or Critical; banner with sound for Critical on any staff page; acknowledge and resolve endpoints; polling fallback every 10 s if real time is down. (FR-ALR-01/02/04)
+- [x] **5.7 Job runner.** `src/core/jobs/runDue()`: claims up to 5 due jobs atomically and runs handlers for `alert.escalate` (counsellors → supervisor → district) and `rescore`. Called at the end of `GET /staff/alerts` (polled every 10 s by every staff dashboard) and from `POST /api/v1/internal/jobs/run` (secret-protected); `npm run jobs` loops it locally. No separate worker process. (FR-ALR-03)
+- [x] **5.8 Audit.** Audit entries for case view, transcript view, identity view, review, override. Identity endpoint with consent check.
+- [x] **5.9 Tests.** Playwright with two browser sessions: a victim message that triggers Critical appears on the counsellor screen within 5 s without refresh; unacknowledged alert escalates; override without a reason is blocked; queue order with 20 seeded cases.
 
 **Done when:** AC-CASE-01, AC-CASE-02, AC-IND-02, AC-ALR-01, AC-ALR-02, AC-AUD-01 and AC-RISK-04 pass.
 
