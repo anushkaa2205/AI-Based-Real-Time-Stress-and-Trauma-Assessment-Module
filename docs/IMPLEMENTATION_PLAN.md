@@ -9,8 +9,8 @@ Update this table as work finishes.
 
 | Phase | Milestone | Status |
 |---|---|---|
-| 0. Project setup | M1 Walking skeleton | In progress: 0.1–0.5, 0.8 done; 0.6 (accounts) with the team; 0.7 not yet run on GitHub |
-| 1. Foundation: data, security, staff login | M1 Walking skeleton | In progress: code for all tasks written; 1.3–1.5, 1.7–1.9 done; 1.1, 1.2, 1.6, 1.10, 1.11 wait for an Atlas check |
+| 0. Project setup | M1 Walking skeleton | In progress: 0.1–0.5, 0.8 done; 0.6 Atlas done, Groq/Gemini/Pusher/HF accounts to do; 0.7 runs after first push |
+| 1. Foundation: data, security, staff login | M1 Walking skeleton | Done (verified on Atlas: indexes, seed, all 10 roles log in, police 403) |
 | 2. Scoring core (no AI) | M2 Text MVP | Done (2.1–2.10; coverage 98% on scoring folders) |
 | 3. Victim text flow | M2 Text MVP | Not started |
 | 4. AI text analysis | M2 Text MVP | Not started |
@@ -99,17 +99,17 @@ Update this table as work finishes.
 **Goal:** the data model, encryption, audit log, role-based access and staff sign-in.
 **Effort:** 4–5 days. **Depends on:** Phase 0.
 
-- [ ] **1.1 Database connection.** `src/lib/db.ts` (cached Mongoose connection, `DATABASE.md` §10.1) and `src/lib/pii-db.ts` (separate connection for `subject_identities`).
-- [ ] **1.2 Models.** Split `docs/models.ts` into `src/models/<name>.ts`, with shared enums in `src/models/enums.ts`. Bind `SubjectIdentity` to the PII connection. `scripts/sync-indexes.ts` runs `syncIndexes()` on every model. *First real check of the indexes against MongoDB: fix anything it rejects and update `DATABASE.md`.*
+- [x] **1.1 Database connection.** `src/lib/db.ts` (cached Mongoose connection, `DATABASE.md` §10.1) and `src/lib/pii-db.ts` (separate connection for `subject_identities`).
+- [x] **1.2 Models.** Split `docs/models.ts` into `src/models/<name>.ts`, with shared enums in `src/models/enums.ts`. Bind `SubjectIdentity` to the PII connection. `scripts/sync-indexes.ts` runs `syncIndexes()` on every model. *First real check of the indexes against MongoDB: fix anything it rejects and update `DATABASE.md`.*
 - [x] **1.3 Field encryption.** `src/core/privacy/crypto.ts`: `encrypt()` / `decrypt()` with AES-256-GCM, key IDs and rotation (`DATABASE.md` §8.1). Unit tests: round trip, wrong key fails, tampered text fails, old key still decrypts.
 - [x] **1.4 PII redaction.** `src/core/privacy/redact.ts`: phone numbers, emails, 12-digit ID numbers, PIN codes, and names/addresses supplied from context → `[PHONE]`, `[NAME]`, … Unit tests with Hindi, Hinglish and English samples. (NFR-SEC-05, AC-SEC-02)
 - [x] **1.5 Audit log.** `src/core/audit/record.ts` with the hash chain and retry on fork (`DATABASE.md` §9); `verifyChain()`. Tests: chain verifies; editing an entry breaks verification. (FR-AUD-01…03)
-- [ ] **1.6 Staff authentication.** Auth.js v5 credentials provider with bcrypt; TOTP step with `otplib` for supervisor, state, ministry, admin and auditor roles; 15-minute idle timeout; `/login` page. (NFR-SEC-02/03)
+- [x] **1.6 Staff authentication.** Auth.js v5 credentials provider with bcrypt; TOTP step with `otplib` for supervisor, state, ministry, admin and auditor roles; 15-minute idle timeout; `/login` page. (NFR-SEC-02/03)
 - [x] **1.7 Policies.** `src/core/policies/rbac.ts`: one `can(user, action, resource)` function built from the matrix in `API_CONTRACTS.md` §4, including district and state scoping. `serializers.ts`: per-role output shapes. Table-driven unit tests covering every cell of the matrix. (NFR-PRI-02)
 - [x] **1.8 Route helper.** `src/lib/route.ts`: wraps a handler with authentication, policy check, Zod validation, problem+json errors and request IDs, so every endpoint follows the same steps.
 - [x] **1.9 Rate limiting and security headers.** `src/lib/ratelimit.ts` with MongoDB fixed-window counters (TTL-indexed); CSP, HSTS and frame headers in `next.config`. (NFR-SEC-04)
-- [ ] **1.10 Seed script.** `scripts/seed.ts`: a few states and districts; one user per role; scoring config v1 from `REQUIREMENTS.md` Appendices A–C; one API client.
-- [ ] **1.11 Staff shell.** Layout for `(staff)` with a sidebar that changes per role and an empty home page for each role. `GET /api/v1/staff/me`, `PATCH /me/duty`, `GET /health`.
+- [x] **1.10 Seed script.** `scripts/seed.ts`: a few states and districts; one user per role; scoring config v1 from `REQUIREMENTS.md` Appendices A–C; one API client.
+- [x] **1.11 Staff shell.** Layout for `(staff)` with a sidebar that changes per role and an empty home page for each role. `GET /api/v1/staff/me`, `PATCH /me/duty`, `GET /health`.
 
 **Done when:** each seeded role can log in and lands on its own page; a police user requesting a counsellor page gets 403; unit tests for crypto, redaction, audit and policies pass; AC-PRI-01 holds (identifiers and assessment data are in separate collections).
 
