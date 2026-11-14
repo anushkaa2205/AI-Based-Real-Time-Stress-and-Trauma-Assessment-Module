@@ -4,7 +4,8 @@
  *   request id → CSRF origin check → authenticate → rate limit →
  *   authorise (core/policies) → validate (Zod contract) → handler → problem+json on error
  * Logs carry the request id, route and error code only, never bodies (NFR-REL-03).
- * Victim session and API-key authentication are added in tasks 3.2 and 8.4.
+ * Victim sessions (task 3.2) are bound to the interaction in the URL; API-key
+ * authentication is added in task 8.4.
  */
 import { randomBytes } from "node:crypto";
 import type { NextRequest } from "next/server";
@@ -15,10 +16,11 @@ import { db } from "@/lib/db";
 import { ApiError, problemResponse } from "@/lib/problem";
 import { LIMITS, checkRateLimit, mongoRateLimitStore, rateKey, rateLimitHeaders, type Limit } from "@/lib/ratelimit";
 import { currentStaff, type StaffUser } from "@/lib/staff-session";
+import { loadVictimSession, type VictimSession } from "@/lib/victim-session";
 
 export type { StaffUser };
 
-type AuthMode = "staff" | "public";
+type AuthMode = "staff" | "public" | "victim";
 type Params = Record<string, string | string[] | undefined>;
 
 export interface RouteContext<A extends AuthMode, B extends z.ZodType, Q extends z.ZodType> {
@@ -28,6 +30,8 @@ export interface RouteContext<A extends AuthMode, B extends z.ZodType, Q extends
   body: z.output<B>;
   query: z.output<Q>;
   user: A extends "staff" ? StaffUser : null;
+  /** Victim session bound to the interaction in the URL (auth: "victim") */
+  victim: A extends "victim" ? VictimSession : null;
   /** Resource-level check; throws 403 when not allowed. Returns the access level. */
   authorize(action: Action, resource?: PolicyResource): Access;
 }
@@ -119,10 +123,16 @@ export function route<A extends AuthMode, B extends z.ZodType = z.ZodUndefined, 
     try {
       checkOrigin(req);
 
+      const params = (await segment?.params) ?? {};
       const user = opts.auth === "staff" ? await loadStaffUser() : null;
+      const victim = opts.auth === "victim" ? await loadVictimSession(req, params.id) : null;
 
-      if (opts.rateLimit !== false && (opts.rateLimit || user)) {
-        const rl = opts.rateLimit || { limit: LIMITS.staff, key: (_r: NextRequest, u: StaffUser | null) => `staff:${u?.id}` };
+      if (opts.rateLimit !== false && (opts.rateLimit || user || victim)) {
+        const rl =
+          opts.rateLimit ||
+          (victim
+            ? { limit: LIMITS.victimSession, key: () => `victim:${victim.interactionId}` }
+            : { limit: LIMITS.staff, key: (_r: NextRequest, u: StaffUser | null) => `staff:${u?.id}` });
         await db();
         const result = await checkRateLimit(mongoRateLimitStore, rateKey("route", rl.key(req, user)), rl.limit, Date.now());
         headers = rateLimitHeaders(result);
@@ -133,7 +143,6 @@ export function route<A extends AuthMode, B extends z.ZodType = z.ZodUndefined, 
 
       const body = opts.body ? await readBody(req, opts.body) : undefined;
       const query = opts.query ? readQuery(req, opts.query) : undefined;
-      const params = (await segment?.params) ?? {};
 
       const ctx = {
         req,
@@ -142,6 +151,7 @@ export function route<A extends AuthMode, B extends z.ZodType = z.ZodUndefined, 
         body,
         query,
         user,
+        victim,
         authorize(action: Action, resource?: PolicyResource): Access {
           const level = user ? access(user, action, resource) : null;
           if (!level) throw new ApiError("FORBIDDEN");
@@ -167,6 +177,11 @@ export function route<A extends AuthMode, B extends z.ZodType = z.ZodUndefined, 
       }
       // Unknown error: log the type only; messages can carry data.
       console.error(`[${requestId}] ${req.method} ${instance} -> INTERNAL ${(err as Error)?.name ?? "Error"}`);
+      // Development only: code locations (stack frames without the message, which can carry data).
+      if (process.env.NODE_ENV === "development") {
+        const frames = ((err as Error)?.stack ?? "").split("\n").filter((l) => l.trim().startsWith("at ")).slice(0, 6);
+        console.error(frames.join("\n"));
+      }
       return problemResponse(new ApiError("INTERNAL"), instance, requestId);
     }
   };
