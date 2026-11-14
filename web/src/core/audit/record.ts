@@ -50,10 +50,15 @@ export async function recordWith(store: AuditStore, entry: AuditEntryInput, maxA
 export function mongoAuditStore(session?: ClientSession): AuditStore {
   return {
     async headHash() {
-      const last = await AuditLog.findOne().sort({ _id: -1 }).select("hash").session(session ?? null).lean();
-      if (!last) return null;
-      let hash = last.hash;
-      // Concurrent writers on different machines can produce out-of-order _ids: walk forward.
+      // Concurrent writers on different machines can produce out-of-order _ids, so the newest
+      // _id is not always the tip. Read the last few entries in ONE trip and pick the one that
+      // no other entry points to; walk forward only in the rare case that is ambiguous.
+      const recent = await AuditLog.find().sort({ _id: -1 }).limit(5).select("hash prevHash").session(session ?? null).lean();
+      if (!recent.length) return null;
+      const pointedTo = new Set(recent.map((r) => r.prevHash));
+      const tips = recent.filter((r) => !pointedTo.has(r.hash));
+      let hash = tips.length === 1 ? tips[0]!.hash : recent[0]!.hash;
+      if (tips.length === 1 && recent.length < 5) return hash; // whole log seen
       for (;;) {
         const next = await AuditLog.findOne({ prevHash: hash }).select("hash").session(session ?? null).lean();
         if (!next) return hash;
@@ -71,8 +76,15 @@ export function mongoAuditStore(session?: ClientSession): AuditStore {
  * (or rolls back) with the change it describes.
  */
 export async function record(entry: AuditEntryInput, session?: ClientSession): Promise<string> {
-  // In a transaction a duplicate aborts the transaction, so only one attempt here.
-  return recordWith(mongoAuditStore(session), entry, session ? 1 : 5);
+  if (!session) return recordWith(mongoAuditStore(), entry, 5);
+  // In a transaction a duplicate aborts the transaction. Mark it transient so
+  // session.withTransaction retries the whole transaction against the new head.
+  try {
+    return await recordWith(mongoAuditStore(session), entry, 1);
+  } catch (err) {
+    if (isDuplicatePrevHash(err)) (err as { addErrorLabel?: (l: string) => void }).addErrorLabel?.("TransientTransactionError");
+    throw err;
+  }
 }
 
 /** Loads the whole log and verifies it (GET /staff/admin/audit/verify). */
