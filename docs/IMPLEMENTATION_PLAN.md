@@ -9,8 +9,8 @@ Update this table as work finishes.
 
 | Phase | Milestone | Status |
 |---|---|---|
-| 0. Project setup | M1 Walking skeleton | In progress (0.1 done) |
-| 1. Foundation: data, security, staff login | M1 Walking skeleton | Not started |
+| 0. Project setup | M1 Walking skeleton | In progress: 0.1–0.5, 0.8 done; 0.6 (accounts) with the team; 0.7 not yet run on GitHub |
+| 1. Foundation: data, security, staff login | M1 Walking skeleton | In progress: code for all tasks written; 1.3–1.5, 1.7–1.9 done; 1.1, 1.2, 1.6, 1.10, 1.11 wait for an Atlas check |
 | 2. Scoring core (no AI) | M2 Text MVP | Not started |
 | 3. Victim text flow | M2 Text MVP | Not started |
 | 4. AI text analysis | M2 Text MVP | Not started |
@@ -74,7 +74,7 @@ Update this table as work finishes.
 **Effort:** 1–2 days. **Depends on:** nothing.
 
 - [x] **0.1 Repository layout.** Create `web/`, `analysis-service/`, `evaluation/`, `docs/`. Add `.gitignore` (node_modules, `.next`, `.env*`, `__pycache__`, `.venv`, audio files), `.editorconfig`, root `README.md`.
-- [ ] **0.2 Next.js app.**
+- [x] **0.2 Next.js app.**
   ```bash
   npx create-next-app@latest web --typescript --tailwind --eslint --app --src-dir --import-alias "@/*"
   cd web
@@ -83,12 +83,12 @@ Update this table as work finishes.
   npx shadcn@latest init
   ```
   Turn on `"strict": true` and `"noUncheckedIndexedAccess": true` in `tsconfig.json`.
-- [ ] **0.3 Scripts in `web/package.json`:** `dev`, `build`, `typecheck` (`tsc --noEmit`), `lint`, `test` (`vitest run`), `test:cov`, `e2e`, `seed`, `db:indexes`, `jobs`, `eval`.
-- [ ] **0.4 Folders from `ARCHITECTURE.md` §13:** `src/core/*`, `src/models`, `src/contracts`, `src/lib`, `messages/`, `scripts/`, `tests/unit`, `tests/e2e`.
-- [ ] **0.5 Environment.** `web/.env.example` with every key from `CLAUDE.md`; `src/lib/env.ts` validates them with Zod at start-up and fails with a clear message.
+- [x] **0.3 Scripts in `web/package.json`:** `dev`, `build`, `typecheck` (`tsc --noEmit`), `lint`, `test` (`vitest run`), `test:cov`, `e2e`, `seed`, `db:indexes`, `jobs`, `eval`.
+- [x] **0.4 Folders from `ARCHITECTURE.md` §13:** `src/core/*`, `src/models`, `src/contracts`, `src/lib`, `messages/`, `scripts/`, `tests/unit`, `tests/e2e`.
+- [x] **0.5 Environment.** `web/.env.example` with every key from `CLAUDE.md`; `src/lib/env.ts` validates them with Zod at start-up and fails with a clear message.
 - [ ] **0.6 Database and accounts.** Create the Atlas Free cluster and two databases, `nhaa_assess` and `nhaa_pii`. Create free accounts and keys: Groq, Google AI Studio (Gemini), Pusher (Sandbox), Hugging Face (accept the IndicConformer model terms).
 - [ ] **0.7 CI.** GitHub Actions workflow: install, type-check, lint, unit tests on every push.
-- [ ] **0.8 Python service skeleton.** `analysis-service/` with a virtual environment, FastAPI, `GET /v1/health`, `requirements.txt`, `.env.example`, `ruff` and `pytest` configured. Runs locally with `uvicorn`; no Docker needed.
+- [x] **0.8 Python service skeleton.** `analysis-service/` with a virtual environment, FastAPI, `GET /v1/health`, `requirements.txt`, `.env.example`, `ruff` and `pytest` configured. Runs locally with `uvicorn`; no Docker needed.
 
 **Done when:** `npm run dev` shows a page; `npm run typecheck && npm run lint && npm test` pass; the health endpoint of the Python service answers; CI is green.
 
@@ -101,13 +101,13 @@ Update this table as work finishes.
 
 - [ ] **1.1 Database connection.** `src/lib/db.ts` (cached Mongoose connection, `DATABASE.md` §10.1) and `src/lib/pii-db.ts` (separate connection for `subject_identities`).
 - [ ] **1.2 Models.** Split `docs/models.ts` into `src/models/<name>.ts`, with shared enums in `src/models/enums.ts`. Bind `SubjectIdentity` to the PII connection. `scripts/sync-indexes.ts` runs `syncIndexes()` on every model. *First real check of the indexes against MongoDB: fix anything it rejects and update `DATABASE.md`.*
-- [ ] **1.3 Field encryption.** `src/core/privacy/crypto.ts`: `encrypt()` / `decrypt()` with AES-256-GCM, key IDs and rotation (`DATABASE.md` §8.1). Unit tests: round trip, wrong key fails, tampered text fails, old key still decrypts.
-- [ ] **1.4 PII redaction.** `src/core/privacy/redact.ts`: phone numbers, emails, 12-digit ID numbers, PIN codes, and names/addresses supplied from context → `[PHONE]`, `[NAME]`, … Unit tests with Hindi, Hinglish and English samples. (NFR-SEC-05, AC-SEC-02)
-- [ ] **1.5 Audit log.** `src/core/audit/record.ts` with the hash chain and retry on fork (`DATABASE.md` §9); `verifyChain()`. Tests: chain verifies; editing an entry breaks verification. (FR-AUD-01…03)
+- [x] **1.3 Field encryption.** `src/core/privacy/crypto.ts`: `encrypt()` / `decrypt()` with AES-256-GCM, key IDs and rotation (`DATABASE.md` §8.1). Unit tests: round trip, wrong key fails, tampered text fails, old key still decrypts.
+- [x] **1.4 PII redaction.** `src/core/privacy/redact.ts`: phone numbers, emails, 12-digit ID numbers, PIN codes, and names/addresses supplied from context → `[PHONE]`, `[NAME]`, … Unit tests with Hindi, Hinglish and English samples. (NFR-SEC-05, AC-SEC-02)
+- [x] **1.5 Audit log.** `src/core/audit/record.ts` with the hash chain and retry on fork (`DATABASE.md` §9); `verifyChain()`. Tests: chain verifies; editing an entry breaks verification. (FR-AUD-01…03)
 - [ ] **1.6 Staff authentication.** Auth.js v5 credentials provider with bcrypt; TOTP step with `otplib` for supervisor, state, ministry, admin and auditor roles; 15-minute idle timeout; `/login` page. (NFR-SEC-02/03)
-- [ ] **1.7 Policies.** `src/core/policies/rbac.ts`: one `can(user, action, resource)` function built from the matrix in `API_CONTRACTS.md` §4, including district and state scoping. `serializers.ts`: per-role output shapes. Table-driven unit tests covering every cell of the matrix. (NFR-PRI-02)
-- [ ] **1.8 Route helper.** `src/lib/route.ts`: wraps a handler with authentication, policy check, Zod validation, problem+json errors and request IDs, so every endpoint follows the same steps.
-- [ ] **1.9 Rate limiting and security headers.** `src/lib/ratelimit.ts` with MongoDB fixed-window counters (TTL-indexed); CSP, HSTS and frame headers in `next.config`. (NFR-SEC-04)
+- [x] **1.7 Policies.** `src/core/policies/rbac.ts`: one `can(user, action, resource)` function built from the matrix in `API_CONTRACTS.md` §4, including district and state scoping. `serializers.ts`: per-role output shapes. Table-driven unit tests covering every cell of the matrix. (NFR-PRI-02)
+- [x] **1.8 Route helper.** `src/lib/route.ts`: wraps a handler with authentication, policy check, Zod validation, problem+json errors and request IDs, so every endpoint follows the same steps.
+- [x] **1.9 Rate limiting and security headers.** `src/lib/ratelimit.ts` with MongoDB fixed-window counters (TTL-indexed); CSP, HSTS and frame headers in `next.config`. (NFR-SEC-04)
 - [ ] **1.10 Seed script.** `scripts/seed.ts`: a few states and districts; one user per role; scoring config v1 from `REQUIREMENTS.md` Appendices A–C; one API client.
 - [ ] **1.11 Staff shell.** Layout for `(staff)` with a sidebar that changes per role and an empty home page for each role. `GET /api/v1/staff/me`, `PATCH /me/duty`, `GET /health`.
 
