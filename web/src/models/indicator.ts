@@ -23,6 +23,10 @@ const IndicatorSchema = new Schema(
       contextField: String, // CONTEXT_FIELD
     },
     negated: { type: Boolean, default: false }, // FR-NLP-08: kept for audit, not scored
+    // Added in task 3.5 (not yet in DATABASE.md): override facts this signal carries
+    // (e.g. ACCUSED_PRESENT → OV-2) and a short staff-facing label. Never victim text.
+    flags: { type: [String], default: [] },
+    label: String,
     modelVersion: { type: String, required: true },
 
     status: { type: String, enum: INDICATOR_STATUSES, default: "ACTIVE" },
