@@ -9,7 +9,7 @@ import { explain } from "./explain";
 import { effective, fuseDimensions } from "./fuse";
 import { applyOverrides, flagsFrom } from "./overrides";
 import { computeSvi } from "./svi";
-import type { AssessmentDraft, Dimension, DimensionResult, IndicatorInput, RiskBand, ScoringConfig } from "./types";
+import type { AssessmentDraft, Dimension, DimensionResult, IndicatorInput, OverrideFlag, RiskBand, ScoringConfig } from "./types";
 
 export interface AssessInput {
   indicators: readonly IndicatorInput[];
@@ -18,6 +18,12 @@ export interface AssessInput {
   lockedBand?: RiskBand | null;
   /** true when the AI service was unavailable (NFR-REL-01) */
   limitedConfidence?: boolean;
+  /**
+   * Override flags to use instead of those on the indicators. Set after a human
+   * band override, so only evidence newer than that decision can raise the band
+   * again (FR-RISK-03). Indicator scores are unaffected.
+   */
+  flags?: ReadonlySet<OverrideFlag>;
 }
 
 const TOP_EVIDENCE = 3;
@@ -29,7 +35,7 @@ export function assess(input: AssessInput): AssessmentDraft {
   const computedBand = assignBand(svi, config.bandThresholds);
   const { band, fired, lockedBand } = applyOverrides(
     computedBand,
-    flagsFrom(indicators),
+    input.flags ?? flagsFrom(indicators),
     config.safetyOverrides,
     input.lockedBand ?? null,
   );

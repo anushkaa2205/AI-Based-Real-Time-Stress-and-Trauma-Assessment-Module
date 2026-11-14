@@ -87,6 +87,9 @@ const InteractionSchema = new Schema(
     mode: { type: String, enum: ASSESSMENT_MODES, default: "SAFETY_ONLY" },
     uiLanguage: { type: String, required: true }, // BCP-47: "hi", "en", "mr", …
     detectedLanguages: { type: [String], default: [] },
+    // Added in Phase 5 (not yet in DATABASE.md): facts found in earlier messages that drive
+    // recommendations, e.g. COMPLAINT_NOT_REGISTERED → legal aid. Codes only, never text.
+    caseFacts: { type: [String], default: [] },
     districtId: { type: ObjectId, ref: "District" },
     operatorId: { type: ObjectId, ref: "User" },
     apiClientId: { type: ObjectId, ref: "ApiClient" },
