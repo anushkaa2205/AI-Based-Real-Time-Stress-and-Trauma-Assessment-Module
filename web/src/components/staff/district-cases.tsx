@@ -1,0 +1,75 @@
+"use client";
+
+/**
+ * High and Critical cases in the officer's district (task 6.6, FR-DSH-03).
+ * Band and SVI only: the API sends the reduced shape (no reason, no evidence, no transcript).
+ */
+import { useCallback, useEffect, useState } from "react";
+import { useRealtime } from "@/components/realtime/realtime-provider";
+import { BandBadge, waitingFor } from "./band-badge";
+
+interface Row {
+  id: string;
+  docketNumber: string;
+  band: string | null;
+  svi: number | null;
+  status: string;
+  waitingSince: string;
+  openAlert: { level: string; escalationLevel: number } | null;
+}
+
+const POLL_MS = 15_000;
+
+export function DistrictCases({ channels }: { channels: string[] }) {
+  const [rows, setRows] = useState<Row[] | null>(null);
+  const [now, setNow] = useState(() => Date.now());
+
+  const load = useCallback(async () => {
+    const res = await fetch("/api/v1/staff/cases?band=HIGH,CRITICAL&status=NEW,UNDER_REVIEW,ACTION_TAKEN,FOLLOW_UP_SCHEDULED", { cache: "no-store" }).catch(() => null);
+    if (res?.ok) setRows(((await res.json()) as { items: Row[] }).items);
+    setNow(Date.now());
+  }, []);
+
+  useEffect(() => {
+    const first = setTimeout(load, 0);
+    const timer = setInterval(load, POLL_MS);
+    return () => {
+      clearTimeout(first);
+      clearInterval(timer);
+    };
+  }, [load]);
+  useRealtime(channels, (env) => {
+    if (env.event.startsWith("case.") || env.event === "assessment.updated") void load();
+  });
+
+  if (rows === null) return <p className="text-muted-foreground">Loading…</p>;
+  if (rows.length === 0) return <p className="text-muted-foreground">No High or Critical cases open in your district.</p>;
+  return (
+    <table className="w-full text-left text-sm" data-testid="district-cases">
+      <thead className="bg-muted">
+        <tr>
+          <th className="p-2">Band</th>
+          <th className="p-2">SVI</th>
+          <th className="p-2">Docket</th>
+          <th className="p-2">Status</th>
+          <th className="p-2">Waiting</th>
+          <th className="p-2">Alert</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((r) => (
+          <tr key={r.id} className="border-t border-border" data-testid="district-case-row">
+            <td className="p-2">
+              <BandBadge band={r.band} />
+            </td>
+            <td className="p-2 font-mono">{r.svi ?? "–"}</td>
+            <td className="p-2 font-mono">{r.docketNumber}</td>
+            <td className="p-2">{r.status.replace(/_/g, " ").toLowerCase()}</td>
+            <td className="p-2">{waitingFor(r.waitingSince, now)}</td>
+            <td className="p-2 text-xs">{r.openAlert ? `${r.openAlert.level.toLowerCase()}${r.openAlert.escalationLevel ? `, escalated (level ${r.openAlert.escalationLevel})` : ""}` : "–"}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
+}

@@ -15,6 +15,7 @@ export interface StaffPage {
 export const STAFF_PAGES = {
   operator: { href: "/operator", label: "Operator console", roles: ["OPERATOR", "NHAA_SUPERVISOR"] },
   counsellor: { href: "/counsellor", label: "Case queue", roles: ["COUNSELLOR", "NHAA_SUPERVISOR"] },
+  approvals: { href: "/approvals", label: "Approvals", roles: ["COUNSELLOR", "NHAA_SUPERVISOR"] },
   district: { href: "/district", label: "District dashboard", roles: ["DISTRICT_OFFICER"] },
   police: { href: "/police", label: "Action requests", roles: ["POLICE_LIAISON"] },
   welfare: { href: "/welfare", label: "Referrals", roles: ["WELFARE_OFFICER"] },

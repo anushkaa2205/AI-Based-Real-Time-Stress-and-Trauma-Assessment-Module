@@ -8,6 +8,7 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { useRealtime } from "@/components/realtime/realtime-provider";
 import { BandBadge } from "./band-badge";
+import { RecommendationActions } from "./recommendation-actions";
 
 type Json = Record<string, unknown>;
 interface Dim {
@@ -53,6 +54,13 @@ interface Msg {
   emotion: { label: string; confidence: number } | null;
   createdAt: string;
 }
+interface FollowUp {
+  id: string;
+  dueAt: string;
+  channel: string;
+  status: string;
+  assignedTo: { name: string } | null;
+}
 interface CaseDetail {
   id: string;
   docketNumber: string;
@@ -67,7 +75,17 @@ interface CaseDetail {
   interactions: { id: string; channel: string; startedAt: string; endedAt: string | null; status: string }[];
   latestAssessment: Assessment | null;
   screenerScores?: { instrument: string; total: number; maxTotal: number; isPositive: boolean }[];
-  recommendations: { id: string; type: string; reason: string; urgency: string; status: string; responsibleRole: string; legalBasis?: string }[];
+  recommendations: {
+    id: string;
+    type: string;
+    reason: string;
+    urgency: string;
+    status: string;
+    responsibleRole: string;
+    legalBasis?: string;
+    decision?: { by: { name: string }; at: string; reason?: string };
+    referralId?: string;
+  }[];
   openAlerts: { id: string; level: string; createdAt: string }[];
   bandOverrides: { fromBand: string; toBand: string; reason: string; by: { name: string } | null; at: string }[];
   assignedTo: { id: string; name: string } | null;
@@ -136,6 +154,7 @@ export function CaseDetailView({ caseId }: { caseId: string }) {
   const [messages, setMessages] = useState<Msg[]>([]);
   const [noShare, setNoShare] = useState(false);
   const [notes, setNotes] = useState<{ id: string; body: string; author: { name: string } | null; createdAt: string }[]>([]);
+  const [followUps, setFollowUps] = useState<FollowUp[]>([]);
   const [msg, setMsg] = useState<string | null>(null);
   const [review, setReview] = useState<{ id: string; action: string } | null>(null);
 
@@ -151,11 +170,12 @@ export function CaseDetailView({ caseId }: { caseId: string }) {
     }
     // Everything is set together after all requests finish, so no section shows "empty" while loading.
     const iids = r.data.interactions.map((i) => i.id);
-    const [tl, ind, tr, nt] = await Promise.all([
+    const [tl, ind, tr, nt, fu] = await Promise.all([
       Promise.all(iids.map((i) => getJson<{ items: Assessment[] }>(`/api/v1/staff/interactions/${i}/assessments`))),
       Promise.all(iids.map((i) => getJson<{ items: Indicator[] }>(`/api/v1/staff/interactions/${i}/indicators`))),
       Promise.all(iids.map((i) => getJson<{ items: Msg[] }>(`/api/v1/staff/interactions/${i}/transcript`))),
       getJson<{ items: typeof notes }>(`/api/v1/staff/cases/${caseId}/notes`),
+      getJson<{ items: FollowUp[] }>(`/api/v1/staff/follow-ups?caseId=${caseId}&status=SCHEDULED`),
     ]);
     setC(r.data);
     setTimeline(tl.flatMap((x) => x.data?.items ?? []));
@@ -163,6 +183,7 @@ export function CaseDetailView({ caseId }: { caseId: string }) {
     setMessages(tr.flatMap((x) => x.data?.items ?? []));
     setNoShare(tr.some((x) => x.status === 403));
     setNotes(nt.data?.items ?? []);
+    setFollowUps(fu.data?.items ?? []);
   }, [caseId]);
 
   useEffect(() => {
@@ -214,6 +235,24 @@ export function CaseDetailView({ caseId }: { caseId: string }) {
     const r = await send("POST", `/api/v1/staff/cases/${caseId}/notes`, { body: String(new FormData(form).get("body") ?? "") });
     if (r.ok) form.reset();
     else setMsg("Could not save the note.");
+    void load();
+  }
+
+  async function scheduleFollowUp(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const f = new FormData(form);
+    const local = String(f.get("dueAt") ?? "");
+    if (!local) return setMsg("Pick a date and time for the follow-up.");
+    const r = await send("POST", `/api/v1/staff/cases/${caseId}/follow-ups`, { dueAt: new Date(local).toISOString(), channel: f.get("channel") });
+    setMsg(r.ok ? "Follow-up scheduled." : String(r.data.detail ?? r.data.title ?? "Could not schedule"));
+    if (r.ok) form.reset();
+    void load();
+  }
+
+  async function finishFollowUp(id: string, status: "DONE" | "CANCELLED") {
+    const r = await send("PATCH", `/api/v1/staff/follow-ups/${id}`, { status });
+    setMsg(r.ok ? "Follow-up updated." : String(r.data.detail ?? r.data.title ?? "Update failed"));
     void load();
   }
 
@@ -381,14 +420,23 @@ export function CaseDetailView({ caseId }: { caseId: string }) {
           {c.recommendations.length === 0 && <p className="text-muted-foreground">None.</p>}
           <ul className="flex flex-col gap-1">
             {c.recommendations.map((r) => (
-              <li key={r.id}>
-                <strong>{r.type.replace(/_/g, " ").toLowerCase()}</strong> · {r.urgency.replace(/_/g, " ").toLowerCase()} · {r.status.toLowerCase()} ·{" "}
-                {r.responsibleRole.replace(/_/g, " ").toLowerCase()}
-                <span className="block text-xs text-muted-foreground">{r.reason}</span>
+              <li key={r.id} className="flex flex-col gap-1 border-b border-border pb-2 last:border-0">
+                <span>
+                  <strong>{r.type.replace(/_/g, " ").toLowerCase()}</strong> · {r.urgency.replace(/_/g, " ").toLowerCase()} · {r.status.toLowerCase()} ·{" "}
+                  {r.responsibleRole.replace(/_/g, " ").toLowerCase()}
+                </span>
+                <span className="text-xs text-muted-foreground">{r.reason}</span>
+                {r.legalBasis && <span className="text-xs text-muted-foreground">Basis: {r.legalBasis}</span>}
+                <RecommendationActions
+                  rec={r}
+                  onDone={(m) => {
+                    setMsg(m);
+                    void load();
+                  }}
+                />
               </li>
             ))}
           </ul>
-          <p className="text-xs text-muted-foreground">Approval and referrals arrive in Phase 6.</p>
         </div>
       </section>
 
@@ -422,6 +470,39 @@ export function CaseDetailView({ caseId }: { caseId: string }) {
               </button>
             ))}
           </div>
+          <form onSubmit={scheduleFollowUp} className="flex flex-wrap items-center gap-2" data-testid="followup-form">
+            <label htmlFor="fu-due" className="text-xs">
+              Follow-up
+            </label>
+            <input id="fu-due" name="dueAt" type="datetime-local" className="rounded border border-border p-1" />
+            <select name="channel" defaultValue="VOICE_CALL" aria-label="Follow-up channel" className="rounded border border-border p-1">
+              {["VOICE_CALL", "CHATBOT", "PORTAL", "MOBILE_APP"].map((ch) => (
+                <option key={ch} value={ch}>
+                  {ch.replace(/_/g, " ").toLowerCase()}
+                </option>
+              ))}
+            </select>
+            <button type="submit" className="rounded border border-border px-2">
+              Schedule
+            </button>
+          </form>
+          {followUps.length > 0 && (
+            <ul className="flex flex-col gap-1 text-xs" data-testid="followups">
+              {followUps.map((f) => (
+                <li key={f.id} className="flex flex-wrap items-center gap-2">
+                  <span>
+                    {new Date(f.dueAt).toLocaleString()} · {f.channel.replace(/_/g, " ").toLowerCase()} · {f.assignedTo?.name ?? "unassigned"}
+                  </span>
+                  <button type="button" className="underline" onClick={() => finishFollowUp(f.id, "DONE")}>
+                    Done
+                  </button>
+                  <button type="button" className="underline" onClick={() => finishFollowUp(f.id, "CANCELLED")}>
+                    Cancel
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
           <form onSubmit={addNote} className="flex gap-2">
             <input name="body" required placeholder="Add a note" className="flex-1 rounded border border-border p-1" />
             <button type="submit" className="rounded bg-primary px-3 text-primary-foreground">
