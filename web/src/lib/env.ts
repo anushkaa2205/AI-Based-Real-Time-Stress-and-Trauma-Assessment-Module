@@ -37,6 +37,8 @@ const secret = z.string().min(16, "must be at least 16 characters");
 const EnvSchema = z
   .object({
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+    /** Set to "1" by Vercel */
+    VERCEL: z.string().optional(),
     MONGODB_URI: z.string().regex(/^mongodb(\+srv)?:\/\//, "must be a mongodb:// or mongodb+srv:// URI"),
     MONGODB_PII_URI: z.string().regex(/^mongodb(\+srv)?:\/\//, "must be a mongodb:// or mongodb+srv:// URI"),
     ENCRYPTION_KEYS: encryptionKeys,
@@ -60,8 +62,9 @@ const EnvSchema = z
         if (!env[k]) ctx.addIssue({ code: "custom", path: [k], message: "required when REALTIME_DRIVER=pusher" });
       }
     }
-    if (env.NODE_ENV === "production" && env.REALTIME_DRIVER === "sse") {
-      ctx.addIssue({ code: "custom", path: ["REALTIME_DRIVER"], message: "sse is for local development only" });
+    // SSE cannot work on serverless hosting (ADR-6); it is fine for a local production build.
+    if (env.VERCEL === "1" && env.REALTIME_DRIVER === "sse") {
+      ctx.addIssue({ code: "custom", path: ["REALTIME_DRIVER"], message: "sse is for local use only; use pusher on Vercel" });
     }
   });
 
