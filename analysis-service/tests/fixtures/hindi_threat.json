@@ -1,0 +1,48 @@
+{
+  "language": { "code": "hi", "confidence": 0.97 },
+  "translation_en": "Those people are standing outside the house, saying withdraw the case",
+  "indicators": [
+    {
+      "dimension": "INTIMIDATION",
+      "score": 0.95,
+      "confidence": 0.9,
+      "quote": "घर के बाहर खड़े हैं",
+      "negated": false,
+      "flags": ["ACCUSED_PRESENT"],
+      "rationale": "Accused reported outside the home now"
+    },
+    {
+      "dimension": "INTIMIDATION",
+      "score": 0.9,
+      "confidence": 0.85,
+      "quote": "केस वापस लो",
+      "negated": false,
+      "flags": ["PRESSURE_TO_WITHDRAW"],
+      "rationale": "Pressure to withdraw the complaint"
+    },
+    {
+      "dimension": "FEAR_ANXIETY",
+      "score": 0.7,
+      "confidence": 0.7,
+      "quote": "They are standing outside",
+      "negated": false,
+      "flags": [],
+      "rationale": "Quote taken from the translation, must be dropped"
+    },
+    {
+      "dimension": "NOT_A_DIMENSION",
+      "score": 0.5,
+      "confidence": 0.5,
+      "quote": "केस",
+      "negated": false,
+      "flags": [],
+      "rationale": "Unknown dimension, must be dropped"
+    }
+  ],
+  "immediate_danger": { "detected": true, "confidence": 0.85, "quote": "घर के बाहर खड़े हैं" },
+  "emotion": {
+    "label": "fear",
+    "confidence": 0.81,
+    "distribution": { "fear": 0.81, "sadness": 0.07, "anger": 0.08, "shame": 0.0, "shock_numbness": 0.0, "neutral": 0.04 }
+  }
+}

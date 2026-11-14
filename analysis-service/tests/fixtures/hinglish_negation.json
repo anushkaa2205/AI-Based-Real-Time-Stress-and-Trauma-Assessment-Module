@@ -1,0 +1,30 @@
+{
+  "language": { "code": "hi-Latn", "confidence": 0.9 },
+  "translation_en": "I will never hurt myself, I am just scared",
+  "indicators": [
+    {
+      "dimension": "SUICIDAL_IDEATION",
+      "score": 0.6,
+      "confidence": 0.8,
+      "quote": "khud ko nuksaan",
+      "negated": true,
+      "flags": [],
+      "rationale": "Denies self-harm"
+    },
+    {
+      "dimension": "FEAR_ANXIETY",
+      "score": 1.7,
+      "confidence": 0.6,
+      "quote": "Dar Lagta Hai",
+      "negated": false,
+      "flags": ["NOT_A_FLAG"],
+      "rationale": "Expresses fear; score out of range on purpose"
+    }
+  ],
+  "immediate_danger": { "detected": false, "confidence": 0.1, "quote": "" },
+  "emotion": {
+    "label": "fear",
+    "confidence": 0.6,
+    "distribution": { "fear": 0.6, "sadness": 0.2, "anger": 0.0, "shame": 0.0, "shock_numbness": 0.0, "neutral": 0.2 }
+  }
+}

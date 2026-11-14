@@ -54,3 +54,6 @@ desktop.ini
 !.vscode/extensions.json
 !.vscode/settings.json
 *.swp
+
+# Analysis service model-answer cache (task 4.5)
+analysis-service/.cache/
