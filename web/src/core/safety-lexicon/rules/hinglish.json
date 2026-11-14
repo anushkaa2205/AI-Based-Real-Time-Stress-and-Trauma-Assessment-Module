@@ -1,0 +1,179 @@
+{
+  "id": "hinglish",
+  "version": "hinglish-1.0",
+  "negation": {
+    "cues": ["nahi", "nahin", "nhi", "nai", "mat", "never", "not"],
+    "before": 3,
+    "after": 2
+  },
+  "clauseBreaks": ["lekin", "magar", "par", "aur", "kyunki", "kyuki", "isliye", "but", "and", "phir"],
+  "rules": [
+    {
+      "id": "HL-SI-INTENT-1",
+      "label": "Intent to end life (aaj jaan de dungi / suicide kar lungi)",
+      "dimension": "SUICIDAL_IDEATION",
+      "score": 0.95,
+      "confidence": 0.85,
+      "flags": ["SUICIDAL_INTENT"],
+      "patterns": [
+        "(?:aaj|abhi|aaj raat) (?:hi )?(?:mar (?:jaun|jaaun|jaungi|jaaungi|jaunga|jaaunga)|jaan de (?:dungi|dunga|doongi|doonga))",
+        "jaan de (?:dungi|dunga|doongi|doonga)",
+        "(?:suicide|khudkushi|khud ?kushi) kar (?:lungi|lunga|loongi|loonga)",
+        "khud ko khatam kar (?:lungi|lunga|dungi|dunga)",
+        "(?:zeher|zehar|jahar|zahar|fansi|phansi|faansi) (?:kha|laga) (?:lungi|lunga|loongi|loonga)"
+      ]
+    },
+    {
+      "id": "HL-SI-EXPLICIT-1",
+      "label": "Wants to die (marna chahti hoon)",
+      "dimension": "SUICIDAL_IDEATION",
+      "score": 0.9,
+      "confidence": 0.8,
+      "flags": ["PASSIVE_SUICIDAL_IDEATION"],
+      "patterns": [
+        "(?:marna|mar jaana|mar jana|marne ka man) (?:chahti|chahta|chahte|karta|karti|hai)",
+        "mar (?:jaun|jaaun|jau)",
+        "khudkushi|khud ?kushi"
+      ]
+    },
+    {
+      "id": "HL-SI-INDIRECT-1",
+      "label": "No wish to live / better without me",
+      "dimension": "SUICIDAL_IDEATION",
+      "score": 0.75,
+      "confidence": 0.7,
+      "flags": ["PASSIVE_SUICIDAL_IDEATION"],
+      "patterns": [
+        "(?:jeena|jina) (?:nahi|nahin|nhi) (?:chahti|chahta|chahte|hai)",
+        "(?:jeene|jine) (?:ka|ki) (?:koi )?(?:man|mann|ichha|iccha) (?:nahi|nahin|nhi)",
+        "(?:jeene|jine) ka koi (?:matlab|fayda|faida) (?:nahi|nahin|nhi)",
+        "mere (?:bina|bagair) (?:sab|ghar ?wale|family|bachche)[^.!?]{0,20}?(?:khush|acche|achhe|better)"
+      ]
+    },
+    {
+      "id": "HL-SELFHARM-1",
+      "label": "Self-harm (khud ko nuksaan)",
+      "dimension": "SUICIDAL_IDEATION",
+      "score": 0.8,
+      "confidence": 0.7,
+      "flags": ["PASSIVE_SUICIDAL_IDEATION"],
+      "patterns": ["khud ko (?:kabhi )?(?:hurt|nuksaan|nuksan|nuqsan|chot)"]
+    },
+    {
+      "id": "HL-DANGER-PRESENT-1",
+      "label": "Accused outside the house now",
+      "dimension": "INTIMIDATION",
+      "score": 0.95,
+      "confidence": 0.8,
+      "flags": ["ACCUSED_PRESENT"],
+      "patterns": [
+        "ghar ke (?:bahar|baahar|saamne|samne) (?:khade|khadey|baithe|ghoom)",
+        "(?:wo|woh|ve) (?:log )?(?:abhi )?(?:yaha|yahan|idhar) (?:hai|hain|aa gaye|aa gye)"
+      ]
+    },
+    {
+      "id": "HL-DANGER-CONFINED-1",
+      "label": "Locked in / not allowed out",
+      "dimension": "INTIMIDATION",
+      "score": 0.9,
+      "confidence": 0.8,
+      "flags": ["CONFINED"],
+      "patterns": ["(?:kamre|ghar) (?:me|mein|main) band kar", "bahar (?:jaane|jane|nikalne) (?:nahi|nahin|nhi) de"]
+    },
+    {
+      "id": "HL-DANGER-INJURY-1",
+      "label": "Current injury",
+      "dimension": "SEVERE_TRAUMA",
+      "score": 0.85,
+      "confidence": 0.75,
+      "flags": ["SERIOUS_INJURY"],
+      "patterns": [
+        "khoon (?:beh|bah|nikal) (?:raha|rahi)",
+        "(?:haath|hath|pair|haddi) toot (?:gaya|gayi|gyi|gya)",
+        "(?:hospital|doctor|ambulance) (?:ki )?(?:turant )?(?:zarurat|zaroorat|jarurat|chahiye)"
+      ]
+    },
+    {
+      "id": "HL-THREAT-LIFE-1",
+      "label": "Threat to life (jaan se maar denge)",
+      "dimension": "INTIMIDATION",
+      "score": 0.9,
+      "confidence": 0.8,
+      "flags": ["THREAT_TO_LIFE"],
+      "patterns": ["jaan se maar (?:denge|dalenge|daalenge|dunga|dene)", "maar (?:dalenge|daalenge)", "jaan ki dhamki"]
+    },
+    {
+      "id": "HL-THREAT-1",
+      "label": "Threats (dhamki)",
+      "dimension": "INTIMIDATION",
+      "score": 0.75,
+      "confidence": 0.7,
+      "patterns": ["dhamki", "dhamka(?:ya|te|ti|rahe|rahi|kar)"]
+    },
+    {
+      "id": "HL-PRESSURE-1",
+      "label": "Pressure to withdraw the case (case wapas lo)",
+      "dimension": "INTIMIDATION",
+      "score": 0.85,
+      "confidence": 0.8,
+      "flags": ["PRESSURE_TO_WITHDRAW"],
+      "patterns": [
+        "(?:case|complaint|fir|shikayat|mukadma) (?:wapas|wapis|vapas) (?:le|lo|lene|le lo)",
+        "samjhauta (?:kar|karne|karo)",
+        "(?:bayan|bayaan|gawahi|gavahi) (?:badal|badlo|badalne)"
+      ]
+    },
+    {
+      "id": "HL-ISOLATION-BOYCOTT-1",
+      "label": "Social boycott (bahishkar)",
+      "dimension": "SOCIAL_ISOLATION",
+      "score": 0.8,
+      "confidence": 0.75,
+      "patterns": ["bahishkar|bahiskar", "hukka paani band", "paani (?:bharne|lene) (?:nahi|nahin|nhi) de"]
+    },
+    {
+      "id": "HL-ISOLATION-DISPLACED-1",
+      "label": "Forced out of village (gaon se nikal diya)",
+      "dimension": "SOCIAL_ISOLATION",
+      "score": 0.85,
+      "confidence": 0.75,
+      "flags": ["DISPLACED"],
+      "patterns": ["(?:gaon|gaanv|gav|ghar) se (?:nikal|bahar kar)"]
+    },
+    {
+      "id": "HL-ISOLATION-ALONE-1",
+      "label": "Nobody to turn to (koi saath nahi)",
+      "dimension": "SOCIAL_ISOLATION",
+      "score": 0.7,
+      "confidence": 0.65,
+      "patterns": ["koi (?:saath|sath|madad) (?:nahi|nahin|nhi) (?:hai|deta|karta|kar raha)", "akel(?:i|a) (?:hu|hoon|hun|ho gayi|ho gaya|pad gayi|pad gaya)"]
+    },
+    {
+      "id": "HL-FACT-NOT-REGISTERED-1",
+      "label": "Complaint not registered",
+      "fact": "COMPLAINT_NOT_REGISTERED",
+      "patterns": [
+        "(?:fir|report|complaint|shikayat) (?:darj )?(?:nahi|nahin|nhi) (?:likhi|li|hui|kiya|ki)",
+        "police ne (?:fir|complaint|report|shikayat) (?:nahi|nahin|nhi|lene se mana)"
+      ]
+    },
+    {
+      "id": "HL-FACT-RIGHTS-1",
+      "label": "Unsure what to do",
+      "fact": "RIGHTS_CONFUSION",
+      "patterns": ["(?:kya karu|kya karun|kahan jaun|kaha jau)[^.!?]{0,12}?(?:samajh|pata) (?:nahi|nahin|nhi)"]
+    },
+    {
+      "id": "HL-FACT-LONG-CASE-1",
+      "label": "Long-running case",
+      "fact": "LONG_RUNNING_CASE",
+      "patterns": ["(?:saalon|kai saal|\\d+ saal) se (?:case|mukadma)"]
+    },
+    {
+      "id": "HL-FACT-WITNESS-1",
+      "label": "Witness under threat",
+      "fact": "WITNESS_UNDER_THREAT",
+      "patterns": ["gawah(?:on)? ko (?:dhamki|dhamka|maara|mara|dara)"]
+    }
+  ]
+}

@@ -1,0 +1,179 @@
+{
+  "id": "hi",
+  "version": "hi-1.0",
+  "negation": {
+    "cues": ["नहीं", "नही", "मत", "न"],
+    "before": 3,
+    "after": 2
+  },
+  "clauseBreaks": ["लेकिन", "मगर", "और", "क्योंकि", "इसलिए", "फिर"],
+  "rules": [
+    {
+      "id": "HI-SI-INTENT-1",
+      "label": "आज/अभी जान देने का इरादा (intent to end life)",
+      "dimension": "SUICIDAL_IDEATION",
+      "score": 0.95,
+      "confidence": 0.85,
+      "flags": ["SUICIDAL_INTENT"],
+      "patterns": [
+        "(?:आज|अभी|आज रात)\\s+(?:ही\\s+)?(?:मर\\s+जाऊँगी|मर\\s+जाऊंगी|मर\\s+जाऊँगा|मर\\s+जाऊंगा|जान\\s+दे\\s+दूँगी|जान\\s+दे\\s+दूंगी|जान\\s+दे\\s+दूँगा|जान\\s+दे\\s+दूंगा)",
+        "जान\\s+दे\\s+(?:दूँगी|दूंगी|दूँगा|दूंगा)",
+        "(?:आत्महत्या|खुदकुशी|ख़ुदकुशी)\\s+कर\\s+(?:लूँगी|लूंगी|लूँगा|लूंगा)",
+        "खुद\\s+को\\s+(?:खत्म|ख़त्म)\\s+कर\\s+(?:लूँगी|लूंगी|लूँगा|लूंगा|दूँगी|दूंगी|दूँगा|दूंगा)",
+        "(?:ज़हर|जहर|फांसी|फाँसी)\\s+(?:खा|लगा)\\s+(?:लूँगी|लूंगी|लूँगा|लूंगा)"
+      ]
+    },
+    {
+      "id": "HI-SI-EXPLICIT-1",
+      "label": "मरने की इच्छा (wants to die)",
+      "dimension": "SUICIDAL_IDEATION",
+      "score": 0.9,
+      "confidence": 0.8,
+      "flags": ["PASSIVE_SUICIDAL_IDEATION"],
+      "patterns": [
+        "(?:मरना|मर\\s+जाना)\\s+चाह(?:ती|ता|ते)",
+        "मर\\s+(?:जाऊँ|जाऊं)",
+        "(?:आत्महत्या|खुदकुशी|ख़ुदकुशी)"
+      ]
+    },
+    {
+      "id": "HI-SI-INDIRECT-1",
+      "label": "जीने का मन नहीं / मेरे बिना सब ठीक (indirect)",
+      "dimension": "SUICIDAL_IDEATION",
+      "score": 0.75,
+      "confidence": 0.7,
+      "flags": ["PASSIVE_SUICIDAL_IDEATION"],
+      "patterns": [
+        "जीना\\s+नहीं\\s+(?:चाहती|चाहता|है)",
+        "जीने\\s+(?:का|की)\\s+(?:कोई\\s+)?(?:मन|इच्छा)\\s+नहीं",
+        "जीने\\s+का\\s+कोई\\s+(?:मतलब|फ़ायदा|फायदा)\\s+नहीं",
+        "मेरे\\s+(?:बिना|बगैर)\\s+(?:सब|परिवार|घरवाले|बच्चे)[^.।!?]{0,20}?(?:खुश|अच्छे|बेहतर)"
+      ]
+    },
+    {
+      "id": "HI-SELFHARM-1",
+      "label": "खुद को नुकसान (self-harm)",
+      "dimension": "SUICIDAL_IDEATION",
+      "score": 0.8,
+      "confidence": 0.7,
+      "flags": ["PASSIVE_SUICIDAL_IDEATION"],
+      "patterns": ["खुद\\s+को\\s+(?:कभी\\s+)?(?:नुकसान|नुक़सान|चोट)"]
+    },
+    {
+      "id": "HI-DANGER-PRESENT-1",
+      "label": "आरोपी अभी घर के बाहर/पास (accused nearby now)",
+      "dimension": "INTIMIDATION",
+      "score": 0.95,
+      "confidence": 0.8,
+      "flags": ["ACCUSED_PRESENT"],
+      "patterns": [
+        "(?:घर|दरवाज़े|दरवाजे)\\s+के\\s+(?:बाहर|सामने)\\s+(?:खड़े|खडे|बैठे|घूम)",
+        "(?:वो|वे|वह)\\s+(?:लोग\\s+)?(?:अभी\\s+)?(?:यहाँ|यहां)\\s+(?:हैं|है|आ\\s+गए|आ\\s+गये)"
+      ]
+    },
+    {
+      "id": "HI-DANGER-CONFINED-1",
+      "label": "बंद करके रखा / बाहर जाने नहीं दे रहे (confined)",
+      "dimension": "INTIMIDATION",
+      "score": 0.9,
+      "confidence": 0.8,
+      "flags": ["CONFINED"],
+      "patterns": ["(?:कमरे|घर)\\s+में\\s+बंद\\s+कर", "बाहर\\s+(?:जाने|निकलने)\\s+नहीं\\s+दे"]
+    },
+    {
+      "id": "HI-DANGER-INJURY-1",
+      "label": "अभी चोट, खून बह रहा (current injury)",
+      "dimension": "SEVERE_TRAUMA",
+      "score": 0.85,
+      "confidence": 0.75,
+      "flags": ["SERIOUS_INJURY"],
+      "patterns": [
+        "खून\\s+(?:बह|निकल)\\s+(?:रहा|रही)",
+        "(?:हाथ|पैर|हड्डी)\\s+टूट\\s+(?:गया|गई|गयी)",
+        "(?:अस्पताल|डॉक्टर|डाक्टर|एम्बुलेंस)\\s+की\\s+(?:तुरंत\\s+)?(?:ज़रूरत|जरूरत)"
+      ]
+    },
+    {
+      "id": "HI-THREAT-LIFE-1",
+      "label": "जान से मारने की धमकी (threat to life)",
+      "dimension": "INTIMIDATION",
+      "score": 0.9,
+      "confidence": 0.8,
+      "flags": ["THREAT_TO_LIFE"],
+      "patterns": ["जान\\s+से\\s+मार\\s+(?:देंगे|डालेंगे|दूंगा|दूँगा|देने)", "मार\\s+(?:डालेंगे|डालने\\s+की)", "जान\\s+की\\s+धमकी"]
+    },
+    {
+      "id": "HI-THREAT-1",
+      "label": "धमकी (threats)",
+      "dimension": "INTIMIDATION",
+      "score": 0.75,
+      "confidence": 0.7,
+      "patterns": ["धमकी", "धमका(?:या|ते|ती|रहे|रही|कर)"]
+    },
+    {
+      "id": "HI-PRESSURE-1",
+      "label": "केस/शिकायत वापस लेने का दबाव (pressure to withdraw)",
+      "dimension": "INTIMIDATION",
+      "score": 0.85,
+      "confidence": 0.8,
+      "flags": ["PRESSURE_TO_WITHDRAW"],
+      "patterns": [
+        "(?:केस|शिकायत|मुकदमा|एफआईआर)\\s+वापस\\s+(?:ले|लो|लेने)",
+        "समझौता\\s+(?:कर|करने|करो)",
+        "(?:बयान|गवाही)\\s+(?:बदल|बदलने|बदलो)"
+      ]
+    },
+    {
+      "id": "HI-ISOLATION-BOYCOTT-1",
+      "label": "बहिष्कार / पानी नहीं भरने देते (boycott)",
+      "dimension": "SOCIAL_ISOLATION",
+      "score": 0.8,
+      "confidence": 0.75,
+      "patterns": ["बहिष्कार", "हुक्का[- ]पानी\\s+बंद", "पानी\\s+(?:भरने|लेने)\\s+नहीं\\s+दे"]
+    },
+    {
+      "id": "HI-ISOLATION-DISPLACED-1",
+      "label": "गाँव/घर से निकाल दिया (displaced)",
+      "dimension": "SOCIAL_ISOLATION",
+      "score": 0.85,
+      "confidence": 0.75,
+      "flags": ["DISPLACED"],
+      "patterns": ["(?:गाँव|गांव|घर)\\s+से\\s+(?:निकाल|बाहर\\s+कर)"]
+    },
+    {
+      "id": "HI-ISOLATION-ALONE-1",
+      "label": "कोई साथ नहीं (nobody to turn to)",
+      "dimension": "SOCIAL_ISOLATION",
+      "score": 0.7,
+      "confidence": 0.65,
+      "patterns": ["कोई\\s+(?:साथ|मदद)\\s+नहीं\\s+(?:है|देता|करता|कर\\s+रहा)", "अकेली\\s+(?:हूँ|हूं|पड़\\s+गई)", "अकेला\\s+(?:हूँ|हूं|पड़\\s+गया)"]
+    },
+    {
+      "id": "HI-FACT-NOT-REGISTERED-1",
+      "label": "शिकायत दर्ज नहीं हुई (complaint not registered)",
+      "fact": "COMPLAINT_NOT_REGISTERED",
+      "patterns": [
+        "(?:एफआईआर|रिपोर्ट|शिकायत)\\s+(?:दर्ज\\s+)?नहीं\\s+(?:लिखी|की|ली|हुई)",
+        "पुलिस\\s+ने\\s+(?:शिकायत|रिपोर्ट|एफआईआर)\\s+(?:नहीं|लेने\\s+से\\s+मना)"
+      ]
+    },
+    {
+      "id": "HI-FACT-RIGHTS-1",
+      "label": "क्या करें पता नहीं (unsure of rights)",
+      "fact": "RIGHTS_CONFUSION",
+      "patterns": ["(?:क्या\\s+करूँ|क्या\\s+करूं|कहाँ\\s+जाऊँ|कहां\\s+जाऊं)[^.।!?]{0,12}?(?:समझ|पता)\\s+नहीं", "अपने\\s+अधिकार\\s+(?:नहीं\\s+)?(?:पता|मालूम)"]
+    },
+    {
+      "id": "HI-FACT-LONG-CASE-1",
+      "label": "सालों से केस (long-running case)",
+      "fact": "LONG_RUNNING_CASE",
+      "patterns": ["(?:सालों|कई\\s+साल|\\d+\\s+साल)\\s+से\\s+(?:केस|मुकदमा)"]
+    },
+    {
+      "id": "HI-FACT-WITNESS-1",
+      "label": "गवाह को धमकी (witness under threat)",
+      "fact": "WITNESS_UNDER_THREAT",
+      "patterns": ["गवाह(?:ों)?\\s+को\\s+(?:धमकी|धमका|मारा|डरा)"]
+    }
+  ]
+}
