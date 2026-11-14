@@ -12,14 +12,14 @@ Update this table as work finishes.
 | 0. Project setup | M1 Walking skeleton | In progress: all done except 0.6 (Atlas done; Groq/Gemini/Pusher/HF accounts to do) |
 | 1. Foundation: data, security, staff login | M1 Walking skeleton | Done (verified on Atlas: indexes, seed, all 10 roles log in, police 403) |
 | 2. Scoring core (no AI) | M2 Text MVP | Done (2.1–2.10; coverage 98% on scoring folders) |
-| 3. Victim text flow | M2 Text MVP | Not started |
+| 3. Victim text flow | M2 Text MVP | Done (unit + Playwright on desktop and mobile; rules-only baseline 75% recorded) |
 | 4. AI text analysis | M2 Text MVP | Not started |
 | 5. Responder dashboards and live alerts | M3 Responder loop | Not started |
 | 6. Recommendations, referrals, stakeholder views | M3 Responder loop | Not started |
 | 7. Voice, operator console, IVRS | M4 Voice | Not started |
 | 8. Languages, analytics, integration API, admin | M5 Feature complete | Not started |
 | 9. Evaluation, hardening, deployment, demo | M6 Demo-ready | Not started |
-| E. Evaluation set (runs alongside phases 2–9) | all | Not started |
+| E. Evaluation set (runs alongside phases 2–9) | all | In progress: E.1–E.2 done (20 draft scenarios need a second reviewer) |
 
 ---
 
@@ -140,8 +140,8 @@ Update this table as work finishes.
 **Goal:** the labelled synthetic scenarios that every accuracy criterion depends on (AC-EVAL-01).
 **Effort:** 4–5 days in total, spread out. **Owner:** Track D with review by a second person.
 
-- [ ] **E.1 Format.** `evaluation/scenarios/<id>.json`: language, channel, context, ordered messages or screener answers, expected band, expected indicators, expected recommendations, tags (`negation`, `dialect`, `voice`). Zod schema plus a validator script.
-- [ ] **E.2 First 20 text scenarios** (5 per band; Hindi, Hinglish, English), ready by the end of Phase 2 so the lexicon can be tuned against them.
+- [x] **E.1 Format.** `evaluation/scenarios/<id>.json`: language, channel, context, ordered messages or screener answers, expected band, expected indicators, expected recommendations, tags (`negation`, `dialect`, `voice`). Zod schema plus a validator script.
+- [x] **E.2 First 20 text scenarios** (5 per band; Hindi, Hinglish, English), ready by the end of Phase 2 so the lexicon can be tuned against them.
 - [ ] **E.3 Grow to 60+**: at least 15 per band; 10+ each in Hindi, Hinglish and English; 5 per regional language; 10+ negation or tricky cases. Two people agree on each label.
 - [ ] **E.4 Voice recordings**: 15+ scripted recordings by team members (calm, hesitant with long pauses, agitated), plus reference files for pause and pitch checks (AC-VOI-01/02).
 - [ ] **E.5 Runner.** `evaluation/run_eval.ts`: runs every scenario through the pipeline and reports band accuracy, confusion matrix, recall and precision per dimension, results per language, gender and channel, and latency. Output as Markdown and JSON.
@@ -155,15 +155,15 @@ Update this table as work finishes.
 **Goal:** a victim can start a session, give consent, answer the safety check, tell their story by text and finish, with every message scored by the rules from Phase 2. No AI service yet.
 **Effort:** 5–6 days. **Depends on:** Phases 1 and 2.
 
-- [ ] **3.1 Contracts.** Zod schemas for every victim endpoint in `API_CONTRACTS.md` §3 (`src/contracts/victim.ts`).
-- [ ] **3.2 Victim session.** `POST /victim/interactions`: creates subject, case (new docket or attach to an existing one) and interaction; sets the HttpOnly session cookie; stores only the token hash. Session middleware bound to one interaction. (FR-CH-07)
-- [ ] **3.3 Consent.** `src/core/consent/`: choices → assessment mode. Endpoints `/consent`, `/consent/withdraw`, `/consent-notices/{version}`. Consent notice text and audio placeholder per language. (FR-CON-01…06)
-- [ ] **3.4 Conversation engine.** `src/core/conversation/flow.ts`: state machine (greeting → consent → safety check → optional context → open narrative → adaptive screeners → close). Prompts are i18n keys; every question skippable; resume after reload via `GET /next`. (FR-CH-01/09/10)
-- [ ] **3.5 Pipeline v1.** `src/core/pipeline/run.ts`: consent check → store message (encrypted) → lexicon → fuse → SVI → band → overrides → save assessment → update case → recommendations → alert record. One transaction; idempotency key honoured (`DATABASE.md` §6).
-- [ ] **3.6 Remaining victim endpoints.** `/messages`, `/screeners`, `/context`, `/language`, `/callback-request`, `/end`.
-- [ ] **3.7 Victim UI.** `[locale]/(victim)`: start page with language choice, consent screen with separate toggles and audio, chat screen, emergency panel (112, Tele-MANAS 14416, NHAA 14566, "call me back"), quick-exit button on every screen, closing page with the docket number. Large touch targets, simple wording.
-- [ ] **3.8 i18n.** `next-intl` with `messages/en.json` and `messages/hi.json`; script `check-i18n.ts` fails if any key is missing in any language. (AC-LANG-01 for the first two languages)
-- [ ] **3.9 Tests.** Playwright: full Hindi flow; all consent declined still files the complaint and runs the safety check; withdrawing consent stops analysis; quick exit; a safety-check "yes" to suicidal thoughts shows the emergency panel. A response-shape test asserts that no victim response contains `svi`, `band` or `dimension`.
+- [x] **3.1 Contracts.** Zod schemas for every victim endpoint in `API_CONTRACTS.md` §3 (`src/contracts/victim.ts`).
+- [x] **3.2 Victim session.** `POST /victim/interactions`: creates subject, case (new docket or attach to an existing one) and interaction; sets the HttpOnly session cookie; stores only the token hash. Session middleware bound to one interaction. (FR-CH-07)
+- [x] **3.3 Consent.** `src/core/consent/`: choices → assessment mode. Endpoints `/consent`, `/consent/withdraw`, `/consent-notices/{version}`. Consent notice text and audio placeholder per language. (FR-CON-01…06)
+- [x] **3.4 Conversation engine.** `src/core/conversation/flow.ts`: state machine (greeting → consent → safety check → optional context → open narrative → adaptive screeners → close). Prompts are i18n keys; every question skippable; resume after reload via `GET /next`. (FR-CH-01/09/10)
+- [x] **3.5 Pipeline v1.** `src/core/pipeline/run.ts`: consent check → store message (encrypted) → lexicon → fuse → SVI → band → overrides → save assessment → update case → recommendations → alert record. One transaction; idempotency key honoured (`DATABASE.md` §6).
+- [x] **3.6 Remaining victim endpoints.** `/messages`, `/screeners`, `/context`, `/language`, `/callback-request`, `/end`.
+- [x] **3.7 Victim UI.** `[locale]/(victim)`: start page with language choice, consent screen with separate toggles and audio, chat screen, emergency panel (112, Tele-MANAS 14416, NHAA 14566, "call me back"), quick-exit button on every screen, closing page with the docket number. Large touch targets, simple wording.
+- [x] **3.8 i18n.** `next-intl` with `messages/en.json` and `messages/hi.json`; script `check-i18n.ts` fails if any key is missing in any language. (AC-LANG-01 for the first two languages)
+- [x] **3.9 Tests.** Playwright: full Hindi flow; all consent declined still files the complaint and runs the safety check; withdrawing consent stops analysis; quick exit; a safety-check "yes" to suicidal thoughts shows the emergency panel. A response-shape test asserts that no victim response contains `svi`, `band` or `dimension`.
 
 **Done when:** AC-CH-01, AC-CH-04, AC-CH-05, AC-CON-01…05, AC-SCR-01 and AC-SCR-03 pass; band accuracy on the first 20 scenarios is recorded as the rules-only baseline.
 
