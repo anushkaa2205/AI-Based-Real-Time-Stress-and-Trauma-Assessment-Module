@@ -82,6 +82,7 @@ export type CaseStatus = (typeof CASE_STATUSES)[number];
 export type ReferralStatus = (typeof REFERRAL_STATUSES)[number];
 export type ActorType = (typeof ACTOR_TYPES)[number];
 export type JobType = (typeof JOB_TYPES)[number];
+export type IndicatorStatus = (typeof INDICATOR_STATUSES)[number];
 
 /** Roles that must pass a TOTP step at login (NFR-SEC-02, API_CONTRACTS §1). */
 export const TOTP_ROLES: readonly Role[] = ["NHAA_SUPERVISOR", "STATE_ADMIN", "MINISTRY_ADMIN", "SYS_ADMIN", "AUDITOR"];

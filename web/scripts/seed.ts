@@ -3,7 +3,7 @@
  *  - a few states and districts
  *  - one demo user per role (fresh random password every run)
  *  - TOTP secrets for supervisor/admin roles (kept between runs; --reset-totp makes new ones)
- *  - scoring config v1 (REQUIREMENTS Appendices A–C), active
+ *  - scoring config v1 from core/scoring/defaultConfig.ts (Appendices A–C), active
  *  - one API client for the integration demo (key shown once, when created)
  *
  * Passwords, TOTP URIs and the API key go to web/.seed-output/ (git-ignored),
@@ -20,7 +20,8 @@ import { newTotpSecret, roleRequiresTotp, totpUri } from "@/core/auth/totp";
 import { encrypt } from "@/core/privacy/crypto";
 import { db } from "@/lib/db";
 import { ApiClient, District, ROLES, ScoringConfig, State, User, type Role } from "@/models";
-import * as v1 from "./seed-data/scoring-config-v1";
+import { validateConfig } from "@/core/scoring/config";
+import { DEFAULT_CONFIG } from "@/core/scoring/defaultConfig";
 
 const RESET_TOTP = process.argv.includes("--reset-totp");
 const OUT_DIR = resolve(process.cwd(), ".seed-output");
@@ -105,18 +106,21 @@ async function seedUsers(home: { id: Types.ObjectId; stateId: Types.ObjectId }) 
 async function seedScoringConfig() {
   const admin = await User.findOne({ role: "SYS_ADMIN" }).lean();
   if (!admin) throw new Error("SYS_ADMIN user missing");
-  const exists = await ScoringConfig.exists({ version: 1 });
+  const checked = validateConfig(DEFAULT_CONFIG);
+  if (!checked.ok) throw new Error(`default scoring config is invalid: ${checked.errors.join("; ")}`);
+  const c = checked.config;
+  const exists = await ScoringConfig.exists({ version: c.version });
   if (!exists) {
     await ScoringConfig.updateMany({ isActive: true }, { $set: { isActive: false } });
     await ScoringConfig.create({
-      version: 1,
-      dimensionWeights: v1.dimensionWeights,
-      sourceWeights: v1.sourceWeights,
-      voiceOnlyCap: 0.6,
-      bandThresholds: v1.bandThresholds,
-      safetyOverrides: v1.safetyOverrides,
-      recommendationRules: v1.recommendationRules,
-      alertPolicy: v1.alertPolicy,
+      version: c.version,
+      dimensionWeights: c.dimensionWeights,
+      sourceWeights: c.sourceWeights,
+      voiceOnlyCap: c.voiceOnlyCap,
+      bandThresholds: c.bandThresholds,
+      safetyOverrides: c.safetyOverrides,
+      recommendationRules: c.recommendationRules,
+      alertPolicy: { ...c.alertPolicy, escalationChain: [...c.alertPolicy.escalationChain] },
       isActive: true,
       notes: "Defaults from REQUIREMENTS.md Appendices A–C",
       createdById: admin._id,
