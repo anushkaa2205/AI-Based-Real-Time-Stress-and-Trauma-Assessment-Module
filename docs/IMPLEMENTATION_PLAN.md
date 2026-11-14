@@ -15,7 +15,7 @@ Update this table as work finishes.
 | 3. Victim text flow | M2 Text MVP | Done (unit + Playwright on desktop and mobile; rules-only baseline 75% recorded) |
 | 4. AI text analysis | M2 Text MVP | In progress: 4.1–4.9 done and verified live (Groq + Gemini overflow); 4.10 results recorded, weight tuning waits for reviewed labels; text latency p95 4.2 s in dev (target 3 s) |
 | 5. Responder dashboards and live alerts | M3 Responder loop | Done (5.1–5.9; verified with Pusher: Critical alert on screen in under 5 s; 13 Playwright tests pass. 5.5 auto-assignment (S) deferred) |
-| 6. Recommendations, referrals, stakeholder views | M3 Responder loop | Not started |
+| 6. Recommendations, referrals, stakeholder views | M3 Responder loop | Done (6.1–6.8; AC-REC-03/05, AC-DSH-01/03 pass in Playwright. AC-REC-01/02 covered by the Phase 2 engine tests and the eval set. AC-ALR-01's 5 s check failed on the last run only because Atlas round trips were ~200 ms instead of ~37 ms; re-run on a normal network) |
 | 7. Voice, operator console, IVRS | M4 Voice | Not started |
 | 8. Languages, analytics, integration API, admin | M5 Feature complete | Not started |
 | 9. Evaluation, hardening, deployment, demo | M6 Demo-ready | Not started |
@@ -213,14 +213,14 @@ Update this table as work finishes.
 **Goal:** close the loop from risk to action, with each stakeholder seeing only what they need.
 **Effort:** 5–7 days. **Depends on:** Phase 5.
 
-- [ ] **6.1 Approval inbox.** `GET /staff/recommendations`, `POST /recommendations/{id}/decision` (approve, reject, post-review of auto-triggered emergency support). Approval creates the referral; text limited to 300 characters with a warning not to include clinical detail. (FR-REC-05/07)
-- [ ] **6.2 Emergency path.** Critical band auto-triggers EMERGENCY_SUPPORT, shows the victim's emergency panel through the `emergency.show` event, and handles callback requests. (FR-REC-06)
-- [ ] **6.3 Referral endpoints.** List, detail and status updates with allowed transitions. (FR-REC-08)
-- [ ] **6.4 Police liaison view.** Action requests only. Add an automated test that a police user calling case, transcript, indicator and assessment endpoints directly receives 403 on each. (FR-DSH-04, AC-DSH-01, AC-REC-05)
-- [ ] **6.5 Welfare view.** Rehabilitation, relief, legal-aid and medical referrals. **(S)** (FR-DSH-05)
-- [ ] **6.6 District dashboard.** High and Critical cases in the district (band and SVI only), pending referrals, missed deadlines, escalated alerts. (FR-DSH-03)
-- [ ] **6.7 Follow-ups.** Schedule on closing a High or Critical case; reminders through the job runner. **(S)** (FR-REC-09)
-- [ ] **6.8 Tests.** One Playwright journey per role confirming it sees its own dashboard and nothing else. (AC-DSH-03)
+- [x] **6.1 Approval inbox.** `GET /staff/recommendations`, `POST /recommendations/{id}/decision` (approve, reject, post-review of auto-triggered emergency support). Approval creates the referral; text limited to 300 characters with a warning not to include clinical detail. (FR-REC-05/07)
+- [x] **6.2 Emergency path.** Critical band auto-triggers EMERGENCY_SUPPORT, shows the victim's emergency panel through the `emergency.show` event, and handles callback requests. (FR-REC-06)
+- [x] **6.3 Referral endpoints.** List, detail and status updates with allowed transitions. (FR-REC-08)
+- [x] **6.4 Police liaison view.** Action requests only. Add an automated test that a police user calling case, transcript, indicator and assessment endpoints directly receives 403 on each. (FR-DSH-04, AC-DSH-01, AC-REC-05)
+- [x] **6.5 Welfare view.** Rehabilitation, relief, legal-aid and medical referrals. **(S)** (FR-DSH-05)
+- [x] **6.6 District dashboard.** High and Critical cases in the district (band and SVI only), pending referrals, missed deadlines, escalated alerts. (FR-DSH-03)
+- [x] **6.7 Follow-ups.** Schedule on closing a High or Critical case; reminders through the job runner. **(S)** (FR-REC-09)
+- [x] **6.8 Tests.** One Playwright journey per role confirming it sees its own dashboard and nothing else. (AC-DSH-03)
 
 **Done when:** AC-REC-01…05, AC-DSH-01 and AC-DSH-03 pass. **Milestone M3.**
 
