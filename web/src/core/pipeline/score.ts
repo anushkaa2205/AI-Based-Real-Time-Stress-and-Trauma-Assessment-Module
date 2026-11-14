@@ -28,7 +28,7 @@ import {
   type CaseEventData,
   type OutboundEvent,
 } from "@/lib/realtime/channels";
-import { Alert, Assessment, Indicator, Job, Recommendation, type ActorType, type CaseDoc, type IndicatorStatus, type InteractionDoc } from "@/models";
+import { Alert, Assessment, Indicator, Job, Recommendation, URGENCIES, type ActorType, type CaseDoc, type IndicatorStatus, type InteractionDoc, type Urgency } from "@/models";
 import { Types as MTypes, type HydratedDocument } from "mongoose";
 
 const ID = (v: unknown) => String(v);
@@ -72,6 +72,9 @@ export function screenerResponsesOf(i: { screenerResponses?: unknown }): Screene
   }));
 }
 
+/** IMMEDIATE is the most urgent; NONE the least. */
+const urgencyRank = (u: Urgency) => URGENCIES.length - URGENCIES.indexOf(u);
+
 /** Insert new proposals, keep unchanged ones, supersede stale ones, in ONE round trip (DATABASE §6). */
 async function persistRecommendations(
   session: ClientSession,
@@ -79,7 +82,7 @@ async function persistRecommendations(
   proposals: Proposal[],
   now: Date,
 ): Promise<OutboundEvent[]> {
-  const open = await Recommendation.find({ caseId: ids.caseId, status: { $in: ["PROPOSED", "AUTO_TRIGGERED", "APPROVED"] } })
+  const open = await Recommendation.find({ caseId: ids.caseId, status: { $in: ["PROPOSED", "AUTO_TRIGGERED", "APPROVED", "REJECTED"] } })
     .select("ruleId type status urgency")
     .session(session)
     .lean();
@@ -94,7 +97,10 @@ async function persistRecommendations(
     if ((rec.status === "PROPOSED" || staleInfo) && !wanted.has(rec.ruleId)) supersede.add(ID(rec._id));
   }
   for (const p of proposals) {
-    const existing = open.find((r) => r.ruleId === p.ruleId && !supersede.has(ID(r._id)));
+    // A human rejected this rule for this case: propose it again only if it became more urgent.
+    const rejected = open.find((r) => r.ruleId === p.ruleId && r.status === "REJECTED" && urgencyRank(p.urgency) <= urgencyRank(r.urgency as Urgency));
+    if (rejected) continue;
+    const existing = open.find((r) => r.ruleId === p.ruleId && r.status !== "REJECTED" && !supersede.has(ID(r._id)));
     if (existing && (existing.status !== "PROPOSED" || existing.urgency === p.urgency)) continue;
     if (existing) supersede.add(ID(existing._id));
     inserts.push({

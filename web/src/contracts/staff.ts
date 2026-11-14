@@ -257,3 +257,85 @@ export function decodeCursor(cursor: string | undefined): number {
   const m = /^o:(\d{1,6})$/.exec(Buffer.from(cursor, "base64url").toString());
   return m ? Number(m[1]) : 0;
 }
+
+// --- Phase 6: recommendations, referrals, follow-ups (API_CONTRACTS §5.5, §5.7) ---
+
+export const RecommendationQuery = z.object({
+  status: z.enum(["PROPOSED", "APPROVED", "REJECTED", "AUTO_TRIGGERED", "SUPERSEDED"]).default("PROPOSED"),
+  responsibleRole: Role.optional(),
+  districtId: ObjectIdStr.optional(),
+  /** AUTO_TRIGGERED emergency support still waiting for its human review (FR-REC-05). */
+  needsReview: z.enum(["true", "false"]).optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+  cursor: z.string().max(40).optional(),
+});
+
+export const RecommendationInboxItem = RecommendationDto.extend({
+  caseId: ObjectIdStr,
+  docketNumber: z.string(),
+  band: RiskBand.nullable(),
+  postReviewedAt: Iso.nullable(),
+});
+export type RecommendationInboxItem = z.infer<typeof RecommendationInboxItem>;
+
+/** Referral text is what police and welfare see; length is checked in the service (422 REFERRAL_TOO_DETAILED). */
+export const DecisionRequest = z.object({
+  decision: z.enum(["APPROVE", "REJECT", "POST_REVIEW"]),
+  reason: z.string().trim().max(500).optional(),
+  referral: z
+    .object({
+      actionRequested: z.string().trim().max(2000).optional(),
+      locationHint: z.string().trim().max(2000).optional(),
+      assignedToId: ObjectIdStr.nullable().optional(),
+    })
+    .optional(),
+});
+export type DecisionRequest = z.infer<typeof DecisionRequest>;
+
+export const ReferralQuery = z.object({
+  status: csv(ReferralStatus),
+  type: csv(SupportType),
+  /** Only referrals past their due time that are still open. */
+  overdue: z.enum(["true", "false"]).optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+  cursor: z.string().max(40).optional(),
+});
+
+/** §5.5 lists IN_PROGRESS | DONE | DECLINED; ACCEPTED is added because the transition table starts PENDING → ACCEPTED. */
+export const ReferralPatch = z.object({
+  status: z.enum(["ACCEPTED", "IN_PROGRESS", "DONE", "DECLINED"]),
+  outcomeNote: z.string().trim().max(500).optional(),
+  declinedReason: z.string().trim().max(500).optional(),
+});
+export type ReferralPatch = z.infer<typeof ReferralPatch>;
+
+export const FollowUpQuery = z.object({
+  status: z.enum(["SCHEDULED", "DONE", "MISSED", "CANCELLED"]).default("SCHEDULED"),
+  due: z.enum(["today", "overdue", "all"]).default("all"),
+  caseId: ObjectIdStr.optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+  cursor: z.string().max(40).optional(),
+});
+
+export const FollowUpCreate = z.object({
+  dueAt: Iso,
+  channel: Channel,
+  assignedToId: ObjectIdStr.nullable().optional(),
+});
+
+export const FollowUpPatch = z.object({
+  status: z.enum(["DONE", "MISSED", "CANCELLED"]),
+  outcomeNote: z.string().trim().max(500).optional(),
+});
+
+export const FollowUpItem = z.object({
+  id: ObjectIdStr,
+  caseId: ObjectIdStr,
+  docketNumber: z.string(),
+  dueAt: Iso,
+  channel: Channel,
+  status: z.enum(["SCHEDULED", "DONE", "MISSED", "CANCELLED"]),
+  assignedTo: UserRef.nullable(),
+  outcomeNote: z.string().optional(),
+});
+export type FollowUpItem = z.infer<typeof FollowUpItem>;

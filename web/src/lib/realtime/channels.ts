@@ -8,6 +8,7 @@
  *  - `transcript.appended` carries ids only, no message text: the transport may
  *    be a third-party service (Pusher); staff fetch the text over our own API.
  */
+import type { ReferralDto } from "@/contracts/staff";
 import type { EmergencyPanel } from "@/contracts/victim";
 import type { RiskBand, Role } from "@/models/enums";
 
@@ -68,6 +69,11 @@ export interface EventMap {
   "alert.acknowledged": { alertId: string; caseId: string; acknowledgedBy: { id: string; name: string }; acknowledgedAt: string };
   "alert.escalated": { alertId: string; caseId: string; docketNumber: string; level: "HIGH" | "CRITICAL"; escalationLevel: number; waitingSec: number };
   "recommendation.created": { recommendationId: string; type: string; urgency: string; status: string };
+  /** ReferralDto, already minimal (§7); goes to role-{ROLE}-{district} only. */
+  "referral.created": ReferralDto;
+  "referral.updated": ReferralDto;
+  /** Follow-up reminder (FR-REC-09); ids and time only. */
+  "followup.due": { followUpId: string; caseId: string; docketNumber: string; dueAt: string };
 }
 
 export interface CaseEventData {
