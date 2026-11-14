@@ -66,7 +66,8 @@ export const AssessmentDto = z.object({
   dimensions: z.partialRecord(Dimension, DimensionEntry),
   confidence: z.number(),
   limitedConfidence: z.boolean(),
-  topEvidence: z.array(z.object({ indicatorId: ObjectIdStr, dimension: Dimension, label: z.string() })),
+  // indicatorId is null when the evidence is a questionnaire answer or case context
+  topEvidence: z.array(z.object({ indicatorId: ObjectIdStr.nullable(), dimension: Dimension, label: z.string() })),
   explanation: z.string(),
   configVersion: z.number().int(),
   createdAt: Iso,
@@ -139,3 +140,120 @@ export const ReferralDto = z.object({
   createdAt: Iso,
 });
 export type ReferralDto = z.infer<typeof ReferralDto>;
+
+// --- Phase 5: queue, detail, review, override, notes, alerts (API_CONTRACTS §5.2–5.6) ---
+
+const csv = <T extends z.ZodType>(item: T) =>
+  z.preprocess((v) => (v === undefined ? undefined : (Array.isArray(v) ? v : String(v).split(",")).filter(Boolean)), z.array(item).optional());
+
+export const CaseQueueQuery = z.object({
+  status: csv(CaseStatus),
+  band: csv(RiskBand),
+  districtId: ObjectIdStr.optional(),
+  assignedTo: z.union([z.enum(["me", "unassigned"]), ObjectIdStr]).optional(),
+  channel: Channel.optional(),
+  language: z.string().max(10).optional(),
+  from: Iso.optional(),
+  to: Iso.optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+  cursor: z.string().max(40).optional(),
+});
+
+export const IndicatorDto = z.object({
+  id: ObjectIdStr,
+  dimension: Dimension,
+  source: SignalSource,
+  score: z.number(),
+  confidence: z.number(),
+  negated: z.boolean(),
+  status: z.enum(["ACTIVE", "CONFIRMED", "REJECTED", "ADJUSTED"]),
+  flags: z.array(z.string()),
+  label: z.string().nullable(),
+  evidence: z.union([
+    z.object({ type: z.literal("TEXT_SPAN"), messageId: ObjectIdStr, spanStart: z.number(), spanEnd: z.number(), quote: z.string().nullable() }),
+    z.object({ type: z.enum(["ACOUSTIC_EVENT", "SCREENER_ANSWER", "CONTEXT_FIELD"]) }).loose(),
+  ]),
+  review: z.object({ score: z.number().nullable(), reason: z.string(), by: UserRef, at: Iso }).nullable(),
+  modelVersion: z.string(),
+  createdAt: Iso,
+});
+export type IndicatorDto = z.infer<typeof IndicatorDto>;
+
+export const RecommendationDto = z.object({
+  id: ObjectIdStr,
+  type: SupportType,
+  ruleId: z.string(),
+  reason: z.string(),
+  urgency: Urgency,
+  dueAt: Iso.optional(),
+  responsibleRole: Role,
+  legalBasis: z.string().optional(),
+  status: z.enum(["PROPOSED", "APPROVED", "REJECTED", "AUTO_TRIGGERED", "SUPERSEDED"]),
+  decision: z.object({ by: UserRef, at: Iso, reason: z.string().optional() }).optional(),
+  referralId: ObjectIdStr.optional(),
+});
+export type RecommendationDto = z.infer<typeof RecommendationDto>;
+
+export const TranscriptItem = z.object({
+  id: ObjectIdStr,
+  seq: z.number(),
+  sender: z.enum(["VICTIM", "SYSTEM", "OPERATOR"]),
+  modality: z.string(),
+  text: z.string(),
+  translation: z.string().nullable(),
+  language: z.string().nullable(),
+  sttConfidence: z.number().nullable(),
+  emotion: z.object({ label: z.string(), confidence: z.number() }).nullable(),
+  createdAt: Iso,
+});
+
+export const IndicatorReviewRequest = z
+  .object({
+    action: z.enum(["CONFIRM", "REJECT", "ADJUST"]),
+    reason: z.string().trim().max(500).optional(),
+    score: z.number().min(0).max(1).optional(),
+  })
+  .refine((r) => r.action !== "ADJUST" || r.score !== undefined, { message: "score is required to adjust", path: ["score"] });
+
+export const BandOverrideRequest = z.object({ toBand: RiskBand, reason: z.string().trim().max(500).optional() });
+
+export const NoteRequest = z.object({ body: z.string().trim().min(1).max(4000) });
+
+export const CasePatchRequest = z
+  .object({
+    status: CaseStatus.optional(),
+    assignedCounsellorId: ObjectIdStr.nullable().optional(),
+    /** Additive: why a High/Critical case is closed without a follow-up */
+    reason: z.string().trim().max(500).optional(),
+  })
+  .refine((p) => p.status !== undefined || p.assignedCounsellorId !== undefined, { message: "nothing to change" });
+
+export const AlertQuery = z.object({
+  status: z.enum(["OPEN", "ACKNOWLEDGED", "RESOLVED"]).default("OPEN"),
+  level: z.enum(["CRITICAL", "HIGH"]).optional(),
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+  cursor: z.string().max(40).optional(),
+});
+
+export const AlertItem = z.object({
+  id: ObjectIdStr,
+  caseId: ObjectIdStr,
+  docketNumber: z.string(),
+  level: z.enum(["CRITICAL", "HIGH"]),
+  reason: z.string(),
+  status: z.enum(["OPEN", "ACKNOWLEDGED", "RESOLVED"]),
+  escalationLevel: z.number(),
+  createdAt: Iso,
+  acknowledgedAt: Iso.nullable(),
+});
+export type AlertItem = z.infer<typeof AlertItem>;
+
+export const ResolveRequest = z.object({ note: z.string().trim().max(500).optional() });
+
+/** Opaque offset cursor for list endpoints. */
+export const encodeCursor = (offset: number) => Buffer.from(`o:${offset}`).toString("base64url");
+export function decodeCursor(cursor: string | undefined): number {
+  if (!cursor) return 0;
+  const m = /^o:(\d{1,6})$/.exec(Buffer.from(cursor, "base64url").toString());
+  return m ? Number(m[1]) : 0;
+}
