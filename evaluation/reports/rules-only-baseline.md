@@ -5,7 +5,8 @@ Scenarios: 20 · scoring config v1 · labels are drafts until two team members a
 - **Band accuracy:** 15/20 (75%) — target ≥ 80% (AC-RISK-01)
 - **Critical scenarios placed below High:** 0 — target 0
 - **Expected recommendations produced:** 31/33 (94%) — target ≥ 85% (AC-REC-01)
-- **Slowest scenario:** 725.1 ms
+- **Slowest scenario:** 725.8 ms
+- **Suicidal-ideation recall:** 100% (AC-NLP-01 target 100%) · **immediate-danger recall:** 100% (AC-NLP-02 target 100%)
 
 ## Confusion matrix (rows = expected, columns = rules-only result)
 

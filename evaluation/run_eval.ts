@@ -1,15 +1,19 @@
 /**
- * Evaluation runner, rules-only mode (tasks E.1/E.2 baseline; full runner is E.5).
- * Run from web/:  npm run eval
+ * Evaluation runner (tasks E.1/E.2 baseline and 4.10; the full pipeline runner is E.5).
+ * Run from web/:
+ *   npm run eval                 rules only (lexicon + screeners + context), like fallback mode
+ *   npm run eval -- --mode=ai    adds the analysis service (needs it running; answers are cached)
  *
- * Scores every scenario with the deterministic path only (safety lexicon +
- * screeners + context → fuse → SVI → band → overrides → recommendations), with
- * no database and no AI, exactly like the pipeline's fallback mode. Writes
- * evaluation/reports/rules-only-baseline.{md,json}.
+ * Same scoring code as the pipeline, without the database. Writes
+ * evaluation/reports/<mode>.{md,json}. Text sent to the AI is redacted first.
  */
 import { mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import "../web/scripts/load-env";
+import { analyzeText, defaultDeps } from "@/core/analysis-client/client";
+import { checkAnalysis } from "@/core/analysis-client/guardrails";
+import { redact } from "@/core/privacy/redact";
 import { evaluateRecommendations } from "@/core/recommendations/evaluate";
 import { lexiconSignals } from "@/core/safety-lexicon/engine";
 import { assess } from "@/core/scoring/assess";
@@ -23,6 +27,11 @@ import { ScenarioSchema, type Scenario } from "@/contracts/evaluation";
 const ROOT = dirname(fileURLToPath(import.meta.url));
 const BANDS = ["LOW", "MODERATE", "HIGH", "CRITICAL"] as const;
 const DETECT_THRESHOLD = 0.5;
+const MODE = process.argv.includes("--mode=ai") ? "ai" : "rules";
+const REPORT = MODE === "ai" ? "with-ai" : "rules-only-baseline";
+let aiCalls = 0;
+let aiDegraded = 0;
+let aiDropped = 0;
 
 function toContext(raw: Scenario["context"]): CaseContextInput {
   const ctx: Record<string, unknown> = { ...raw };
@@ -31,7 +40,7 @@ function toContext(raw: Scenario["context"]): CaseContextInput {
   return ctx as CaseContextInput;
 }
 
-function run(s: Scenario) {
+async function run(s: Scenario) {
   const t0 = performance.now();
   const indicators: IndicatorInput[] = [];
   const facts = new Set<CaseFact>();
@@ -39,6 +48,17 @@ function run(s: Scenario) {
     const lx = lexiconSignals(m);
     indicators.push(...lx.indicators);
     lx.facts.forEach((f) => facts.add(f));
+    if (MODE === "ai") {
+      const redacted = redact(m).text;
+      aiCalls++;
+      const r = await analyzeText({ requestId: `eval-${s.id}`, text: redacted, languageHint: s.language }, { ...defaultDeps(), timeoutMs: 60_000 });
+      if (r.degraded) aiDegraded++;
+      else {
+        const checked = checkAnalysis(r.result, m, redacted);
+        aiDropped += checked.dropped;
+        indicators.push(...checked.indicators);
+      }
+    }
   }
   const responses = s.screeners.map((r) => ({
     instrument: ITEM_BY_CODE.get(r.itemCode)!.instrument,
@@ -50,7 +70,7 @@ function run(s: Scenario) {
   indicators.push(...sc.indicators, ...cx.indicators);
   [...sc.facts, ...cx.facts].forEach((f) => facts.add(f));
 
-  const draft = assess({ indicators, config: DEFAULT_CONFIG, limitedConfidence: true });
+  const draft = assess({ indicators, config: DEFAULT_CONFIG, limitedConfidence: MODE !== "ai" });
   const recs = evaluateRecommendations(
     { band: draft.band, overridesFired: draft.overridesFired, dimensions: draft.dimensions, facts: [...facts] },
     DEFAULT_CONFIG,
@@ -78,7 +98,7 @@ function run(s: Scenario) {
 
 const pct = (n: number, d: number) => (d ? `${((100 * n) / d).toFixed(0)}%` : "n/a");
 
-function main() {
+async function main() {
   const dir = join(ROOT, "scenarios");
   const scenarios: Scenario[] = [];
   const errors: string[] = [];
@@ -96,7 +116,8 @@ function main() {
     process.exit(1);
   }
 
-  const results = scenarios.map(run);
+  const results = [];
+  for (const sc of scenarios) results.push(await run(sc));
   const correct = results.filter((r) => r.band === r.expectedBand).length;
   const criticalMissed = results.filter((r) => r.expectedBand === "CRITICAL" && (r.band === "LOW" || r.band === "MODERATE"));
 
@@ -120,9 +141,13 @@ function main() {
       return `| ${key}:${g} | ${rs.length} | ${pct(rs.filter((r) => r.band === r.expectedBand).length, rs.length)} |`;
     });
   const maxMs = Math.max(...results.map((r) => r.ms));
+  const siCases = results.filter((r) => r.expectedIndicators.includes("SUICIDAL_IDEATION"));
+  const siRecall = pct(siCases.filter((r) => r.detected.includes("SUICIDAL_IDEATION") || r.overrides.some((o) => o === "OV-1" || o === "OV-6")).length, siCases.length);
+  const dangerCases = results.filter((r) => r.expectedBand === "CRITICAL" && !r.expectedIndicators.includes("SUICIDAL_IDEATION"));
+  const dangerRecall = pct(dangerCases.filter((r) => r.overrides.some((o) => ["OV-2", "OV-3"].includes(o))).length, dangerCases.length);
 
   const md = [
-    "# Rules-only baseline (no AI)",
+    MODE === "ai" ? "# Rules + AI (analysis service)" : "# Rules-only baseline (no AI)",
     "",
     `Scenarios: ${results.length} · scoring config v${DEFAULT_CONFIG.version} · labels are drafts until two team members agree (AC-EVAL-01).`,
     "",
@@ -130,6 +155,8 @@ function main() {
     `- **Critical scenarios placed below High:** ${criticalMissed.length}${criticalMissed.length ? ` (${criticalMissed.map((r) => r.id).join(", ")})` : ""} — target 0`,
     `- **Expected recommendations produced:** ${recHit}/${recExpected} (${pct(recHit, recExpected)}) — target ≥ 85% (AC-REC-01)`,
     `- **Slowest scenario:** ${maxMs.toFixed(1)} ms`,
+    ...(MODE === "ai" ? [`- **AI calls:** ${aiCalls}, degraded: ${aiDegraded}, AI quotes dropped by guardrails: ${aiDropped}`] : []),
+    `- **Suicidal-ideation recall:** ${siRecall} (AC-NLP-01 target 100%) · **immediate-danger recall:** ${dangerRecall} (AC-NLP-02 target 100%)`,
     "",
     "## Confusion matrix (rows = expected, columns = rules-only result)",
     "",
@@ -164,10 +191,10 @@ function main() {
 
   const out = resolve(ROOT, "reports");
   mkdirSync(out, { recursive: true });
-  writeFileSync(join(out, "rules-only-baseline.md"), md);
-  writeFileSync(join(out, "rules-only-baseline.json"), JSON.stringify({ configVersion: DEFAULT_CONFIG.version, results }, null, 2) + "\n");
+  writeFileSync(join(out, `${REPORT}.md`), md);
+  writeFileSync(join(out, `${REPORT}.json`), JSON.stringify({ mode: MODE, configVersion: DEFAULT_CONFIG.version, results }, null, 2) + "\n");
   console.log(md.split("## Confusion")[0]);
-  console.log(`Report: evaluation/reports/rules-only-baseline.md`);
+  console.log(`Report: evaluation/reports/${REPORT}.md`);
 }
 
-main();
+void main();
