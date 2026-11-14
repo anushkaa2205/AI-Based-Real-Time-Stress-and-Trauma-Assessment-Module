@@ -17,6 +17,8 @@ import { hashSessionToken, newSessionToken, SESSION_TTL_MS } from "@/core/victim
 import { db } from "@/lib/db";
 import { env } from "@/lib/env";
 import { piiDb } from "@/lib/pii-db";
+import { ONCALL } from "@/lib/realtime/channels";
+import { publish } from "@/lib/realtime/publish";
 import { ApiError } from "@/lib/problem";
 import { Alert, Case, District, Interaction, Job, State, StoredAudio, Subject, type Channel } from "@/models";
 import { SubjectIdentity } from "@/models/subject-identity";
@@ -235,6 +237,17 @@ export async function requestCallback(id: string, phone: string) {
   );
   if (alert) await Job.create({ type: "alert.escalate", payload: { alertId: String(alert._id), level: 1 }, runAt: escalateAt });
   await record({ actorType: "VICTIM_SESSION", actorId: id, action: "callback.request", entityType: "case", entityId: String(interaction.caseId) });
+  // On-duty staff see the call-back request at once (FR-REC-06); the phone number never leaves the vault.
+  if (alert) {
+    const c = await Case.findById(interaction.caseId).select("docketNumber").lean();
+    await publish([
+      {
+        channel: ONCALL,
+        event: "alert.created",
+        data: { alertId: String(alert._id), caseId: String(interaction.caseId), docketNumber: c?.docketNumber ?? "", level: "CRITICAL", reason: alert.reason, createdAt: new Date(alert.createdAt).toISOString() },
+      },
+    ]);
+  }
 }
 
 // --- end (FR-CH-09) -------------------------------------------------------------------------
