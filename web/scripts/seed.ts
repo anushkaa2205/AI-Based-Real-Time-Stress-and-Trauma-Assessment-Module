@@ -52,12 +52,12 @@ const DISTRICT_ROLES: readonly Role[] = ["DISTRICT_OFFICER", "POLICE_LIAISON", "
 async function seedGeography() {
   const districts = new Map<string, { id: Types.ObjectId; stateId: Types.ObjectId }>();
   for (const s of STATES) {
-    const state = await State.findOneAndUpdate({ code: s.code }, { $set: { name: s.name } }, { upsert: true, new: true });
+    const state = await State.findOneAndUpdate({ code: s.code }, { $set: { name: s.name } }, { upsert: true, returnDocument: "after" });
     for (const [code, name] of s.districts) {
       const d = await District.findOneAndUpdate(
         { code },
         { $set: { name, stateId: state._id } },
-        { upsert: true, new: true },
+        { upsert: true, returnDocument: "after" },
       );
       districts.set(code, { id: d._id, stateId: state._id });
     }

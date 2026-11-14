@@ -76,7 +76,7 @@ export const mongoRateLimitStore: RateLimitStore = {
     const doc = await RateLimit.findOneAndUpdate(
       { key, windowStart },
       { $inc: { count: 1 }, $setOnInsert: { expiresAt } },
-      { upsert: true, new: true, projection: { count: 1 } },
+      { upsert: true, returnDocument: "after", projection: { count: 1 } },
     ).lean();
     return doc?.count ?? 1;
   },
