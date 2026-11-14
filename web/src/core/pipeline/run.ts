@@ -17,7 +17,7 @@
  */
 import { randomUUID } from "node:crypto";
 import mongoose, { type ClientSession, Types } from "mongoose";
-import { analyzeText } from "@/core/analysis-client/client";
+import { TEXT_TIMEOUT_MS, analyzeText, defaultDeps } from "@/core/analysis-client/client";
 import { checkAnalysis, type CheckedAnalysis } from "@/core/analysis-client/guardrails";
 import { record } from "@/core/audit/record";
 import { allowsScreeners, allowsTextAnalysis, currentConsent, resolveMode } from "@/core/consent/mode";
@@ -61,11 +61,33 @@ export interface RunInput {
   skipNarrative?: boolean;
 }
 
+/** What the route needs to pick the next prompt, so it does not read the database again. */
+export interface TurnFacts {
+  consentGiven: boolean;
+  mode: AssessmentMode;
+  answered: Map<string, number | null>;
+  state: FlowState;
+  lang: "en" | "hi";
+}
+
 export interface RunResult {
   messageId: string | null;
   showEmergencyPanel: boolean;
   replayed: boolean;
+  /** null only for an idempotent replay */
+  turn: TurnFacts | null;
 }
+
+function answeredOf(responses: ScreenerResponseInput[]): Map<string, number | null> {
+  const m = new Map<string, number | null>();
+  for (const r of responses) m.set(r.itemCode, r.skipped || r.value === null ? null : r.value);
+  return m;
+}
+
+const isDuplicateIdempotencyKey = (err: unknown) => {
+  const e = err as { code?: number; keyPattern?: Record<string, unknown> };
+  return e?.code === 11000 && !!e.keyPattern && "idempotencyKey" in e.keyPattern;
+};
 
 const ID = (v: unknown) => String(v);
 const isObjectId = (s: string | null | undefined): s is string => !!s && /^[a-f0-9]{24}$/.test(s);
@@ -116,42 +138,44 @@ async function persistRecommendations(
   const open = await Recommendation.find({
     caseId: ids.caseId,
     status: { $in: ["PROPOSED", "AUTO_TRIGGERED", "APPROVED"] },
-  }).session(session);
+  })
+    .select("ruleId type status urgency")
+    .session(session)
+    .lean();
 
+  // Collect every change, then write them in ONE round trip.
+  const supersede = new Set<string>();
+  const inserts: Record<string, unknown>[] = [];
   const wanted = new Set(proposals.map((p) => p.ruleId));
   for (const rec of open) {
     // Stale proposals, and the automatic Low-band information once the band has risen.
     // Auto-triggered emergency support stays until a human reviews it (FR-REC-05).
     const staleInfo = rec.status === "AUTO_TRIGGERED" && rec.type === "INFORMATION";
-    if ((rec.status === "PROPOSED" || staleInfo) && !wanted.has(rec.ruleId)) {
-      rec.status = "SUPERSEDED";
-      await rec.save({ session });
-    }
+    if ((rec.status === "PROPOSED" || staleInfo) && !wanted.has(rec.ruleId)) supersede.add(ID(rec._id));
   }
   for (const p of proposals) {
-    const existing = open.find((r) => r.ruleId === p.ruleId && r.status !== "SUPERSEDED");
+    const existing = open.find((r) => r.ruleId === p.ruleId && !supersede.has(ID(r._id)));
     if (existing && (existing.status !== "PROPOSED" || existing.urgency === p.urgency)) continue;
-    if (existing) {
-      existing.status = "SUPERSEDED";
-      await existing.save({ session });
-    }
-    await Recommendation.create(
-      [
-        {
-          ...ids,
-          type: p.type,
-          ruleId: p.ruleId,
-          reason: p.reason,
-          urgency: p.urgency,
-          dueAt: dueAt(p.urgency, now.getTime()) ?? undefined,
-          responsibleRole: p.responsibleRole,
-          legalBasis: p.legalBasis,
-          status: p.status,
-        },
-      ],
-      { session },
-    );
+    if (existing) supersede.add(ID(existing._id));
+    inserts.push({
+      ...ids,
+      type: p.type,
+      ruleId: p.ruleId,
+      reason: p.reason,
+      urgency: p.urgency,
+      dueAt: dueAt(p.urgency, now.getTime()) ?? undefined,
+      responsibleRole: p.responsibleRole,
+      legalBasis: p.legalBasis,
+      status: p.status,
+    });
   }
+  const ops = [
+    ...[...supersede].map((id) => ({
+      updateOne: { filter: { _id: new Types.ObjectId(id) }, update: { $set: { status: "SUPERSEDED", updatedAt: now } } },
+    })),
+    ...inserts.map((doc) => ({ insertOne: { document: { ...doc, createdAt: now, updatedAt: now } } })),
+  ];
+  if (ops.length) await Recommendation.bulkWrite(ops as never, { session, ordered: true });
 }
 
 /** FR-ALR-01/03/04: alert when the band rises to High or Critical; Critical escalates if not acknowledged. */
@@ -189,7 +213,12 @@ async function raiseAlertIfNeeded(
   }
 }
 
+/** Whole-turn budget for the AI call, measured from the start of the pipeline. */
+const AI_BUDGET_MS = 2_300;
+const MIN_AI_MS = 1_000;
+
 export async function runPipeline(input: RunInput): Promise<RunResult> {
+  const startedMs = Date.now();
   await db();
   const now = new Date();
 
@@ -199,23 +228,42 @@ export async function runPipeline(input: RunInput): Promise<RunResult> {
   const textEnc = text ? encrypt(text) : null;
   const quotesEnc = new Map((lexicon?.indicators ?? []).map((i) => [i.id, encrypt(i.evidence.quote)]));
 
+  // One parallel round trip before the transaction: checks, duplicate detection, scoring config.
+  const [pre, existing, config] = await Promise.all([
+    Interaction.findById(input.interactionId).select("mode uiLanguage context status consents.action").lean(),
+    input.message?.idempotencyKey
+      ? Message.findOne({ interactionId: input.interactionId, idempotencyKey: input.message.idempotencyKey }).select("_id").lean()
+      : Promise.resolve(null),
+    activeConfig(),
+  ]);
+  if (!pre) throw new ApiError("NOT_FOUND");
+  if (pre.status !== "ACTIVE") throw new ApiError("INTERACTION_ENDED");
+  // Consent step first, even "no to everything", so nothing is processed before the notice (AC-CON-01).
+  if (!pre.consents?.length) throw new ApiError("CONSENT_REQUIRED", "Please answer the consent question first.");
+  if (input.screener && input.screener.instrument !== "SAFETY_CHECK" && !allowsScreeners(pre.mode)) {
+    throw new ApiError("CONSENT_REQUIRED", "This question needs your consent.");
+  }
+  if (existing) return replayOf(input.interactionId, ID(existing._id));
+
   // Second, independent path (task 4.8): the AI. Its failure never blocks the turn (NFR-REL-01).
   let ai: { checked: CheckedAnalysis; quotesEnc: Map<string, string>; translationEnc: string | null } | null = null;
   let aiDegraded = false;
   if (text) {
-    const pre = await Interaction.findById(input.interactionId).select("mode uiLanguage context").lean();
-    const replay =
-      input.message?.idempotencyKey &&
-      (await Message.exists({ interactionId: input.interactionId, idempotencyKey: input.message.idempotencyKey }));
-    if (pre && !replay && allowsTextAnalysis(pre.mode)) {
+    if (allowsTextAnalysis(pre.mode)) {
       const ctx = (pre.context ?? {}) as CaseContextInput;
       const redacted = redact(text).text; // NFR-SEC-05: no phones, e-mails, IDs or PIN codes leave the app
-      const r = await analyzeText({
-        requestId: input.message?.idempotencyKey ?? randomUUID(),
-        text: redacted,
-        languageHint: pre.uiLanguage,
-        context: { isSexualOffence: ctx.isSexualOffence === true, isMinor: isMinor(ctx) },
-      });
+      // Time budget (NFR-PERF-01, 3 s p95): the AI gets what is left of AI_BUDGET_MS after the
+      // work above, never more than the 2.5 s cap; the transaction needs ~0.6 s after it.
+      const timeoutMs = Math.min(TEXT_TIMEOUT_MS, Math.max(MIN_AI_MS, AI_BUDGET_MS - (Date.now() - startedMs)));
+      const r = await analyzeText(
+        {
+          requestId: input.message?.idempotencyKey ?? randomUUID(),
+          text: redacted,
+          languageHint: pre.uiLanguage,
+          context: { isSexualOffence: ctx.isSexualOffence === true, isMinor: isMinor(ctx) },
+        },
+        { ...defaultDeps(), timeoutMs },
+      );
       if (r.degraded) {
         aiDegraded = true;
         console.warn(`[pipeline] analysis degraded (${r.reason}); continuing with rules only`);
@@ -231,7 +279,7 @@ export async function runPipeline(input: RunInput): Promise<RunResult> {
   }
 
   const session = await mongoose.startSession();
-  let result: RunResult = { messageId: null, showEmergencyPanel: false, replayed: false };
+  let result: RunResult = { messageId: null, showEmergencyPanel: false, replayed: false, turn: null };
   try {
     await session.withTransaction(
       async () => {
@@ -240,23 +288,13 @@ export async function runPipeline(input: RunInput): Promise<RunResult> {
         if (interaction.status !== "ACTIVE") throw new ApiError("INTERACTION_ENDED");
         const caseDoc = await Case.findById(interaction.caseId).session(session);
         if (!caseDoc) throw new ApiError("NOT_FOUND");
-        const config = await activeConfig(session);
         const flow: FlowState = flowStateOf(interaction.flowState);
         const prevBand = (caseDoc.currentBand ?? null) as RiskBand | null;
 
         // --- 1. apply the new signal -------------------------------------------------
+        // A concurrent retry with the same Idempotency-Key fails on the unique index → replay below.
         let messageId: Types.ObjectId | null = null;
         if (input.message) {
-          if (input.message.idempotencyKey) {
-            const dup = await Message.findOne({
-              interactionId: interaction._id,
-              idempotencyKey: input.message.idempotencyKey,
-            }).session(session);
-            if (dup) {
-              result = { messageId: ID(dup._id), showEmergencyPanel: shouldShowEmergency(caseDoc.currentBand), replayed: true };
-              return;
-            }
-          }
           interaction.messageSeq = (interaction.messageSeq ?? 0) + 1;
           const [msg] = await Message.create(
             [
@@ -309,9 +347,10 @@ export async function runPipeline(input: RunInput): Promise<RunResult> {
 
         if (allowsTextAnalysis(mode) || allowsScreeners(mode)) {
           // --- 3a. full rules-only scoring ---------------------------------------------
-          if (lexicon && messageId && allowsTextAnalysis(mode) && lexicon.indicators.length) {
-            await Indicator.insertMany(
-              lexicon.indicators.map((i) => ({
+          const newIndicators: Record<string, unknown>[] = [];
+          if (lexicon && messageId && allowsTextAnalysis(mode)) {
+            newIndicators.push(
+              ...lexicon.indicators.map((i) => ({
                 interactionId: interaction._id,
                 caseId: caseDoc._id,
                 dimension: i.dimension,
@@ -330,13 +369,12 @@ export async function runPipeline(input: RunInput): Promise<RunResult> {
                 },
                 modelVersion: LEXICON_VERSION,
               })),
-              { session },
             );
           }
           // AI indicators: only if consent still allows text analysis at write time (ARCHITECTURE §6.5).
-          if (ai && messageId && allowsTextAnalysis(mode) && ai.checked.indicators.length) {
-            await Indicator.insertMany(
-              ai.checked.indicators.map((i) => ({
+          if (ai && messageId && allowsTextAnalysis(mode)) {
+            newIndicators.push(
+              ...ai.checked.indicators.map((i) => ({
                 interactionId: interaction._id,
                 caseId: caseDoc._id,
                 dimension: i.dimension,
@@ -355,22 +393,18 @@ export async function runPipeline(input: RunInput): Promise<RunResult> {
                 },
                 modelVersion: ai!.checked.modelVersion,
               })),
-              { session },
             );
           }
+          if (newIndicators.length) await Indicator.insertMany(newIndicators, { session });
           // NFR-REL-01: limited confidence while any message still waits for AI analysis.
+          // The case flag stays set until the rescore job (task 5.7) clears it.
           if (aiDegraded && messageId) {
             await Job.create(
               [{ type: "rescore", payload: { interactionId: ID(interaction._id), messageId: ID(messageId) }, runAt: new Date(now.getTime() + 60_000) }],
               { session },
             );
           }
-          const pendingRescore = await Job.exists({
-            type: "rescore",
-            "payload.interactionId": ID(interaction._id),
-            doneAt: null,
-          }).session(session);
-          const limitedConfidence = aiDegraded || !!pendingRescore;
+          const limitedConfidence = aiDegraded || caseDoc.limitedConfidence === true;
           const stored = await Indicator.find({ interactionId: interaction._id, status: { $ne: "REJECTED" } })
             .select("dimension source score confidence negated status review flags label")
             .session(session)
@@ -493,12 +527,39 @@ export async function runPipeline(input: RunInput): Promise<RunResult> {
         await interaction.save({ session });
         await caseDoc.save({ session });
 
-        result = { messageId: messageId ? ID(messageId) : null, showEmergencyPanel: shouldShowEmergency(newBand), replayed: false };
+        result = {
+          messageId: messageId ? ID(messageId) : null,
+          showEmergencyPanel: shouldShowEmergency(newBand),
+          replayed: false,
+          turn: {
+            consentGiven: interaction.consents.length > 0,
+            mode,
+            answered: answeredOf(responses),
+            state: flow,
+            lang: interaction.uiLanguage === "hi" ? "hi" : "en",
+          },
+        };
       },
       { readConcern: { level: "snapshot" }, writeConcern: { w: "majority" } },
     );
+  } catch (err) {
+    // Two copies of the same message raced past the pre-check: the second is a replay.
+    if (input.message?.idempotencyKey && isDuplicateIdempotencyKey(err)) {
+      const dup = await Message.findOne({ interactionId: input.interactionId, idempotencyKey: input.message.idempotencyKey })
+        .select("_id")
+        .lean();
+      if (dup) return replayOf(input.interactionId, ID(dup._id));
+    }
+    throw err;
   } finally {
     await session.endSession();
   }
   return result;
+}
+
+/** Idempotent replay (API_CONTRACTS §1): the original message id and the current state. */
+async function replayOf(interactionId: string, messageId: string): Promise<RunResult> {
+  const interaction = await Interaction.findById(interactionId).select("caseId").lean();
+  const caseDoc = interaction ? await Case.findById(interaction.caseId).select("currentBand").lean() : null;
+  return { messageId, showEmergencyPanel: shouldShowEmergency(caseDoc?.currentBand), replayed: true, turn: null };
 }

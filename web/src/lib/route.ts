@@ -125,14 +125,26 @@ export function route<A extends AuthMode, B extends z.ZodType = z.ZodUndefined, 
 
       const params = (await segment?.params) ?? {};
       const user = opts.auth === "staff" ? await loadStaffUser() : null;
-      const victim = opts.auth === "victim" ? await loadVictimSession(req, params.id) : null;
 
-      if (opts.rateLimit !== false && (opts.rateLimit || user || victim)) {
-        const rl =
-          opts.rateLimit ||
-          (victim
-            ? { limit: LIMITS.victimSession, key: () => `victim:${victim.interactionId}` }
-            : { limit: LIMITS.staff, key: (_r: NextRequest, u: StaffUser | null) => `staff:${u?.id}` });
+      // Victim routes: the session check and the per-session counter are independent, so they
+      // run in parallel (one database round trip instead of two). The counter is keyed by the
+      // interaction in the URL; a request with a bad token still fails the session check.
+      let victim: VictimSession | null = null;
+      let victimCount: Promise<Awaited<ReturnType<typeof checkRateLimit>>> | null = null;
+      if (opts.auth === "victim") {
+        await db();
+        if (opts.rateLimit !== false && !opts.rateLimit) {
+          victimCount = checkRateLimit(mongoRateLimitStore, rateKey("route", `victim:${String(params.id)}`), LIMITS.victimSession, Date.now());
+        }
+        [victim] = await Promise.all([loadVictimSession(req, params.id), victimCount]);
+      }
+
+      if (victimCount) {
+        const result = await victimCount;
+        headers = rateLimitHeaders(result);
+        if (!result.allowed) throw new ApiError("RATE_LIMITED", undefined, { headers });
+      } else if (opts.rateLimit !== false && (opts.rateLimit || user || victim)) {
+        const rl = opts.rateLimit || { limit: LIMITS.staff, key: (_r: NextRequest, u: StaffUser | null) => `staff:${u?.id}` };
         await db();
         const result = await checkRateLimit(mongoRateLimitStore, rateKey("route", rl.key(req, user)), rl.limit, Date.now());
         headers = rateLimitHeaders(result);
