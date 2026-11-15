@@ -18,7 +18,10 @@
     "i18n:check": "tsx scripts/check-i18n.ts",
     "stats:rollup": "tsx scripts/rollup.ts",
     "api:client": "tsx scripts/create-api-client.ts",
-    "api:example": "tsx scripts/api-example.ts"
+    "api:example": "tsx scripts/api-example.ts",
+    "measure:latency": "tsx scripts/measure-latency.ts",
+    "eval:outcomes": "tsx scripts/outcomes.ts",
+    "security:bundle": "tsx scripts/check-client-bundle.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
@@ -40,6 +43,7 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
     "@playwright/test": "^1.65.1",
     "@tailwindcss/turbopack": "4.3.3",
     "@types/bcryptjs": "^2.4.6",

@@ -30,7 +30,7 @@ function QuickExitButton() {
       type="button"
       onClick={exit}
       className="min-h-12 rounded-md bg-red-700 px-4 py-2 text-base font-semibold text-white shadow focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-red-900"
-      aria-label={t("quickExitHint")}
+      aria-label={`${t("quickExit")}: ${t("quickExitHint")}`}
     >
       {t("quickExit")} ✕
     </button>

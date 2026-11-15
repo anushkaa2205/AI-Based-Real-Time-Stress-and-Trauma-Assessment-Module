@@ -162,7 +162,7 @@ test("quick exit leaves at once and ends the session (AC-CH-05)", async ({ page 
   const id = await start(page, "en");
   await consent(page, [], "Continue");
   const t0 = Date.now();
-  await page.getByRole("button", { name: "Leave this page at once" }).click();
+  await page.getByRole("button", { name: /Leave this page at once/ }).click();
   await page.waitForURL("https://www.google.com/**");
   expect(Date.now() - t0).toBeLessThan(1_000);
   // The session no longer works.
