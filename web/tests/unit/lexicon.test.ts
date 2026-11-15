@@ -22,7 +22,7 @@ describe("rule files", () => {
   });
 
   it("reports a version", () => {
-    expect(LEXICON_VERSION).toBe("en-1.0+hi-1.0+hinglish-1.0");
+    expect(LEXICON_VERSION).toBe("en-1.0+hi-1.0+hinglish-1.0+mr-0.1-draft+ta-0.1-draft+bn-0.1-draft");
   });
 });
 

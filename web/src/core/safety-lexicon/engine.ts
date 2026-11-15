@@ -19,7 +19,10 @@ import { DIMENSIONS } from "@/models/enums";
 import { CASE_FACTS, OVERRIDE_FLAGS, type CaseFact, type IndicatorInput, type OverrideFlag } from "@/core/scoring/types";
 import en from "./rules/en.json";
 import hi from "./rules/hi.json";
+import bn from "./rules/bn.json";
 import hinglish from "./rules/hinglish.json";
+import mr from "./rules/mr.json";
+import ta from "./rules/ta.json";
 
 const RuleSchema = z
   .object({
@@ -97,7 +100,7 @@ export function compile(raw: unknown): CompiledSet {
   };
 }
 
-const DEFAULT_SETS: readonly CompiledSet[] = [compile(en), compile(hi), compile(hinglish)];
+const DEFAULT_SETS: readonly CompiledSet[] = [compile(en), compile(hi), compile(hinglish), compile(mr), compile(ta), compile(bn)];
 
 export const LEXICON_VERSION = DEFAULT_SETS.map((s) => s.set.version).join("+");
 

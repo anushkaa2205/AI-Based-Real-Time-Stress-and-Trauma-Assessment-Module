@@ -1,0 +1,204 @@
+{
+  "id": "ta",
+  "version": "ta-0.1-draft",
+  "negation": {
+    "cues": [
+      "இல்லை",
+      "வேண்டாம்",
+      "மாட்டேன்",
+      "இல்ல"
+    ],
+    "before": 3,
+    "after": 2
+  },
+  "clauseBreaks": [
+    "ஆனால்",
+    "மற்றும்",
+    "ஏனென்றால்",
+    "அதனால்"
+  ],
+  "rules": [
+    {
+      "id": "TA-SI-INTENT-1",
+      "label": "இன்றே உயிரை மாய்க்கும் எண்ணம் (intent to end life)",
+      "dimension": "SUICIDAL_IDEATION",
+      "score": 0.95,
+      "confidence": 0.85,
+      "flags": [
+        "SUICIDAL_INTENT"
+      ],
+      "patterns": [
+        "(?:இன்று|இப்போதே|இன்றிரவு)\\s+(?:சாகப்\\s+போகிறேன்|தற்கொலை\\s+செய்[\\p{L}\\p{M}]*)",
+        "தற்கொலை\\s+செய்(?:து\\s+கொள்ளப்|யப்)\\s+போகிறேன்",
+        "(?:விஷம்|தூக்கு)\\s+(?:குடிக்கப்|போட்டுக்கொள்ளப்|மாட்டிக்கொள்ளப்)\\s+போகிறேன்"
+      ]
+    },
+    {
+      "id": "TA-SI-EXPLICIT-1",
+      "label": "சாக விரும்புகிறேன் (wants to die)",
+      "dimension": "SUICIDAL_IDEATION",
+      "score": 0.9,
+      "confidence": 0.8,
+      "flags": [
+        "PASSIVE_SUICIDAL_IDEATION"
+      ],
+      "patterns": [
+        "சாக\\s+(?:வேண்டும்\\s+போல|விரும்புகிறேன்)[\\p{L}\\p{M}]*",
+        "செத்துப்\\s+போக\\s+(?:வேண்டும்|விரும்புகிறேன்)[\\p{L}\\p{M}]*"
+      ]
+    },
+    {
+      "id": "TA-SI-INDIRECT-1",
+      "label": "வாழ விருப்பம் இல்லை (indirect)",
+      "dimension": "SUICIDAL_IDEATION",
+      "score": 0.75,
+      "confidence": 0.7,
+      "flags": [
+        "PASSIVE_SUICIDAL_IDEATION"
+      ],
+      "patterns": [
+        "(?:உயிர்\\s+)?வாழ\\s+(?:விருப்பம்|ஆசை)\\s+இல்லை",
+        "நான்\\s+இல்லாமல்\\s+எல்லோரும்\\s+நன்றாக"
+      ]
+    },
+    {
+      "id": "TA-SELFHARM-1",
+      "label": "தன்னைத்தானே காயப்படுத்துதல் (self-harm)",
+      "dimension": "SUICIDAL_IDEATION",
+      "score": 0.8,
+      "confidence": 0.7,
+      "flags": [
+        "PASSIVE_SUICIDAL_IDEATION"
+      ],
+      "patterns": [
+        "என்னை\\s+நானே\\s+(?:காயப்படுத்|வெட்டி)[\\p{L}\\p{M}]*"
+      ]
+    },
+    {
+      "id": "TA-DANGER-PRESENT-1",
+      "label": "குற்றவாளி இப்போது அருகில் (accused nearby now)",
+      "dimension": "INTIMIDATION",
+      "score": 0.95,
+      "confidence": 0.8,
+      "flags": [
+        "ACCUSED_PRESENT"
+      ],
+      "patterns": [
+        "வீட்டு\\s+(?:வாசலில்|முன்னால்)\\s+(?:நிற்கிறார்கள்|இருக்கிறார்கள்|காத்திருக்கிறார்கள்)",
+        "(?:அவர்கள்|அவங்க)\\s+(?:இப்போது\\s+)?இங்கே\\s+(?:இருக்கிறார்கள்|வந்துவிட்டார்கள்|இருக்காங்க)",
+        "வீட்டுக்கு\\s+வெளியே\\s+(?:நிற்கிறார்கள்|காத்திருக்கிறார்கள்)"
+      ]
+    },
+    {
+      "id": "TA-DANGER-CONFINED-1",
+      "label": "அடைத்து வைத்திருக்கிறார்கள் (confined)",
+      "dimension": "INTIMIDATION",
+      "score": 0.9,
+      "confidence": 0.8,
+      "flags": [
+        "CONFINED"
+      ],
+      "patterns": [
+        "(?:அடைத்து|பூட்டி)\\s+வைத்திருக்கிறார்கள்",
+        "வெளியே\\s+போக\\s+விடவில்லை"
+      ]
+    },
+    {
+      "id": "TA-DANGER-INJURY-1",
+      "label": "இப்போது காயம், ரத்தம் (current injury)",
+      "dimension": "SEVERE_TRAUMA",
+      "score": 0.85,
+      "confidence": 0.75,
+      "flags": [
+        "SERIOUS_INJURY"
+      ],
+      "patterns": [
+        "ரத்தம்\\s+(?:வருகிறது|கொட்டுகிறது)",
+        "(?:பலத்த|கடுமையான)\\s+காயம்"
+      ]
+    },
+    {
+      "id": "TA-THREAT-LIFE-1",
+      "label": "கொலை மிரட்டல் (threat to life)",
+      "dimension": "INTIMIDATION",
+      "score": 0.9,
+      "confidence": 0.8,
+      "flags": [
+        "THREAT_TO_LIFE"
+      ],
+      "patterns": [
+        "கொன்றுவிடுவோம்",
+        "கொலை\\s+மிரட்டல்",
+        "உயிரோடு\\s+விட\\s+மாட்டோம்"
+      ]
+    },
+    {
+      "id": "TA-THREAT-1",
+      "label": "மிரட்டல் (threats)",
+      "dimension": "INTIMIDATION",
+      "score": 0.75,
+      "confidence": 0.7,
+      "patterns": [
+        "மிரட்டு[\\p{L}\\p{M}]*",
+        "மிரட்டல்[\\p{L}\\p{M}]*"
+      ]
+    },
+    {
+      "id": "TA-PRESSURE-1",
+      "label": "புகாரைத் திரும்பப் பெற அழுத்தம் (pressure to withdraw)",
+      "dimension": "INTIMIDATION",
+      "score": 0.85,
+      "confidence": 0.8,
+      "flags": [
+        "PRESSURE_TO_WITHDRAW"
+      ],
+      "patterns": [
+        "(?:புகாரை|வழக்கை|கேஸை|கேஸ)\\s+(?:திரும்பப்\\s+பெற|வாபஸ்\\s+வாங்க)[\\p{L}\\p{M}]*",
+        "சமரசம்\\s+செய்ய[\\p{L}\\p{M}]*",
+        "சாட்சியை\\s+மாற்ற[\\p{L}\\p{M}]*"
+      ]
+    },
+    {
+      "id": "TA-ISOLATION-BOYCOTT-1",
+      "label": "சமூகப் புறக்கணிப்பு (boycott)",
+      "dimension": "SOCIAL_ISOLATION",
+      "score": 0.8,
+      "confidence": 0.75,
+      "patterns": [
+        "ஒதுக்கி\\s+வைத்திருக்கிறார்கள்",
+        "தண்ணீர்\\s+எடுக்க\\s+விடவில்லை",
+        "புறக்கணி[\\p{L}\\p{M}]*"
+      ]
+    },
+    {
+      "id": "TA-ISOLATION-DISPLACED-1",
+      "label": "ஊரை விட்டு விரட்டினார்கள் (displaced)",
+      "dimension": "SOCIAL_ISOLATION",
+      "score": 0.85,
+      "confidence": 0.75,
+      "flags": [
+        "DISPLACED"
+      ],
+      "patterns": [
+        "(?:ஊரை|வீட்டை)\\s+விட்டு\\s+(?:துரத்தி|விரட்டி)[\\p{L}\\p{M}]*"
+      ]
+    },
+    {
+      "id": "TA-FACT-NOT-REGISTERED-1",
+      "label": "புகார் பதிவு செய்யப்படவில்லை",
+      "fact": "COMPLAINT_NOT_REGISTERED",
+      "patterns": [
+        "(?:புகாரை|எஃப்ஐஆர்)\\s+பதிவு\\s+செய்யவில்லை",
+        "காவல்துறை\\s+புகாரை\\s+(?:எடுக்கவில்லை|ஏற்கவில்லை)"
+      ]
+    },
+    {
+      "id": "TA-FACT-WITNESS-1",
+      "label": "சாட்சிகளுக்கு மிரட்டல்",
+      "fact": "WITNESS_UNDER_THREAT",
+      "patterns": [
+        "சாட்சிகளை\\s+மிரட்டு[\\p{L}\\p{M}]*"
+      ]
+    }
+  ]
+}

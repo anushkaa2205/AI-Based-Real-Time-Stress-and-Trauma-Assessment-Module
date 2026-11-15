@@ -1,0 +1,204 @@
+{
+  "id": "mr",
+  "version": "mr-0.1-draft",
+  "negation": {
+    "cues": [
+      "नाही",
+      "नको",
+      "न"
+    ],
+    "before": 3,
+    "after": 2
+  },
+  "clauseBreaks": [
+    "पण",
+    "परंतु",
+    "आणि",
+    "कारण",
+    "म्हणून"
+  ],
+  "rules": [
+    {
+      "id": "MR-SI-INTENT-1",
+      "label": "आज/आत्ता जीव देण्याचा इरादा (intent to end life)",
+      "dimension": "SUICIDAL_IDEATION",
+      "score": 0.95,
+      "confidence": 0.85,
+      "flags": [
+        "SUICIDAL_INTENT"
+      ],
+      "patterns": [
+        "(?:आज|आत्ता|आज\\s+रात्री)\\s+(?:मी\\s+)?(?:जीव\\s+देणार|मरून\\s+जाणार|आत्महत्या\\s+करणार)",
+        "जीव\\s+देणार",
+        "आत्महत्या\\s+(?:करणार|करेन)",
+        "(?:विष|फास)\\s+(?:घेणार|घेईन|लावणार|लावेन)"
+      ]
+    },
+    {
+      "id": "MR-SI-EXPLICIT-1",
+      "label": "मरावेसे वाटते (wants to die)",
+      "dimension": "SUICIDAL_IDEATION",
+      "score": 0.9,
+      "confidence": 0.8,
+      "flags": [
+        "PASSIVE_SUICIDAL_IDEATION"
+      ],
+      "patterns": [
+        "मरावेसे\\s+वाटते",
+        "मला\\s+मरायचे\\s+आहे",
+        "मरून\\s+जावेसे\\s+वाटते"
+      ]
+    },
+    {
+      "id": "MR-SI-INDIRECT-1",
+      "label": "जगावेसे वाटत नाही (indirect)",
+      "dimension": "SUICIDAL_IDEATION",
+      "score": 0.75,
+      "confidence": 0.7,
+      "flags": [
+        "PASSIVE_SUICIDAL_IDEATION"
+      ],
+      "patterns": [
+        "जगावेसे\\s+वाटत\\s+नाही",
+        "जगण्याची\\s+इच्छा\\s+(?:उरली\\s+)?नाही",
+        "माझ्याशिवाय\\s+सगळे\\s+(?:बरे|ठीक)"
+      ]
+    },
+    {
+      "id": "MR-SELFHARM-1",
+      "label": "स्वतःला इजा (self-harm)",
+      "dimension": "SUICIDAL_IDEATION",
+      "score": 0.8,
+      "confidence": 0.7,
+      "flags": [
+        "PASSIVE_SUICIDAL_IDEATION"
+      ],
+      "patterns": [
+        "स्वतःला\\s+(?:इजा|दुखापत)\\s+(?:करते|करतो|करीन|केली)"
+      ]
+    },
+    {
+      "id": "MR-DANGER-PRESENT-1",
+      "label": "आरोपी आत्ता घराबाहेर/जवळ (accused nearby now)",
+      "dimension": "INTIMIDATION",
+      "score": 0.95,
+      "confidence": 0.8,
+      "flags": [
+        "ACCUSED_PRESENT"
+      ],
+      "patterns": [
+        "(?:घराबाहेर|दारात|दाराबाहेर|घरासमोर)\\s+(?:उभे|बसले|फिरत)\\s+आहेत",
+        "ते\\s+(?:लोक\\s+)?(?:आत्ता\\s+)?इथे\\s+(?:आहेत|आले\\s+आहेत)"
+      ]
+    },
+    {
+      "id": "MR-DANGER-CONFINED-1",
+      "label": "कोंडून ठेवले (confined)",
+      "dimension": "INTIMIDATION",
+      "score": 0.9,
+      "confidence": 0.8,
+      "flags": [
+        "CONFINED"
+      ],
+      "patterns": [
+        "(?:कोंडून|डांबून)\\s+ठेवले",
+        "बाहेर\\s+(?:जाऊ|पडू)\\s+देत\\s+नाहीत"
+      ]
+    },
+    {
+      "id": "MR-DANGER-INJURY-1",
+      "label": "आत्ता जखम, रक्त येत आहे (current injury)",
+      "dimension": "SEVERE_TRAUMA",
+      "score": 0.85,
+      "confidence": 0.75,
+      "flags": [
+        "SERIOUS_INJURY"
+      ],
+      "patterns": [
+        "रक्त\\s+(?:येत|वाहत)\\s+आहे",
+        "(?:खूप|गंभीर)\\s+(?:मार|जखम)"
+      ]
+    },
+    {
+      "id": "MR-THREAT-LIFE-1",
+      "label": "जीवे मारण्याची धमकी (threat to life)",
+      "dimension": "INTIMIDATION",
+      "score": 0.9,
+      "confidence": 0.8,
+      "flags": [
+        "THREAT_TO_LIFE"
+      ],
+      "patterns": [
+        "(?:जीवे|ठार)\\s+मारण्याची\\s+धमकी",
+        "जिवंत\\s+सोडणार\\s+नाही"
+      ]
+    },
+    {
+      "id": "MR-THREAT-1",
+      "label": "धमकी (threats)",
+      "dimension": "INTIMIDATION",
+      "score": 0.75,
+      "confidence": 0.7,
+      "patterns": [
+        "धमकी\\s+(?:दिली|देत|देतात)",
+        "धमकावत"
+      ]
+    },
+    {
+      "id": "MR-PRESSURE-1",
+      "label": "केस/तक्रार मागे घेण्याचा दबाव (pressure to withdraw)",
+      "dimension": "INTIMIDATION",
+      "score": 0.85,
+      "confidence": 0.8,
+      "flags": [
+        "PRESSURE_TO_WITHDRAW"
+      ],
+      "patterns": [
+        "(?:केस|तक्रार|एफआयआर)\\s+मागे\\s+घे[\\p{L}\\p{M}]*",
+        "तडजोड\\s+कर[\\p{L}\\p{M}]*",
+        "साक्ष\\s+बदल[\\p{L}\\p{M}]*"
+      ]
+    },
+    {
+      "id": "MR-ISOLATION-BOYCOTT-1",
+      "label": "बहिष्कार / पाणी भरू देत नाहीत (boycott)",
+      "dimension": "SOCIAL_ISOLATION",
+      "score": 0.8,
+      "confidence": 0.75,
+      "patterns": [
+        "बहिष्कार",
+        "पाणी\\s+भरू\\s+देत\\s+नाहीत"
+      ]
+    },
+    {
+      "id": "MR-ISOLATION-DISPLACED-1",
+      "label": "गावातून/घरातून हाकलले (displaced)",
+      "dimension": "SOCIAL_ISOLATION",
+      "score": 0.85,
+      "confidence": 0.75,
+      "flags": [
+        "DISPLACED"
+      ],
+      "patterns": [
+        "(?:गावातून|घरातून)\\s+(?:हाकलून\\s+दिले|बाहेर\\s+काढले)"
+      ]
+    },
+    {
+      "id": "MR-FACT-NOT-REGISTERED-1",
+      "label": "तक्रार नोंदवली नाही",
+      "fact": "COMPLAINT_NOT_REGISTERED",
+      "patterns": [
+        "(?:तक्रार|एफआयआर)\\s+(?:नोंदवली|घेतली)\\s+नाही",
+        "पोलिसांनी\\s+(?:तक्रार|एफआयआर)\\s+घेतली\\s+नाही"
+      ]
+    },
+    {
+      "id": "MR-FACT-WITNESS-1",
+      "label": "साक्षीदारांना धमकी",
+      "fact": "WITNESS_UNDER_THREAT",
+      "patterns": [
+        "साक्षीदारांना\\s+(?:धमकी|धमकावले|मारले)"
+      ]
+    }
+  ]
+}

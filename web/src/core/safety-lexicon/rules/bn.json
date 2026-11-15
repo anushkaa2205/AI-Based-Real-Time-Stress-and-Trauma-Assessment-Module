@@ -1,0 +1,204 @@
+{
+  "id": "bn",
+  "version": "bn-0.1-draft",
+  "negation": {
+    "cues": [
+      "না",
+      "নয়",
+      "নেই",
+      "নি"
+    ],
+    "before": 3,
+    "after": 2
+  },
+  "clauseBreaks": [
+    "কিন্তু",
+    "এবং",
+    "আর",
+    "কারণ",
+    "তাই"
+  ],
+  "rules": [
+    {
+      "id": "BN-SI-INTENT-1",
+      "label": "আজই জীবন শেষ করার ইচ্ছা (intent to end life)",
+      "dimension": "SUICIDAL_IDEATION",
+      "score": 0.95,
+      "confidence": 0.85,
+      "flags": [
+        "SUICIDAL_INTENT"
+      ],
+      "patterns": [
+        "(?:আজ|এখনই|আজ\\s+রাতে)\\s+(?:মরে\\s+যাব|আত্মহত্যা\\s+করব)",
+        "আত্মহত্যা\\s+করব",
+        "(?:বিষ\\s+খাব|গলায়\\s+দড়ি\\s+দেব)"
+      ]
+    },
+    {
+      "id": "BN-SI-EXPLICIT-1",
+      "label": "মরে যেতে ইচ্ছে করছে (wants to die)",
+      "dimension": "SUICIDAL_IDEATION",
+      "score": 0.9,
+      "confidence": 0.8,
+      "flags": [
+        "PASSIVE_SUICIDAL_IDEATION"
+      ],
+      "patterns": [
+        "মরে\\s+যেতে\\s+ইচ্ছে\\s+(?:করছে|করে)",
+        "মরতে\\s+চাই"
+      ]
+    },
+    {
+      "id": "BN-SI-INDIRECT-1",
+      "label": "বাঁচতে ইচ্ছে করে না (indirect)",
+      "dimension": "SUICIDAL_IDEATION",
+      "score": 0.75,
+      "confidence": 0.7,
+      "flags": [
+        "PASSIVE_SUICIDAL_IDEATION"
+      ],
+      "patterns": [
+        "বাঁচতে\\s+ইচ্ছে\\s+করে\\s+না",
+        "আমি\\s+না\\s+থাকলে\\s+সবাই\\s+ভালো\\s+থাকবে"
+      ]
+    },
+    {
+      "id": "BN-SELFHARM-1",
+      "label": "নিজেকে আঘাত (self-harm)",
+      "dimension": "SUICIDAL_IDEATION",
+      "score": 0.8,
+      "confidence": 0.7,
+      "flags": [
+        "PASSIVE_SUICIDAL_IDEATION"
+      ],
+      "patterns": [
+        "নিজেকে\\s+(?:আঘাত|কষ্ট)\\s+(?:দিই|দিচ্ছি|দেব|দিয়েছি)"
+      ]
+    },
+    {
+      "id": "BN-DANGER-PRESENT-1",
+      "label": "অভিযুক্ত এখন কাছে (accused nearby now)",
+      "dimension": "INTIMIDATION",
+      "score": 0.95,
+      "confidence": 0.8,
+      "flags": [
+        "ACCUSED_PRESENT"
+      ],
+      "patterns": [
+        "বাড়ির\\s+(?:বাইরে|সামনে)\\s+দাঁড়িয়ে\\s+আছে",
+        "ওরা\\s+(?:এখন\\s+)?এখানে\\s+(?:আছে|এসেছে)"
+      ]
+    },
+    {
+      "id": "BN-DANGER-CONFINED-1",
+      "label": "আটকে রেখেছে (confined)",
+      "dimension": "INTIMIDATION",
+      "score": 0.9,
+      "confidence": 0.8,
+      "flags": [
+        "CONFINED"
+      ],
+      "patterns": [
+        "(?:আটকে|তালা\\s+দিয়ে)\\s+রেখেছে",
+        "বাইরে\\s+যেতে\\s+দিচ্ছে\\s+না"
+      ]
+    },
+    {
+      "id": "BN-DANGER-INJURY-1",
+      "label": "এখন আঘাত, রক্ত পড়ছে (current injury)",
+      "dimension": "SEVERE_TRAUMA",
+      "score": 0.85,
+      "confidence": 0.75,
+      "flags": [
+        "SERIOUS_INJURY"
+      ],
+      "patterns": [
+        "রক্ত\\s+(?:পড়ছে|বেরোচ্ছে)",
+        "(?:গুরুতর|খুব)\\s+আঘাত"
+      ]
+    },
+    {
+      "id": "BN-THREAT-LIFE-1",
+      "label": "প্রাণনাশের হুমকি (threat to life)",
+      "dimension": "INTIMIDATION",
+      "score": 0.9,
+      "confidence": 0.8,
+      "flags": [
+        "THREAT_TO_LIFE"
+      ],
+      "patterns": [
+        "মেরে\\s+ফেলার\\s+হুমকি",
+        "প্রাণে\\s+মেরে\\s+ফেলবে",
+        "জানে\\s+মেরে\\s+দেবে"
+      ]
+    },
+    {
+      "id": "BN-THREAT-1",
+      "label": "হুমকি (threats)",
+      "dimension": "INTIMIDATION",
+      "score": 0.75,
+      "confidence": 0.7,
+      "patterns": [
+        "হুমকি[\\p{L}\\p{M}]*",
+        "শাসাচ্ছে"
+      ]
+    },
+    {
+      "id": "BN-PRESSURE-1",
+      "label": "মামলা তুলে নেওয়ার চাপ (pressure to withdraw)",
+      "dimension": "INTIMIDATION",
+      "score": 0.85,
+      "confidence": 0.8,
+      "flags": [
+        "PRESSURE_TO_WITHDRAW"
+      ],
+      "patterns": [
+        "(?:মামলা|অভিযোগ|কেস)\\s+(?:তুলে\\s+নিতে|প্রত্যাহার\\s+করতে)",
+        "আপস\\s+করতে",
+        "সাক্ষ্য\\s+বদলাতে"
+      ]
+    },
+    {
+      "id": "BN-ISOLATION-BOYCOTT-1",
+      "label": "একঘরে / জল নিতে দেয় না (boycott)",
+      "dimension": "SOCIAL_ISOLATION",
+      "score": 0.8,
+      "confidence": 0.75,
+      "patterns": [
+        "একঘরে\\s+করে\\s+রেখেছে",
+        "জল\\s+নিতে\\s+দেয়\\s+না",
+        "বয়কট"
+      ]
+    },
+    {
+      "id": "BN-ISOLATION-DISPLACED-1",
+      "label": "গ্রাম থেকে তাড়িয়ে দিয়েছে (displaced)",
+      "dimension": "SOCIAL_ISOLATION",
+      "score": 0.85,
+      "confidence": 0.75,
+      "flags": [
+        "DISPLACED"
+      ],
+      "patterns": [
+        "(?:গ্রাম|বাড়ি)\\s+থেকে\\s+(?:তাড়িয়ে|বের\\s+করে)\\s+দিয়েছে"
+      ]
+    },
+    {
+      "id": "BN-FACT-NOT-REGISTERED-1",
+      "label": "অভিযোগ নথিভুক্ত হয়নি",
+      "fact": "COMPLAINT_NOT_REGISTERED",
+      "patterns": [
+        "(?:অভিযোগ|এফআইআর)\\s+(?:নেয়নি|নথিভুক্ত\\s+করেনি)",
+        "পুলিশ\\s+(?:অভিযোগ|এফআইআর)\\s+নেয়নি"
+      ]
+    },
+    {
+      "id": "BN-FACT-WITNESS-1",
+      "label": "সাক্ষীদের হুমকি",
+      "fact": "WITNESS_UNDER_THREAT",
+      "patterns": [
+        "সাক্ষীদের\\s+(?:হুমকি|শাসিয়েছে|মেরেছে)"
+      ]
+    }
+  ]
+}
