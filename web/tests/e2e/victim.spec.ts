@@ -126,6 +126,9 @@ test("all consent declined: complaint still filed, safety check runs, no screene
 
   await page.getByRole("button", { name: "Finish" }).click();
   await expect(page.getByTestId("docket")).toHaveText(/^NHAA-/);
+  // The module is not the grievance system: the closing note must not claim a registered complaint (audit G3).
+  await expect(page.getByText("Your information has been received.", { exact: false })).toBeVisible();
+  await expect(page.getByText(/complaint is registered/i)).toHaveCount(0);
   expect(leaks).toEqual([]);
 });
 
