@@ -183,6 +183,7 @@ describe("safety overrides, one test each (AC-RISK-02, Appendix B)", () => {
     ["OV-6", "PASSIVE_SUICIDAL_IDEATION", "HIGH"],
     ["OV-7", "PRESSURE_TO_WITHDRAW", "HIGH"],
     ["OV-8", "DISPLACED", "MODERATE"],
+    ["OV-9", "NOT_SAFE_NOW", "HIGH"],
   ];
 
   it.each(cases)("%s (%s) forces at least %s whatever the SVI", (id, flag, minBand) => {

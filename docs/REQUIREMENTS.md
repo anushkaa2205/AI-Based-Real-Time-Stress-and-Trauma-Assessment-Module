@@ -302,7 +302,7 @@ Long-term monitoring after the complaint is filed is covered by the sister probl
 | NFR-PERF-01 | The SVI shall update within **3 seconds** of a text message being submitted (95th percentile). | M |
 | NFR-PERF-02 | The SVI shall update within **5 seconds** of each voice window ending (95th percentile). | M |
 | NFR-PERF-03 | A Critical alert shall reach the counsellor dashboard within **5 seconds** of the band changing. | M |
-| NFR-PERF-04 | Safety-lexicon checks (FR-NLP-10) shall run in **under 500 ms**, independent of the ML model. | M |
+| NFR-PERF-04 | Safety-lexicon checks (FR-NLP-10) shall run in **under 50 ms**, independent of the ML model. | M |
 | NFR-PERF-05 | Dashboards shall load in under 3 seconds with 1,000 cases in the database. | S |
 
 ### 4.5 Accessibility and usability (NFR-ACC)
@@ -587,6 +587,8 @@ SVI = round( 100 · Σ_d ( W_d · dimension_score(d) ) )      with Σ_d W_d = 1
 
 **Step 3, band.** 0–29 Low · 30–54 Moderate · 55–74 High · 75–100 Critical, then apply the safety overrides in Appendix B.
 
+**"No" answers (denials).** A "No" to a safety-check or suicide-screen question counts as a screener score of 0 for that dimension, so it can lower the SVI. It can never lower the band: the band is at least what the other evidence gives without the denials, and overrides from other sources still apply (NFR-ETH-05).
+
 ### Appendix B: Safety overrides (default)
 | # | Condition | Minimum band |
 |---|---|---|
@@ -598,6 +600,7 @@ SVI = round( 100 · Σ_d ( W_d · dimension_score(d) ) )      with Σ_d W_d = 1
 | OV-6 | Passive suicidal ideation (wishing to be dead, without a plan) | High |
 | OV-7 | Pressure or threats to withdraw the complaint or turn hostile as a witness | High |
 | OV-8 | Displaced or homeless as a result of the atrocity | Moderate |
+| OV-9 | Says they are **not safe right now** (safety check) | High |
 
 ### Appendix C: Recommendation mapping (default)
 | Trigger (indicator or band) | Recommendation | Responsible | Default urgency |

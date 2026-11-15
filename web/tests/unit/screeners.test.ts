@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { contextSignals } from "@/core/scoring/context";
 import { assess } from "@/core/scoring/assess";
+import type { IndicatorInput, OverrideFlag } from "@/core/scoring/types";
+import { BAND_RANK } from "@/models/enums";
 import { DEFAULT_CONFIG } from "@/core/scoring/defaultConfig";
 import { ITEMS } from "@/core/screeners/items";
 import { scoreAll, scoreInstrument, screenerSignals, type ScreenerResponseInput } from "@/core/screeners/score";
@@ -104,17 +106,41 @@ describe("screener → dimensions", () => {
     const r = screenerSignals([{ instrument: "SAFETY_CHECK", itemCode: "SAFETY_SAFE_NOW", value: 0 }]);
     expect(r.facts).toEqual(["NOT_SAFE_NOW"]);
     expect(r.indicators[0]?.dimension).toBe("FEAR_ANXIETY");
+    expect(r.indicators[0]?.flags).toEqual(["NOT_SAFE_NOW"]);
   });
 
-  it("'no' to safety and suicide questions never produces a zero that could dilute other evidence (NFR-ETH-05)", () => {
+  it("'no' to safety and suicide questions gives zero 'denial' signals (decided 2026-11-15)", () => {
     const r = screenerSignals([
       { instrument: "SAFETY_CHECK", itemCode: "SAFETY_SAFE_NOW", value: 1 },
       { instrument: "SAFETY_CHECK", itemCode: "SAFETY_ACCUSED_NEARBY", value: 0 },
       { instrument: "SAFETY_CHECK", itemCode: "SAFETY_SUICIDAL_THOUGHTS", value: 0 },
       ...answers("CSSRS_SCREEN", [0, 0, 0, 0, 0, 0], "CSSRS"),
     ]);
-    expect(r.indicators).toEqual([]);
+    expect(r.indicators.map((i) => [i.dimension, i.score, i.denial])).toEqual([
+      ["INTIMIDATION", 0, true],
+      ["SUICIDAL_IDEATION", 0, true],
+      ["SUICIDAL_IDEATION", 0, true],
+    ]);
+    expect(r.indicators.every((i) => !i.flags)).toBe(true);
     expect(r.facts).toEqual([]);
+  });
+
+  it("a 'no' may lower the SVI but never the band, and text overrides still fire (NFR-ETH-05)", () => {
+    const text = (score: number, flags?: OverrideFlag[]): IndicatorInput => ({ id: "t1", dimension: "SUICIDAL_IDEATION", source: "TEXT_NLP", score, confidence: 0.9, ...(flags ? { flags } : {}) });
+    const no = screenerSignals([{ instrument: "SAFETY_CHECK", itemCode: "SAFETY_SUICIDAL_THOUGHTS", value: 0 }]).indicators;
+    const others: IndicatorInput[] = [
+      { id: "t2", dimension: "SEVERE_TRAUMA", source: "TEXT_NLP", score: 1, confidence: 0.9 },
+      { id: "t3", dimension: "INTIMIDATION", source: "TEXT_NLP", score: 1, confidence: 0.9 },
+      { id: "t4", dimension: "DEPRESSION", source: "TEXT_NLP", score: 1, confidence: 0.9 },
+      { id: "t5", dimension: "FEAR_ANXIETY", source: "TEXT_NLP", score: 1, confidence: 0.9 },
+    ];
+    const base = assess({ indicators: [text(1), ...others], config: DEFAULT_CONFIG });
+    const withNo = assess({ indicators: [text(1), ...others, ...no], config: DEFAULT_CONFIG });
+    expect(withNo.svi).toBeLessThan(base.svi);
+    expect(BAND_RANK[withNo.band]).toBeGreaterThanOrEqual(BAND_RANK[base.band]);
+    expect(withNo.band).toBe(base.band);
+    const flagged = assess({ indicators: [text(1, ["SUICIDAL_INTENT"]), ...no], config: DEFAULT_CONFIG });
+    expect(flagged.band).toBe("CRITICAL");
   });
 
   it.each([

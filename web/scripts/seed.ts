@@ -125,9 +125,9 @@ async function seedScoringConfig() {
       notes: "Defaults from REQUIREMENTS.md Appendices A–C",
       createdById: admin._id,
     });
-    console.log("scoring config: v1 created and active");
+    console.log(`scoring config: v${c.version} created and active`);
   } else {
-    console.log("scoring config: v1 already present (append-only, left unchanged)");
+    console.log(`scoring config: v${c.version} already present (append-only, left unchanged)`);
   }
 }
 

@@ -6,7 +6,7 @@
 import type { ScoringConfig } from "./types";
 
 export const DEFAULT_CONFIG: ScoringConfig = {
-  version: 1,
+  version: 2, // v2: OV-9 "not safe right now" → minimum High
 
   // Appendix A, step 2 (sums to 1)
   dimensionWeights: {
@@ -84,6 +84,12 @@ export const DEFAULT_CONFIG: ScoringConfig = {
       whenAny: ["DISPLACED"],
       minBand: "MODERATE",
       label: { en: "displaced or homeless because of the atrocity", hi: "घटना के कारण घर छूटा या बेघर" },
+    },
+    {
+      id: "OV-9",
+      whenAny: ["NOT_SAFE_NOW"],
+      minBand: "HIGH",
+      label: { en: "says they are not safe right now", hi: "अभी सुरक्षित महसूस नहीं करते" },
     },
   ],
 

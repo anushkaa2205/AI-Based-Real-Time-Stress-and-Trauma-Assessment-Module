@@ -83,6 +83,11 @@ function ind(
   };
 }
 
+/** A "No" to a safety/suicide question: score 0, marked so it can never lower the band. */
+function denial(dimension: IndicatorInput["dimension"], label: string, itemCode: string): IndicatorInput {
+  return { ...ind(dimension, 0, SCREENER_CONFIDENCE, label, itemCode), denial: true };
+}
+
 /** Ratio indicator for summed instruments, scaled to the items answered. */
 function ratio(instrument: Instrument, a: Map<string, number>) {
   const items = itemsOf(instrument);
@@ -112,7 +117,7 @@ export function screenerSignals(responses: readonly ScreenerResponseInput[]): Sc
   // Safety check (FR-SCR-01)
   if (a.get("SAFETY_SAFE_NOW") === 0) {
     facts.push("NOT_SAFE_NOW");
-    indicators.push(ind("FEAR_ANXIETY", 0.8, SCREENER_CONFIDENCE, "Safety check: does not feel safe right now", "SAFETY_SAFE_NOW"));
+    indicators.push(ind("FEAR_ANXIETY", 0.8, SCREENER_CONFIDENCE, "Safety check: does not feel safe right now", "SAFETY_SAFE_NOW", ["NOT_SAFE_NOW"]));
   }
   if (yes("SAFETY_ACCUSED_NEARBY")) {
     indicators.push(
@@ -121,6 +126,7 @@ export function screenerSignals(responses: readonly ScreenerResponseInput[]): Sc
       ]),
     );
   }
+  if (a.get("SAFETY_ACCUSED_NEARBY") === 0) indicators.push(denial("INTIMIDATION", "Safety check: says the accused is not nearby", "SAFETY_ACCUSED_NEARBY"));
   if (yes("SAFETY_SUICIDAL_INTENT")) {
     indicators.push(
       ind("SUICIDAL_IDEATION", 1, SCREENER_CONFIDENCE, "Safety check: thoughts of ending life, with intent", "SAFETY_SUICIDAL_INTENT", [
@@ -133,6 +139,8 @@ export function screenerSignals(responses: readonly ScreenerResponseInput[]): Sc
         "PASSIVE_SUICIDAL_IDEATION",
       ]),
     );
+  } else if (a.get("SAFETY_SUICIDAL_THOUGHTS") === 0) {
+    indicators.push(denial("SUICIDAL_IDEATION", "Safety check: says no thoughts of ending life", "SAFETY_SUICIDAL_THOUGHTS"));
   }
 
   // PHQ-2 → depression, GAD-2 → fear/anxiety, PC-PTSD-5 → severe trauma
@@ -156,6 +164,8 @@ export function screenerSignals(responses: readonly ScreenerResponseInput[]): Sc
     ["CSSRS_1", 0.5, "PASSIVE_SUICIDAL_IDEATION"],
   ];
   const top = levels.find(([code]) => yes(code));
+  const cssrsAnswered = levels.some(([code]) => a.has(code));
+  if (!top && cssrsAnswered) indicators.push(denial("SUICIDAL_IDEATION", "Suicide-risk screen: \"no\" to the questions answered", "CSSRS"));
   if (top) {
     const [code, score, flag] = top;
     indicators.push(ind("SUICIDAL_IDEATION", score, SCREENER_CONFIDENCE, `Suicide-risk screen: "yes" to ${code}`, code, [flag]));

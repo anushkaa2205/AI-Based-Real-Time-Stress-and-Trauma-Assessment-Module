@@ -22,6 +22,7 @@ export const OVERRIDE_FLAGS = [
   "SEXUAL_OFFENCE_MINOR", // sexual offence and the victim is a minor
   "PRESSURE_TO_WITHDRAW", // pressure to withdraw the complaint or turn hostile
   "DISPLACED", // displaced or homeless because of the atrocity
+  "NOT_SAFE_NOW", // says they are not safe right now (safety check; OV-9, decided 2026-11-15)
 ] as const;
 export type OverrideFlag = (typeof OVERRIDE_FLAGS)[number];
 
@@ -50,6 +51,11 @@ export interface IndicatorInput {
   flags?: readonly OverrideFlag[];
   /** Short staff-facing label, e.g. "Pressure to withdraw the complaint" */
   label?: string;
+  /**
+   * A "No" to a safety or suicide question, scored as 0 (decided 2026-11-15).
+   * It may lower the SVI but never the band (NFR-ETH-05): see assess().
+   */
+  denial?: boolean;
 }
 
 export interface BandThresholds {
