@@ -16,7 +16,7 @@ Update this table as work finishes.
 | 4. AI text analysis | M2 Text MVP | In progress: 4.1–4.9 done and verified live (Groq + Gemini overflow); 4.10 results recorded, weight tuning waits for reviewed labels; text latency p95 4.2 s in dev (target 3 s) |
 | 5. Responder dashboards and live alerts | M3 Responder loop | Done (5.1–5.9; verified with Pusher: Critical alert on screen in under 5 s; 13 Playwright tests pass. 5.5 auto-assignment (S) deferred) |
 | 6. Recommendations, referrals, stakeholder views | M3 Responder loop | Done (6.1–6.8; AC-REC-03/05, AC-DSH-01/03 pass in Playwright. AC-REC-01/02 covered by the Phase 2 engine tests and the eval set. AC-ALR-01's 5 s check failed on the last run only because Atlas round trips were ~200 ms instead of ~37 ms; re-run on a normal network) |
-| 7. Voice, operator console, IVRS | M4 Voice | Not started |
+| 7. Voice, operator console, IVRS | M4 Voice | Done except 7.9 (C, needs storage not in the free list) and crying detection in 7.6 (S). Spike (D4) on the team laptop: ~2 s per 5 s window in the service, ~2 GB RAM with all models; windows scored and pushed in 3.2–3.7 s on a prod build. AC-CH-02/03, AC-VOI-01…06, AC-EMO-01 tested |
 | 8. Languages, analytics, integration API, admin | M5 Feature complete | Not started |
 | 9. Evaluation, hardening, deployment, demo | M6 Demo-ready | Not started |
 | E. Evaluation set (runs alongside phases 2–9) | all | In progress: E.1–E.2 done (20 draft scenarios need a second reviewer) |
@@ -231,16 +231,16 @@ Update this table as work finishes.
 **Goal:** analyse voice (pauses, pitch, speech rate, emotion) in rolling windows and show it live to an operator.
 **Effort:** 8–11 days. **Depends on:** Phases 4 and 5. Engines decided in D4. *Highest technical risk: start with a one-day spike on 7.2: measure seconds per 5-second chunk and RAM with IndicConformer + emotion2vec+ loaded on the team laptop, before committing to the rest.*
 
-- [ ] **7.1 Capture.** Victim voice page using MediaRecorder with 5-second chunks, visible recording indicator, mute and stop, upload with retry, graceful switch to text if the microphone is refused. (FR-CH-03, C-TEC-04, NFR-REL-02)
-- [ ] **7.2 Audio analysis.** `POST /v1/analyze/audio`: decode → Silero VAD → pauses (count, mean, max, silence ratio) → Praat pitch mean, spread and range → energy (librosa) → speech-to-text (Groq Whisper for hi/en/Hinglish; IndicConformer for mr/ta/bn; Bhashini backup) → speech rate = transcript words ÷ voiced seconds. (FR-VOI-01…04)
-- [ ] **7.3 Speaker baseline.** First 20–30 s of speech set the baseline; later windows report deviations from it. (FR-VOI-03)
-- [ ] **7.4 Voice emotion.** emotion2vec+ base (via FunASR) with confidence; start with a simple rule-based mapping from the deviations if the model is too heavy. (FR-VOI-06)
-- [ ] **7.5 Pipeline v3 and operator console.** `POST /victim/…/audio` → features stored in `voice_windows`, raw audio discarded → transcript through the text pipeline → voice indicators (capped) → fused emotion. Operator console: live transcript, SVI gauge, indicator chips with evidence, pause and pitch strip, suggested next questions, "type what the caller said" input. (FR-CH-04, FR-VOI-07/09, FR-EMO-02, FR-DSH-01)
-- [ ] **7.6 Paralinguistic events.** Crying, sobbing, long silence after a question. **(S)** (FR-VOI-05)
-- [ ] **7.7 Emotion timeline.** Chart of text, voice and fused emotion across the session. **(S)** (FR-EMO-03)
-- [ ] **7.8 IVRS simulation.** Keypad page with spoken prompts: language choice, safety check, PHQ-2 and GAD-2 by key press. **(S)** (FR-CH-05)
-- [ ] **7.9 Audio retention.** Only with consent: encrypted object storage, deletion job. **(C)**
-- [ ] **7.10 Tests.** Reference recordings: 5 inserted pauses detected within ±0.3 s; pitch within ±10%; speech rate within ±15%; no stored audio after a session without retention consent; no scenario reaches Critical on voice alone.
+- [x] **7.1 Capture.** Victim voice page using MediaRecorder with 5-second chunks, visible recording indicator, mute and stop, upload with retry, graceful switch to text if the microphone is refused. (FR-CH-03, C-TEC-04, NFR-REL-02)
+- [x] **7.2 Audio analysis.** `POST /v1/analyze/audio`: decode → Silero VAD → pauses (count, mean, max, silence ratio) → Praat pitch mean, spread and range → energy (librosa) → speech-to-text (Groq Whisper for hi/en/Hinglish; IndicConformer for mr/ta/bn; Bhashini backup) → speech rate = transcript words ÷ voiced seconds. (FR-VOI-01…04)
+- [x] **7.3 Speaker baseline.** First 20–30 s of speech set the baseline; later windows report deviations from it. (FR-VOI-03)
+- [x] **7.4 Voice emotion.** emotion2vec+ base (via FunASR) with confidence; start with a simple rule-based mapping from the deviations if the model is too heavy. (FR-VOI-06)
+- [x] **7.5 Pipeline v3 and operator console.** `POST /victim/…/audio` → features stored in `voice_windows`, raw audio discarded → transcript through the text pipeline → voice indicators (capped) → fused emotion. Operator console: live transcript, SVI gauge, indicator chips with evidence, pause and pitch strip, suggested next questions, "type what the caller said" input. (FR-CH-04, FR-VOI-07/09, FR-EMO-02, FR-DSH-01)
+- [x] **7.6 Paralinguistic events.** Crying, sobbing, long silence after a question. **(S)** (FR-VOI-05) *Long silences done; crying/sobbing needs the optional YAMNet tagger and is not built.*
+- [x] **7.7 Emotion timeline.** Chart of text, voice and fused emotion across the session. **(S)** (FR-EMO-03)
+- [x] **7.8 IVRS simulation.** Keypad page with spoken prompts: language choice, safety check, PHQ-2 and GAD-2 by key press. **(S)** (FR-CH-05)
+- [ ] **7.9 Audio retention.** Only with consent: encrypted object storage, deletion job. **(C)** *Not built: no free object storage is listed in TOOLS_AND_COSTS.md. Without it, audio is never stored at all (AC-VOI-06).*
+- [x] **7.10 Tests.** Reference recordings: 5 inserted pauses detected within ±0.3 s; pitch within ±10%; speech rate within ±15%; no stored audio after a session without retention consent; no scenario reaches Critical on voice alone.
 
 **Done when:** AC-CH-02, AC-VOI-01…07, AC-EMO-01 and the voice part of AC-SVI-02 (within 5 s) pass; AC-CH-03 if IVRS is built. **Milestone M4.**
 
