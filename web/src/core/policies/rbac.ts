@@ -105,7 +105,9 @@ const MATRIX: Record<Action, Partial<Record<Role, Rule>>> = {
   },
   "case.transcript.read": {
     OPERATOR: (u, r) => yes(ownCall(u, r)),
-    NHAA_SUPERVISOR: full,
+    // §4 rule 3: transcripts need shareWithCounsellor consent, except for staff who
+    // handled the live interaction (decided 2026-11-15: supervisors respect consent too).
+    NHAA_SUPERVISOR: (u, r) => yes(!r || r.shareWithCounsellor === true || (r.operatorIds ?? []).includes(u.id)),
     COUNSELLOR: (u, r) => yes(assignedOrOnDuty(u, r) && (!r || r.shareWithCounsellor === true)),
   },
   "case.assessment.read": {

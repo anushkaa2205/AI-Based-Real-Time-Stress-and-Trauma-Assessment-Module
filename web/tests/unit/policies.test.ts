@@ -21,7 +21,7 @@ const MATRIX: Record<Action, string> = {
   "staff.self": "F F F F F F F F F F",
   "case.list": "F F F R - - R - - -",
   "case.read": "C F C R - - R - - -",
-  "case.transcript.read": "C F C - - - - - - -",
+  "case.transcript.read": "C C C - - - - - - -",
   "case.assessment.read": "F F F R - - - - - -",
   "case.review": "- F F - - - - - - -",
   "recommendation.decide": "- F F C - - - - - -",
@@ -116,6 +116,13 @@ describe("matrix conditions", () => {
     const c = userOf("COUNSELLOR");
     expect(can(c, "case.transcript.read", { ...inScope("COUNSELLOR"), shareWithCounsellor: false })).toBe(false);
     expect(can(c, "case.transcript.read", inScope("COUNSELLOR"))).toBe(true);
+  });
+
+  it("supervisors also need shareWithCounsellor consent, unless they handled the live call (§4 rule 3)", () => {
+    const s = userOf("NHAA_SUPERVISOR");
+    expect(can(s, "case.transcript.read", { shareWithCounsellor: false })).toBe(false);
+    expect(can(s, "case.transcript.read", { shareWithCounsellor: true })).toBe(true);
+    expect(can(s, "case.transcript.read", { shareWithCounsellor: false, operatorIds: [s.id] })).toBe(true);
   });
 
   it("identity needs the assigned counsellor AND consent, being on duty is not enough", () => {

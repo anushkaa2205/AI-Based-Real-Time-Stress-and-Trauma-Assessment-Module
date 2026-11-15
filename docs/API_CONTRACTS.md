@@ -316,7 +316,7 @@ The phone number is stored **only** in the PII vault. A Critical alert is raised
 |---|---|---|---|---|---|---|---|---|---|---|
 | Queue `GET /cases` | ✅ | ✅ | ✅ | 🔸🔒 | — | — | 🔸🔒 | — | — | — |
 | Case detail `GET /cases/{id}` | ✅ (own calls) | ✅ | ✅ (assigned or on-duty) | 🔸🔒 | — | — | 🔸🔒 (escalated only) | — | — | — |
-| Transcript, indicators, evidence | ✅ (own calls) | ✅ | ✅ (needs `shareWithCounsellor`) | — | — | — | — | — | — | — |
+| Transcript, indicators, evidence | ✅ (own calls) | ✅ (needs `shareWithCounsellor`, or handled the live call) | ✅ (needs `shareWithCounsellor`) | — | — | — | — | — | — | — |
 | Assessments / SVI timeline | ✅ | ✅ | ✅ | 🔸🔒 (band + SVI only) | — | — | — | — | — | — |
 | Review indicator, override band, notes | — | ✅ | ✅ | — | — | — | — | — | — | — |
 | Decide recommendation | — | ✅ | ✅ | 🔸 (police/protection types) | — | — | — | — | — | — |
