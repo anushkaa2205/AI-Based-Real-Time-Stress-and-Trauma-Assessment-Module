@@ -33,6 +33,7 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-surface: var(--surface);
   --color-paper: var(--paper);
   --color-ink: var(--ink);
   --color-ink-2: var(--ink-2);
@@ -69,6 +70,7 @@
   --background: var(--paper);
   --foreground: var(--ink);
   --card: #ffffff;
+  --surface: #ffffff; /* cards and fields on any theme */
   --card-foreground: var(--ink);
   --popover: #ffffff;
   --popover-foreground: var(--ink);
@@ -114,6 +116,63 @@
   ::selection {
     background: #f3dfb8;
   }
+}
+
+/*
+ * "Quiet Paper" (FRONTEND_UX_PRODUCT_BRIEF.md §5.2, task F.2): the victim-facing theme, used on /,
+ * /how-it-works, /privacy and every /portal page via data-theme="quiet-paper". Staff pages keep navy.
+ * Tokens are defined here only; the shared variables below are remapped so .btn, .card, .field and
+ * .link pick them up. Contrast (WCAG 2.1 AA) is checked in tests/unit/theme-contrast.test.ts.
+ */
+[data-theme="quiet-paper"] {
+  --qp-page: #f4f1ea; /* warm off-white page */
+  --qp-surface: #fffefb; /* cards, form surfaces */
+  --qp-ink: #1b2a41; /* text, headings: 12.8:1 on page */
+  --qp-muted: #5f6670; /* secondary text: 5.1:1 on page */
+  --qp-line: #d8d2c7; /* dividers only (decorative) */
+  --qp-field-line: #857f73; /* borders of inputs and controls: 3.5:1 on page (WCAG 1.4.11) */
+  --qp-primary: #245b57; /* calm teal: white text 7.8:1 */
+  --qp-primary-hover: #194a46;
+  --qp-soft-accent: #e5eee9; /* selected / low-emphasis backgrounds */
+  --qp-warning: #8a5a20; /* non-emergency caution */
+  --qp-danger: #a63a2b; /* urgent safety actions and quick exit only */
+  --qp-focus: #225d9c; /* keyboard focus: 6.0:1 on page */
+  --qp-disabled: #686868; /* the brief's #777777 is 4.0:1 on page, so darkened to 4.9:1 */
+  --qp-disabled-surface: #ece8df; /* disabled buttons: #686868 on it is 4.6:1 */
+  --qp-radius: 6px; /* soft but not round: no pills */
+
+  --paper: var(--qp-page);
+  --background: var(--qp-page);
+  --surface: var(--qp-surface);
+  --card: var(--qp-surface);
+  --ink: var(--qp-ink);
+  --foreground: var(--qp-ink);
+  --ink-2: var(--qp-muted);
+  --muted-foreground: var(--qp-muted);
+  --line: var(--qp-line);
+  --border: var(--qp-line);
+  --input: var(--qp-field-line);
+  --navy: var(--qp-primary);
+  --navy-deep: var(--qp-primary-hover);
+  --primary: var(--qp-primary);
+  --accent: var(--qp-soft-accent);
+  --accent-foreground: var(--qp-primary-hover);
+  --muted: var(--qp-disabled-surface);
+  --secondary: var(--qp-disabled-surface);
+  --danger: var(--qp-danger);
+  --destructive: var(--qp-danger);
+  --danger-soft: #f8ebe8;
+  --warn: var(--qp-warning);
+  --ring: var(--qp-focus);
+
+  background: var(--qp-page);
+  color: var(--qp-ink);
+}
+[data-theme="quiet-paper"] :focus-visible {
+  outline-color: var(--qp-focus);
+}
+[data-theme="quiet-paper"] ::selection {
+  background: var(--qp-soft-accent);
 }
 
 /* Shared building blocks: plain classes so every screen uses the same parts. */
@@ -267,5 +326,28 @@
   }
   .link:hover {
     color: var(--navy-deep);
+  }
+
+  /* Quiet Paper component details (victim pages only). */
+  [data-theme="quiet-paper"] .btn,
+  [data-theme="quiet-paper"] .card,
+  [data-theme="quiet-paper"] .field {
+    border-radius: var(--qp-radius);
+  }
+  [data-theme="quiet-paper"] .btn-secondary,
+  [data-theme="quiet-paper"] .field {
+    background: var(--qp-surface);
+  }
+  [data-theme="quiet-paper"] .btn:disabled {
+    opacity: 1;
+    background: var(--qp-disabled-surface);
+    border-color: var(--qp-line);
+    color: var(--qp-disabled);
+  }
+  [data-theme="quiet-paper"] .btn-danger:hover:not(:disabled) {
+    background: #8a2f23;
+  }
+  [data-theme="quiet-paper"] .field:focus-visible {
+    border-color: var(--qp-primary);
   }
 }
