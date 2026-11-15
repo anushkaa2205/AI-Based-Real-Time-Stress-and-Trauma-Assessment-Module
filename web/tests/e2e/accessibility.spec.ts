@@ -19,28 +19,30 @@ test("victim pages have no WCAG 2.1 AA violations (AC-ACC-01)", async ({ page })
   await page.setExtraHTTPHeaders({ "x-forwarded-for": freshIp() });
   await page.goto("/");
   await audit(page, "home");
+  await page.goto("/portal");
+  await audit(page, "portal home");
   for (const lang of ["en", "hi", "mr", "ta", "bn"]) {
-    await page.goto(`/${lang}`);
+    await page.goto(`/portal/${lang}`);
     await audit(page, `start ${lang}`);
   }
-  await page.goto("/en/ivrs");
+  await page.goto("/portal/en/ivrs");
   await audit(page, "ivrs");
 
   // Consent and chat need a session.
-  await page.goto("/en");
+  await page.goto("/portal/en");
   await page.getByRole("button", { name: "Start" }).click();
-  await page.waitForURL(/\/en\/consent/);
+  await page.waitForURL(/\/portal\/en\/consent/);
   await audit(page, "consent");
   await page.getByRole("checkbox").first().check();
   await page.getByRole("button", { name: "Continue" }).click();
-  await page.waitForURL(/\/en\/chat/);
+  await page.waitForURL(/\/portal\/en\/chat/);
   await expect(page.getByTestId("prompt")).toBeVisible();
   await audit(page, "chat");
 });
 
 test("keyboard only: quick exit and start are reachable and usable", async ({ page }) => {
   await page.setExtraHTTPHeaders({ "x-forwarded-for": freshIp() });
-  await page.goto("/en");
+  await page.goto("/portal/en");
   const seen: string[] = [];
   for (let i = 0; i < 12; i++) {
     await page.keyboard.press("Tab");

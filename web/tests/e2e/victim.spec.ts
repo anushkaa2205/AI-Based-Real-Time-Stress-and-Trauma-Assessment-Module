@@ -41,10 +41,10 @@ async function waitForPrompt(page: Page, key: string | RegExp) {
 }
 
 async function start(page: Page, lang: "en" | "hi") {
-  await page.goto("/");
+  await page.goto("/portal");
   await page.getByRole("link", { name: lang === "hi" ? "हिंदी" : "English" }).click();
   await page.getByRole("button", { name: lang === "hi" ? "शुरू करें" : "Start" }).click();
-  await expect(page).toHaveURL(new RegExp(`/${lang}/consent\\?i=[a-f0-9]{24}`));
+  await expect(page).toHaveURL(new RegExp(`/portal/${lang}/consent\\?i=[a-f0-9]{24}`));
   return new URL(page.url()).searchParams.get("i")!;
 }
 

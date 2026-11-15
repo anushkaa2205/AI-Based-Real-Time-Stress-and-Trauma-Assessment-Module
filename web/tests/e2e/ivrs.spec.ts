@@ -4,7 +4,7 @@ import { freshIp, withDb } from "./helpers";
 
 test("the safety check and PHQ-2 / GAD-2 complete with keypad input only (AC-CH-03)", async ({ page }) => {
   await page.setExtraHTTPHeaders({ "x-forwarded-for": freshIp() });
-  await page.goto("/en/ivrs");
+  await page.goto("/portal/en/ivrs");
   const ivrs = page.getByTestId("ivrs");
   await expect(ivrs).toHaveAttribute("data-step", "language");
   await expect(ivrs).toHaveAttribute("data-ready", "true"); // hydrated, keys listened to

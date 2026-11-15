@@ -9,6 +9,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { NOTICE_VERSION, api } from "./api";
 import { ListenButton } from "./listen-button";
+import { portalPath } from "@/lib/portal";
 
 const OPTIONS = ["textAnalysis", "voiceAnalysis", "shareWithCounsellor", "followUpContact", "audioRetention"] as const;
 const PARAGRAPHS = ["what", "why", "who", "howLong", "refuse", "withdraw"] as const;
@@ -30,7 +31,7 @@ export function ConsentScreen() {
     setError(false);
     try {
       await api("POST", `/interactions/${id}/consent`, { noticeVersion: NOTICE_VERSION, language: locale, ...choice });
-      router.replace(`/${locale}/chat?i=${id}`);
+      router.replace(portalPath(locale, `/chat?i=${id}`));
     } catch {
       setError(true);
       setBusy(false);

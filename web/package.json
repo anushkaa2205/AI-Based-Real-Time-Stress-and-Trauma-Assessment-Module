@@ -21,8 +21,7 @@
     "api:example": "tsx scripts/api-example.ts",
     "measure:latency": "tsx scripts/measure-latency.ts",
     "eval:outcomes": "tsx scripts/outcomes.ts",
-    "security:bundle": "tsx scripts/check-client-bundle.ts",
-    "sim:validate": "tsx scripts/validate-sim-cases.ts"
+    "security:bundle": "tsx scripts/check-client-bundle.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { VICTIM_LANGS, type VictimLang } from "@/contracts/victim";
 import { MESSAGES } from "@/core/i18n/messages";
 import { QuickExit } from "@/components/victim/quick-exit";
+import { portalPath } from "@/lib/portal";
 
 export function generateStaticParams() {
   return VICTIM_LANGS.map((locale) => ({ locale }));
@@ -28,7 +29,7 @@ export default async function VictimLayout({
       <div lang={lang} className="flex min-h-full flex-1 flex-col">
         <header className="sticky top-0 z-50 border-b border-line bg-white">
           <div className="mx-auto flex w-full max-w-2xl items-center justify-between gap-3 px-4 py-2.5">
-            <a href={`/${lang}`} className="flex min-w-0 items-center gap-2.5 text-ink no-underline">
+            <a href={portalPath(lang)} className="flex min-w-0 items-center gap-2.5 text-ink no-underline">
               <span aria-hidden className="grid size-9 shrink-0 place-items-center rounded-[3px] bg-navy text-[0.7rem] font-bold leading-none tracking-wide text-white">
                 14566
               </span>

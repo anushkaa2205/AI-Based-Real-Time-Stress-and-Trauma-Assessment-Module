@@ -9,7 +9,7 @@ test.skip(!process.env.E2E_BASE_URL, "service worker runs on production builds o
 
 test("installable shell; the service worker never stores pages or API responses", async ({ page }) => {
   await page.setExtraHTTPHeaders({ "x-forwarded-for": freshIp() });
-  await page.goto("/en");
+  await page.goto("/portal/en");
   const manifest = await page.request.get("/manifest.webmanifest").then((r) => r.json());
   expect(manifest.display).toBe("standalone");
   expect(manifest.icons.map((i: { sizes: string }) => i.sizes)).toEqual(expect.arrayContaining(["192x192", "512x512"]));
@@ -17,10 +17,10 @@ test("installable shell; the service worker never stores pages or API responses"
   await page.waitForFunction(async () => (await navigator.serviceWorker.getRegistration())?.active?.state === "activated", null, { timeout: 30_000 });
   await page.reload(); // now controlled by the worker
   await page.getByRole("button", { name: "Start" }).click();
-  await page.waitForURL(/\/en\/consent/);
+  await page.waitForURL(/\/portal\/en\/consent/);
   await page.getByRole("checkbox").first().check();
   await page.getByRole("button", { name: "Continue" }).click();
-  await page.waitForURL(/\/en\/chat/);
+  await page.waitForURL(/\/portal\/en\/chat/);
   await expect(page.getByTestId("prompt")).toBeVisible();
 
   const cached = await page.evaluate(async () => {

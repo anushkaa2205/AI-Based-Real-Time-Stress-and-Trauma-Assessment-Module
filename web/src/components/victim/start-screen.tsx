@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { api } from "./api";
 import { ListenButton } from "./listen-button";
+import { portalPath } from "@/lib/portal";
 
 export function StartScreen() {
   const t = useTranslations("start");
@@ -21,7 +22,7 @@ export function StartScreen() {
     setError(false);
     try {
       const r = await api<{ interactionId: string }>("POST", "/interactions", { channel: "CHATBOT", language: locale });
-      router.replace(`/${locale}/consent?i=${r.interactionId}`);
+      router.replace(portalPath(locale, `/consent?i=${r.interactionId}`));
     } catch {
       setError(true);
       setBusy(false);
@@ -41,7 +42,7 @@ export function StartScreen() {
         <button type="button" onClick={start} disabled={busy} className="btn btn-primary btn-lg">
           {busy ? tc("loading") : t("start")}
         </button>
-        <a href={`/${locale}/ivrs`} className="btn btn-secondary btn-lg" data-testid="ivrs-link">
+        <a href={portalPath(locale, "/ivrs")} className="btn btn-secondary btn-lg" data-testid="ivrs-link">
           {ti("title")}
         </a>
       </div>

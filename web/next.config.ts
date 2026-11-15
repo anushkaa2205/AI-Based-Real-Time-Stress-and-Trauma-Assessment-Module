@@ -50,6 +50,13 @@ const nextConfig: NextConfig = {
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
+  // The victim intake pages live under /portal; old /<locale> links and installed apps keep working.
+  async redirects() {
+    return [
+      { source: "/:locale(en|hi|mr|ta|bn)", destination: "/portal/:locale", permanent: false },
+      { source: "/:locale(en|hi|mr|ta|bn)/:path*", destination: "/portal/:locale/:path*", permanent: false },
+    ];
+  },
 };
 
 export default withNextIntl(nextConfig);

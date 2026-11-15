@@ -15,6 +15,7 @@ import { ContextForm } from "./context-form";
 import { EmergencyPanel } from "./emergency-panel";
 import { ListenButton } from "./listen-button";
 import { VoiceRecorder } from "./voice-recorder";
+import { portalPath } from "@/lib/portal";
 
 type View = { kind: "loading" } | { kind: "turn"; turn: Turn } | { kind: "done"; docket: string; closing: string } | { kind: "ended" };
 
@@ -43,7 +44,7 @@ export function ChatScreen() {
   const show = useCallback(
     (turn: Turn) => {
       if (turn.next.key === "consent.title") {
-        router.replace(`/${locale}/consent?i=${id}`);
+        router.replace(portalPath(locale, `/consent?i=${id}`));
         return;
       }
       setView({ kind: "turn", turn });
@@ -137,7 +138,7 @@ export function ChatScreen() {
   async function switchLanguage(lang: string) {
     try {
       await api("POST", `/interactions/${id}/language`, { language: lang });
-      router.replace(`/${lang}/chat?i=${id}`);
+      router.replace(portalPath(lang, `/chat?i=${id}`));
     } catch (e) {
       fail(e);
     }
@@ -161,7 +162,7 @@ export function ChatScreen() {
     return (
       <section className="flex flex-col gap-4">
         <p>{t("common.sessionEnded")}</p>
-        <a href={`/${locale}`} className={`${bigButton} btn-primary`}>
+        <a href={portalPath(locale)} className={`${bigButton} btn-primary`}>
           {t("common.startAgain")}
         </a>
       </section>
