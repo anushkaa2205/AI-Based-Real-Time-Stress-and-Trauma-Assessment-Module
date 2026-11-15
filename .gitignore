@@ -43,6 +43,8 @@ htmlcov/
 *.opus
 *.m4a
 *.flac
+# One exception: synthetic text-to-speech test fixture (no real voice; see its README)
+!analysis-service/tests/fixtures/audio/pauses_en.wav
 *.aac
 
 # --- OS / editor ---

@@ -40,6 +40,11 @@ class Settings:
     gemini_model: str
     cache_dir: Path
     use_cache: bool
+    hf_token: str | None = None
+    #: IndicConformer files are pinned to a repo commit (no hub code is run).
+    indic_revision: str | None = None
+    #: Load the voice models at start-up (default) instead of on the first voice window.
+    preload_voice: bool = False
 
 
 def load_settings() -> Settings:
@@ -52,4 +57,7 @@ def load_settings() -> Settings:
         gemini_model=os.environ.get("GEMINI_MODEL") or "gemini-3.5-flash-lite",
         cache_dir=Path(os.environ.get("ANALYSIS_CACHE_DIR") or ENV_FILE.parent / ".cache"),
         use_cache=(os.environ.get("ANALYSIS_CACHE") or "on") != "off",
+        hf_token=_real(os.environ.get("HF_TOKEN")),
+        indic_revision=os.environ.get("INDIC_REVISION") or None,
+        preload_voice=(os.environ.get("PRELOAD_VOICE") or "on") != "off",
     )
