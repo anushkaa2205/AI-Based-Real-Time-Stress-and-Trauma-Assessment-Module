@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { api } from "./api";
 import { ListenButton } from "./listen-button";
+import { VictimChannel } from "@/contracts/victim";
 import { portalPath } from "@/lib/portal";
 
 export function StartScreen() {
@@ -21,7 +22,8 @@ export function StartScreen() {
     setBusy(true);
     setError(false);
     try {
-      const r = await api<{ interactionId: string }>("POST", "/interactions", { channel: "CHATBOT", language: locale });
+      // The browser portal is its own channel (audit G1); the keypad menu sends IVRS from ivrs-screen.
+      const r = await api<{ interactionId: string }>("POST", "/interactions", { channel: VictimChannel.enum.PORTAL, language: locale });
       router.replace(portalPath(locale, `/consent?i=${r.interactionId}`));
     } catch {
       setError(true);

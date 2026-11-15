@@ -43,7 +43,9 @@ async function waitForPrompt(page: Page, key: string | RegExp) {
 async function start(page: Page, lang: "en" | "hi") {
   await page.goto("/portal");
   await page.getByRole("link", { name: lang === "hi" ? "हिंदी" : "English" }).click();
+  const created = page.waitForRequest((r) => r.method() === "POST" && r.url().endsWith("/api/v1/victim/interactions"));
   await page.getByRole("button", { name: lang === "hi" ? "शुरू करें" : "Start" }).click();
+  expect((await created).postDataJSON().channel).toBe("PORTAL"); // audit G1: the portal is not the chatbot channel
   await expect(page).toHaveURL(new RegExp(`/portal/${lang}/consent\\?i=[a-f0-9]{24}`));
   return new URL(page.url()).searchParams.get("i")!;
 }
