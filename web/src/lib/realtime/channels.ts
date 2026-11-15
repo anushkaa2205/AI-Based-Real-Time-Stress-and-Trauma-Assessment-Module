@@ -74,6 +74,19 @@ export interface EventMap {
   "referral.updated": ReferralDto;
   /** Follow-up reminder (FR-REC-09); ids and time only. */
   "followup.due": { followUpId: string; caseId: string; docketNumber: string; dueAt: string };
+  /** Staff-only (interaction channel): one voice window's features for the operator console (task 7.5). */
+  "voice.window": {
+    interactionId: string;
+    voiceWindowId: string;
+    windowIndex: number;
+    startMs: number;
+    pauses: { count: number; meanMs: number; maxMs: number; silenceRatio: number };
+    pitch: { meanHz: number; stdHz: number; rangeHz: number } | null;
+    speechRateWpm: number | null;
+    emotion: { label: string; confidence: number };
+    fusedEmotion: { label: string; confidence: number } | null;
+    events: string[];
+  };
 }
 
 export interface CaseEventData {

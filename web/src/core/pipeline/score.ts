@@ -34,7 +34,7 @@ import { Types as MTypes, type HydratedDocument } from "mongoose";
 const ID = (v: unknown) => String(v);
 const isObjectId = (s: string | null | undefined): s is string => !!s && /^[a-f0-9]{24}$/.test(s);
 
-export type Trigger = "TEXT_MESSAGE" | "SCREENER" | "CONTEXT_UPDATE" | "INDICATOR_REVIEW" | "CONFIG_RESCORE";
+export type Trigger = "TEXT_MESSAGE" | "VOICE_WINDOW" | "SCREENER" | "CONTEXT_UPDATE" | "INDICATOR_REVIEW" | "CONFIG_RESCORE";
 
 /** Turns stored indicator docs into scoring input. */
 export function toInput(doc: {

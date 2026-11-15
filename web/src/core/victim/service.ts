@@ -199,6 +199,16 @@ export async function skipNarrative(id: string) {
   await interaction.save();
 }
 
+/** A spoken answer counts as one narrative turn (task 7.1); its windows were analysed as they arrived. */
+export async function voiceTurnDone(id: string) {
+  const interaction = await requireActive(id);
+  const flow = flowStateOf(interaction.flowState);
+  flow.narrativeTurns += 1;
+  interaction.flowState = flow;
+  interaction.markModified("flowState");
+  await interaction.save();
+}
+
 export async function setLanguage(id: string, lang: VictimLang) {
   const interaction = await requireActive(id);
   interaction.uiLanguage = lang;

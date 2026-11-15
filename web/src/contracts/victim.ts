@@ -109,8 +109,10 @@ export const MessageRequest = z
     promptKey: z.string().max(100).optional(),
     /** Additive (API versioning rule): skip the current free-text question (FR-CH-09) */
     skipped: z.boolean().optional(),
+    /** Additive (task 7.1): the person finished answering this question by voice */
+    voiceDone: z.boolean().optional(),
   })
-  .refine((m) => m.skipped === true || (m.text?.length ?? 0) > 0, { message: "text is required unless skipped" });
+  .refine((m) => m.skipped === true || m.voiceDone === true || (m.text?.length ?? 0) > 0, { message: "text is required unless skipped" });
 
 export const MessageResponse = z.strictObject({
   messageId: ObjectIdStr.nullable(),
@@ -169,3 +171,19 @@ export const FORBIDDEN_VICTIM_FIELDS = [
   "explanation",
   "topEvidence",
 ] as const;
+
+/** §3.7 audio chunk: form fields other than the file (task 7.5). */
+export const AudioFields = z.object({
+  windowIndex: z.coerce.number().int().min(0).max(10_000),
+  startMs: z.coerce.number().int().min(0).max(4 * 3_600_000),
+});
+
+/** 202 for a voice chunk: the victim's own words back, and only the emergency signal (rule 1). */
+export const AudioResponse = z.strictObject({
+  windowIndex: z.number().int(),
+  transcript: z.string().nullable(),
+  /** false when voice analysis is unavailable: the page offers typing instead (NFR-REL-02) */
+  analysed: z.boolean(),
+  showEmergencyPanel: z.boolean(),
+  emergency: EmergencyPanel.nullable(),
+});

@@ -8,17 +8,18 @@ import { MessageRequest, MessageResponse } from "@/contracts/victim";
 import { runPipeline } from "@/core/pipeline/run";
 import { emergencyPanel } from "@/core/victim/emergency";
 import { turnAfter } from "@/core/victim/respond";
-import { currentTurn, requireActive, skipNarrative } from "@/core/victim/service";
+import { currentTurn, requireActive, skipNarrative, voiceTurnDone } from "@/core/victim/service";
 import { ApiError } from "@/lib/problem";
 import { route } from "@/lib/route";
 
 const MAX_TEXT = 2000;
 
 export const POST = route({ auth: "victim", body: MessageRequest }, async ({ req, victim, body }) => {
-  if (body.skipped) {
+  if (body.skipped || body.voiceDone) {
     const interaction = await requireActive(victim.interactionId);
     if (!interaction.consents.length) throw new ApiError("CONSENT_REQUIRED", "Please answer the consent question first.");
-    await skipNarrative(victim.interactionId);
+    if (body.voiceDone) await voiceTurnDone(victim.interactionId);
+    else await skipNarrative(victim.interactionId);
     const turn = await currentTurn(victim.interactionId);
     return MessageResponse.parse({
       messageId: null,

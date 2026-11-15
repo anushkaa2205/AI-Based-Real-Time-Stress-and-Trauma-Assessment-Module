@@ -37,6 +37,12 @@ const VoiceWindowSchema = new Schema(
       confidence: Number,
       distribution: { type: Schema.Types.Mixed },
     },
+    // Added in task 7.5 (not yet in DATABASE.md): text + voice emotion fused by confidence (FR-EMO-02)
+    fusedEmotion: {
+      label: String,
+      confidence: Number,
+      distribution: { type: Schema.Types.Mixed },
+    },
     modelVersion: { type: String, required: true },
     purgeAt: Date,
   },
