@@ -1,0 +1,10 @@
+{
+  "measuredAt": "2026-11-15T09:23:07.448Z",
+  "base": "http://localhost:3001",
+  "runs": 50,
+  "failures": 0,
+  "p50Ms": 1794,
+  "p95Ms": 3434,
+  "maxMs": 4109,
+  "targetP95Ms": 3000
+}

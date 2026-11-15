@@ -1,6 +1,6 @@
 {
   "mode": "ai",
-  "configVersion": 1,
+  "configVersion": 2,
   "results": [
     {
       "id": "S001",
@@ -20,7 +20,7 @@
       "recs": [
         "INFORMATION"
       ],
-      "ms": 605.0489
+      "ms": 432.8852999999999
     },
     {
       "id": "S002",
@@ -40,7 +40,7 @@
       "recs": [
         "INFORMATION"
       ],
-      "ms": 762.5009999999997
+      "ms": 887.7925
     },
     {
       "id": "S003",
@@ -60,7 +60,7 @@
       "recs": [
         "INFORMATION"
       ],
-      "ms": 32.63279999999986
+      "ms": 38.73640000000023
     },
     {
       "id": "S004",
@@ -86,7 +86,7 @@
       "recs": [
         "COUNSELLING"
       ],
-      "ms": 35.17059999999992
+      "ms": 8.410100000000057
     },
     {
       "id": "S005",
@@ -108,7 +108,7 @@
         "LEGAL_AID",
         "INFORMATION"
       ],
-      "ms": 27.155299999999897
+      "ms": 6.956200000000081
     },
     {
       "id": "S006",
@@ -137,7 +137,7 @@
         "REHABILITATION_RELIEF",
         "INFORMATION"
       ],
-      "ms": 60.89879999999994
+      "ms": 30.608400000000074
     },
     {
       "id": "S007",
@@ -165,7 +165,7 @@
         "LEGAL_AID",
         "INFORMATION"
       ],
-      "ms": 2671.2066000000004
+      "ms": 21.509700000000066
     },
     {
       "id": "S008",
@@ -192,7 +192,7 @@
       "recs": [
         "REHABILITATION_RELIEF"
       ],
-      "ms": 1969.2606999999998
+      "ms": 6.523000000000138
     },
     {
       "id": "S009",
@@ -218,7 +218,7 @@
         "COUNSELLING",
         "INFORMATION"
       ],
-      "ms": 1770.0306
+      "ms": 7.184600000000046
     },
     {
       "id": "S010",
@@ -245,7 +245,7 @@
         "LEGAL_AID",
         "INFORMATION"
       ],
-      "ms": 1304.4911999999986
+      "ms": 7.277700000000095
     },
     {
       "id": "S011",
@@ -273,7 +273,7 @@
         "POLICE_INTERVENTION",
         "WITNESS_PROTECTION"
       ],
-      "ms": 1904.8871
+      "ms": 5.620800000000145
     },
     {
       "id": "S012",
@@ -301,7 +301,7 @@
       "recs": [
         "COUNSELLING"
       ],
-      "ms": 2152.846099999999
+      "ms": 6.04760000000033
     },
     {
       "id": "S013",
@@ -331,7 +331,7 @@
         "POLICE_INTERVENTION",
         "WITNESS_PROTECTION"
       ],
-      "ms": 4352.176000000001
+      "ms": 6.254799999999705
     },
     {
       "id": "S014",
@@ -362,7 +362,7 @@
         "COUNSELLING",
         "MEDICAL_ASSISTANCE"
       ],
-      "ms": 3919.3987000000016
+      "ms": 5.578500000000076
     },
     {
       "id": "S015",
@@ -390,7 +390,7 @@
         "POLICE_INTERVENTION",
         "WITNESS_PROTECTION"
       ],
-      "ms": 2426.2208999999966
+      "ms": 5.842799999999897
     },
     {
       "id": "S016",
@@ -421,7 +421,7 @@
         "POLICE_INTERVENTION",
         "WITNESS_PROTECTION"
       ],
-      "ms": 9.907200000001467
+      "ms": 5.8805999999999585
     },
     {
       "id": "S017",
@@ -449,7 +449,7 @@
         "EMERGENCY_SUPPORT",
         "COUNSELLING"
       ],
-      "ms": 4065.7960999999996
+      "ms": 5.885899999999765
     },
     {
       "id": "S018",
@@ -478,7 +478,7 @@
         "EMERGENCY_SUPPORT",
         "POLICE_INTERVENTION"
       ],
-      "ms": 3372.8827999999994
+      "ms": 5.6392000000000735
     },
     {
       "id": "S019",
@@ -511,7 +511,7 @@
         "EMERGENCY_SUPPORT",
         "COUNSELLING"
       ],
-      "ms": 4240.500199999999
+      "ms": 5.344500000000153
     },
     {
       "id": "S020",
@@ -540,7 +540,1101 @@
         "COUNSELLING",
         "MEDICAL_ASSISTANCE"
       ],
-      "ms": 2982.5005999999994
+      "ms": 6.38570000000027
+    },
+    {
+      "id": "S021",
+      "language": "mr",
+      "gender": "F",
+      "channel": "CHATBOT",
+      "tags": [],
+      "expectedBand": "CRITICAL",
+      "band": "CRITICAL",
+      "svi": 23,
+      "overrides": [
+        "OV-2",
+        "OV-9"
+      ],
+      "expectedIndicators": [
+        "INTIMIDATION"
+      ],
+      "detected": [
+        "FEAR_ANXIETY",
+        "INTIMIDATION"
+      ],
+      "expectedRecs": [
+        "EMERGENCY_SUPPORT",
+        "POLICE_INTERVENTION"
+      ],
+      "recs": [
+        "EMERGENCY_SUPPORT",
+        "COUNSELLING",
+        "POLICE_INTERVENTION"
+      ],
+      "ms": 6.2979999999997744
+    },
+    {
+      "id": "S022",
+      "language": "mr",
+      "gender": "M",
+      "channel": "PORTAL",
+      "tags": [],
+      "expectedBand": "LOW",
+      "band": "LOW",
+      "svi": 0,
+      "overrides": [],
+      "expectedIndicators": [],
+      "detected": [],
+      "expectedRecs": [
+        "INFORMATION"
+      ],
+      "recs": [
+        "INFORMATION"
+      ],
+      "ms": 5.54989999999998
+    },
+    {
+      "id": "S023",
+      "language": "ta",
+      "gender": "F",
+      "channel": "CHATBOT",
+      "tags": [],
+      "expectedBand": "HIGH",
+      "band": "HIGH",
+      "svi": 9,
+      "overrides": [
+        "OV-7"
+      ],
+      "expectedIndicators": [
+        "INTIMIDATION"
+      ],
+      "detected": [
+        "INTIMIDATION"
+      ],
+      "expectedRecs": [
+        "WITNESS_PROTECTION",
+        "POLICE_INTERVENTION"
+      ],
+      "recs": [
+        "POLICE_INTERVENTION",
+        "WITNESS_PROTECTION"
+      ],
+      "ms": 6.37059999999974
+    },
+    {
+      "id": "S024",
+      "language": "ta",
+      "gender": "UNDISCLOSED",
+      "channel": "PORTAL",
+      "tags": [],
+      "expectedBand": "LOW",
+      "band": "LOW",
+      "svi": 0,
+      "overrides": [],
+      "expectedIndicators": [],
+      "detected": [],
+      "expectedRecs": [
+        "INFORMATION"
+      ],
+      "recs": [
+        "INFORMATION"
+      ],
+      "ms": 6.325300000000425
+    },
+    {
+      "id": "S025",
+      "language": "bn",
+      "gender": "M",
+      "channel": "CHATBOT",
+      "tags": [],
+      "expectedBand": "CRITICAL",
+      "band": "CRITICAL",
+      "svi": 18,
+      "overrides": [
+        "OV-1"
+      ],
+      "expectedIndicators": [
+        "SUICIDAL_IDEATION"
+      ],
+      "detected": [
+        "SUICIDAL_IDEATION"
+      ],
+      "expectedRecs": [
+        "EMERGENCY_SUPPORT",
+        "COUNSELLING"
+      ],
+      "recs": [
+        "EMERGENCY_SUPPORT",
+        "COUNSELLING"
+      ],
+      "ms": 5.919400000000223
+    },
+    {
+      "id": "S026",
+      "language": "bn",
+      "gender": "F",
+      "channel": "PORTAL",
+      "tags": [],
+      "expectedBand": "MODERATE",
+      "band": "MODERATE",
+      "svi": 7,
+      "overrides": [
+        "OV-8"
+      ],
+      "expectedIndicators": [
+        "SOCIAL_ISOLATION"
+      ],
+      "detected": [
+        "SOCIAL_ISOLATION"
+      ],
+      "expectedRecs": [
+        "REHABILITATION_RELIEF"
+      ],
+      "recs": [
+        "REHABILITATION_RELIEF"
+      ],
+      "ms": 6.096999999999753
+    },
+    {
+      "id": "S027",
+      "language": "hi",
+      "gender": "F",
+      "channel": "CHATBOT",
+      "tags": [
+        "negation"
+      ],
+      "expectedBand": "LOW",
+      "band": "LOW",
+      "svi": 0,
+      "overrides": [],
+      "expectedIndicators": [],
+      "detected": [],
+      "expectedRecs": [
+        "INFORMATION"
+      ],
+      "recs": [
+        "INFORMATION"
+      ],
+      "ms": 6.8836999999998625
+    },
+    {
+      "id": "S028",
+      "language": "hi",
+      "gender": "M",
+      "channel": "PORTAL",
+      "tags": [
+        "negation"
+      ],
+      "expectedBand": "LOW",
+      "band": "LOW",
+      "svi": 0,
+      "overrides": [],
+      "expectedIndicators": [],
+      "detected": [],
+      "expectedRecs": [
+        "INFORMATION"
+      ],
+      "recs": [
+        "INFORMATION"
+      ],
+      "ms": 5.826399999999921
+    },
+    {
+      "id": "S029",
+      "language": "hi",
+      "gender": "F",
+      "channel": "CHATBOT",
+      "tags": [],
+      "expectedBand": "MODERATE",
+      "band": "LOW",
+      "svi": 16,
+      "overrides": [],
+      "expectedIndicators": [
+        "SOCIAL_ISOLATION"
+      ],
+      "detected": [
+        "DEPRESSION",
+        "SOCIAL_ISOLATION"
+      ],
+      "expectedRecs": [
+        "REHABILITATION_RELIEF"
+      ],
+      "recs": [
+        "COUNSELLING",
+        "REHABILITATION_RELIEF",
+        "INFORMATION"
+      ],
+      "ms": 6.359399999999823
+    },
+    {
+      "id": "S030",
+      "language": "hi",
+      "gender": "F",
+      "channel": "VOICE_CALL",
+      "tags": [],
+      "expectedBand": "MODERATE",
+      "band": "LOW",
+      "svi": 19,
+      "overrides": [],
+      "expectedIndicators": [
+        "FEAR_ANXIETY"
+      ],
+      "detected": [
+        "ACUTE_STRESS",
+        "FEAR_ANXIETY"
+      ],
+      "expectedRecs": [
+        "COUNSELLING"
+      ],
+      "recs": [
+        "COUNSELLING",
+        "INFORMATION"
+      ],
+      "ms": 5.884100000000217
+    },
+    {
+      "id": "S031",
+      "language": "hi",
+      "gender": "M",
+      "channel": "CHATBOT",
+      "tags": [],
+      "expectedBand": "HIGH",
+      "band": "HIGH",
+      "svi": 14,
+      "overrides": [
+        "OV-4"
+      ],
+      "expectedIndicators": [
+        "INTIMIDATION"
+      ],
+      "detected": [
+        "INTIMIDATION"
+      ],
+      "expectedRecs": [
+        "POLICE_INTERVENTION",
+        "WITNESS_PROTECTION"
+      ],
+      "recs": [
+        "POLICE_INTERVENTION"
+      ],
+      "ms": 5.780499999999847
+    },
+    {
+      "id": "S032",
+      "language": "hi",
+      "gender": "F",
+      "channel": "IVRS",
+      "tags": [],
+      "expectedBand": "HIGH",
+      "band": "HIGH",
+      "svi": 10,
+      "overrides": [
+        "OV-9"
+      ],
+      "expectedIndicators": [
+        "FEAR_ANXIETY"
+      ],
+      "detected": [
+        "FEAR_ANXIETY"
+      ],
+      "expectedRecs": [
+        "COUNSELLING"
+      ],
+      "recs": [
+        "COUNSELLING"
+      ],
+      "ms": 6.4266999999999825
+    },
+    {
+      "id": "S033",
+      "language": "hi",
+      "gender": "F",
+      "channel": "CHATBOT",
+      "tags": [],
+      "expectedBand": "CRITICAL",
+      "band": "CRITICAL",
+      "svi": 25,
+      "overrides": [
+        "OV-2"
+      ],
+      "expectedIndicators": [
+        "INTIMIDATION"
+      ],
+      "detected": [
+        "INTIMIDATION",
+        "EXTREME_VULNERABILITY"
+      ],
+      "expectedRecs": [
+        "EMERGENCY_SUPPORT",
+        "POLICE_INTERVENTION"
+      ],
+      "recs": [
+        "EMERGENCY_SUPPORT",
+        "POLICE_INTERVENTION"
+      ],
+      "ms": 5.831200000000081
+    },
+    {
+      "id": "S034",
+      "language": "hi",
+      "gender": "M",
+      "channel": "VOICE_CALL",
+      "tags": [],
+      "expectedBand": "CRITICAL",
+      "band": "CRITICAL",
+      "svi": 13,
+      "overrides": [
+        "OV-3"
+      ],
+      "expectedIndicators": [
+        "SEVERE_TRAUMA"
+      ],
+      "detected": [
+        "SEVERE_TRAUMA"
+      ],
+      "expectedRecs": [
+        "EMERGENCY_SUPPORT",
+        "MEDICAL_ASSISTANCE"
+      ],
+      "recs": [
+        "EMERGENCY_SUPPORT",
+        "COUNSELLING",
+        "MEDICAL_ASSISTANCE"
+      ],
+      "ms": 5.776800000000094
+    },
+    {
+      "id": "S035",
+      "language": "hi-Latn",
+      "gender": "M",
+      "channel": "CHATBOT",
+      "tags": [
+        "negation"
+      ],
+      "expectedBand": "LOW",
+      "band": "LOW",
+      "svi": 0,
+      "overrides": [],
+      "expectedIndicators": [],
+      "detected": [],
+      "expectedRecs": [
+        "INFORMATION"
+      ],
+      "recs": [
+        "INFORMATION"
+      ],
+      "ms": 6.362599999999929
+    },
+    {
+      "id": "S036",
+      "language": "hi-Latn",
+      "gender": "F",
+      "channel": "PORTAL",
+      "tags": [],
+      "expectedBand": "LOW",
+      "band": "LOW",
+      "svi": 0,
+      "overrides": [],
+      "expectedIndicators": [],
+      "detected": [],
+      "expectedRecs": [
+        "INFORMATION"
+      ],
+      "recs": [
+        "INFORMATION"
+      ],
+      "ms": 5.58620000000019
+    },
+    {
+      "id": "S037",
+      "language": "hi-Latn",
+      "gender": "F",
+      "channel": "CHATBOT",
+      "tags": [
+        "dialect"
+      ],
+      "expectedBand": "MODERATE",
+      "band": "MODERATE",
+      "svi": 6,
+      "overrides": [
+        "OV-8"
+      ],
+      "expectedIndicators": [
+        "SOCIAL_ISOLATION"
+      ],
+      "detected": [
+        "SOCIAL_ISOLATION"
+      ],
+      "expectedRecs": [
+        "REHABILITATION_RELIEF"
+      ],
+      "recs": [
+        "REHABILITATION_RELIEF"
+      ],
+      "ms": 6.461499999999887
+    },
+    {
+      "id": "S038",
+      "language": "hi-Latn",
+      "gender": "OTHER",
+      "channel": "CHATBOT",
+      "tags": [
+        "dialect"
+      ],
+      "expectedBand": "MODERATE",
+      "band": "LOW",
+      "svi": 16,
+      "overrides": [],
+      "expectedIndicators": [
+        "FEAR_ANXIETY"
+      ],
+      "detected": [
+        "ACUTE_STRESS",
+        "FEAR_ANXIETY"
+      ],
+      "expectedRecs": [
+        "COUNSELLING"
+      ],
+      "recs": [
+        "COUNSELLING",
+        "INFORMATION"
+      ],
+      "ms": 5.380499999999756
+    },
+    {
+      "id": "S039",
+      "language": "hi-Latn",
+      "gender": "M",
+      "channel": "CHATBOT",
+      "tags": [],
+      "expectedBand": "HIGH",
+      "band": "HIGH",
+      "svi": 14,
+      "overrides": [
+        "OV-4",
+        "OV-7"
+      ],
+      "expectedIndicators": [
+        "INTIMIDATION"
+      ],
+      "detected": [
+        "INTIMIDATION"
+      ],
+      "expectedRecs": [
+        "WITNESS_PROTECTION",
+        "POLICE_INTERVENTION"
+      ],
+      "recs": [
+        "POLICE_INTERVENTION",
+        "WITNESS_PROTECTION"
+      ],
+      "ms": 7.894800000000032
+    },
+    {
+      "id": "S040",
+      "language": "hi-Latn",
+      "gender": "F",
+      "channel": "CHATBOT",
+      "tags": [
+        "indirect"
+      ],
+      "expectedBand": "HIGH",
+      "band": "HIGH",
+      "svi": 17,
+      "overrides": [
+        "OV-6"
+      ],
+      "expectedIndicators": [
+        "SUICIDAL_IDEATION"
+      ],
+      "detected": [
+        "SUICIDAL_IDEATION"
+      ],
+      "expectedRecs": [
+        "COUNSELLING"
+      ],
+      "recs": [
+        "COUNSELLING"
+      ],
+      "ms": 6.118600000000242
+    },
+    {
+      "id": "S041",
+      "language": "hi-Latn",
+      "gender": "F",
+      "channel": "CHATBOT",
+      "tags": [],
+      "expectedBand": "CRITICAL",
+      "band": "CRITICAL",
+      "svi": 24,
+      "overrides": [
+        "OV-2"
+      ],
+      "expectedIndicators": [
+        "INTIMIDATION"
+      ],
+      "detected": [
+        "FEAR_ANXIETY",
+        "INTIMIDATION"
+      ],
+      "expectedRecs": [
+        "EMERGENCY_SUPPORT",
+        "POLICE_INTERVENTION"
+      ],
+      "recs": [
+        "EMERGENCY_SUPPORT",
+        "COUNSELLING",
+        "POLICE_INTERVENTION"
+      ],
+      "ms": 5.031799999999748
+    },
+    {
+      "id": "S042",
+      "language": "hi-Latn",
+      "gender": "F",
+      "channel": "CHATBOT",
+      "tags": [],
+      "expectedBand": "CRITICAL",
+      "band": "CRITICAL",
+      "svi": 18,
+      "overrides": [
+        "OV-1"
+      ],
+      "expectedIndicators": [
+        "SUICIDAL_IDEATION"
+      ],
+      "detected": [
+        "SUICIDAL_IDEATION"
+      ],
+      "expectedRecs": [
+        "EMERGENCY_SUPPORT",
+        "COUNSELLING"
+      ],
+      "recs": [
+        "EMERGENCY_SUPPORT",
+        "COUNSELLING"
+      ],
+      "ms": 5.763600000000224
+    },
+    {
+      "id": "S043",
+      "language": "en",
+      "gender": "F",
+      "channel": "CHATBOT",
+      "tags": [
+        "negation"
+      ],
+      "expectedBand": "LOW",
+      "band": "LOW",
+      "svi": 11,
+      "overrides": [],
+      "expectedIndicators": [],
+      "detected": [
+        "INTIMIDATION"
+      ],
+      "expectedRecs": [
+        "INFORMATION"
+      ],
+      "recs": [
+        "POLICE_INTERVENTION",
+        "INFORMATION"
+      ],
+      "ms": 5.829099999999926
+    },
+    {
+      "id": "S044",
+      "language": "en",
+      "gender": "M",
+      "channel": "PORTAL",
+      "tags": [
+        "negation"
+      ],
+      "expectedBand": "LOW",
+      "band": "LOW",
+      "svi": 0,
+      "overrides": [],
+      "expectedIndicators": [],
+      "detected": [],
+      "expectedRecs": [
+        "INFORMATION"
+      ],
+      "recs": [
+        "INFORMATION"
+      ],
+      "ms": 4.963200000000143
+    },
+    {
+      "id": "S045",
+      "language": "en",
+      "gender": "UNDISCLOSED",
+      "channel": "PORTAL",
+      "tags": [],
+      "expectedBand": "LOW",
+      "band": "LOW",
+      "svi": 0,
+      "overrides": [],
+      "expectedIndicators": [],
+      "detected": [],
+      "expectedRecs": [
+        "INFORMATION"
+      ],
+      "recs": [
+        "INFORMATION"
+      ],
+      "ms": 5.913199999999961
+    },
+    {
+      "id": "S046",
+      "language": "en",
+      "gender": "F",
+      "channel": "CHATBOT",
+      "tags": [],
+      "expectedBand": "MODERATE",
+      "band": "LOW",
+      "svi": 8,
+      "overrides": [],
+      "expectedIndicators": [
+        "FEAR_ANXIETY"
+      ],
+      "detected": [
+        "FEAR_ANXIETY"
+      ],
+      "expectedRecs": [
+        "LEGAL_AID",
+        "COUNSELLING"
+      ],
+      "recs": [
+        "COUNSELLING",
+        "INFORMATION"
+      ],
+      "ms": 6.044300000000021
+    },
+    {
+      "id": "S047",
+      "language": "en",
+      "gender": "M",
+      "channel": "VOICE_CALL",
+      "tags": [],
+      "expectedBand": "MODERATE",
+      "band": "LOW",
+      "svi": 18,
+      "overrides": [],
+      "expectedIndicators": [
+        "SEVERE_TRAUMA"
+      ],
+      "detected": [
+        "ACUTE_STRESS",
+        "SEVERE_TRAUMA"
+      ],
+      "expectedRecs": [
+        "COUNSELLING"
+      ],
+      "recs": [
+        "COUNSELLING",
+        "INFORMATION"
+      ],
+      "ms": 5.655499999999847
+    },
+    {
+      "id": "S048",
+      "language": "en",
+      "gender": "F",
+      "channel": "CHATBOT",
+      "tags": [],
+      "expectedBand": "MODERATE",
+      "band": "LOW",
+      "svi": 7,
+      "overrides": [],
+      "expectedIndicators": [
+        "SOCIAL_ISOLATION"
+      ],
+      "detected": [
+        "SOCIAL_ISOLATION"
+      ],
+      "expectedRecs": [
+        "REHABILITATION_RELIEF"
+      ],
+      "recs": [
+        "REHABILITATION_RELIEF",
+        "INFORMATION"
+      ],
+      "ms": 5.576799999999821
+    },
+    {
+      "id": "S049",
+      "language": "en",
+      "gender": "M",
+      "channel": "CHATBOT",
+      "tags": [],
+      "expectedBand": "HIGH",
+      "band": "HIGH",
+      "svi": 14,
+      "overrides": [
+        "OV-4",
+        "OV-7"
+      ],
+      "expectedIndicators": [
+        "INTIMIDATION"
+      ],
+      "detected": [
+        "INTIMIDATION"
+      ],
+      "expectedRecs": [
+        "POLICE_INTERVENTION"
+      ],
+      "recs": [
+        "POLICE_INTERVENTION",
+        "WITNESS_PROTECTION"
+      ],
+      "ms": 6.018299999999726
+    },
+    {
+      "id": "S050",
+      "language": "en",
+      "gender": "F",
+      "channel": "PORTAL",
+      "tags": [],
+      "expectedBand": "HIGH",
+      "band": "HIGH",
+      "svi": 22,
+      "overrides": [
+        "OV-5"
+      ],
+      "expectedIndicators": [
+        "FEAR_ANXIETY"
+      ],
+      "detected": [
+        "FEAR_ANXIETY",
+        "EXTREME_VULNERABILITY"
+      ],
+      "expectedRecs": [
+        "MEDICAL_ASSISTANCE",
+        "COUNSELLING"
+      ],
+      "recs": [
+        "COUNSELLING",
+        "MEDICAL_ASSISTANCE"
+      ],
+      "ms": 5.68100000000004
+    },
+    {
+      "id": "S051",
+      "language": "en",
+      "gender": "OTHER",
+      "channel": "CHATBOT",
+      "tags": [
+        "indirect"
+      ],
+      "expectedBand": "HIGH",
+      "band": "HIGH",
+      "svi": 17,
+      "overrides": [
+        "OV-6"
+      ],
+      "expectedIndicators": [
+        "SUICIDAL_IDEATION"
+      ],
+      "detected": [
+        "SUICIDAL_IDEATION"
+      ],
+      "expectedRecs": [
+        "COUNSELLING"
+      ],
+      "recs": [
+        "COUNSELLING"
+      ],
+      "ms": 5.695699999999761
+    },
+    {
+      "id": "S052",
+      "language": "en",
+      "gender": "F",
+      "channel": "CHATBOT",
+      "tags": [],
+      "expectedBand": "CRITICAL",
+      "band": "CRITICAL",
+      "svi": 18,
+      "overrides": [
+        "OV-1"
+      ],
+      "expectedIndicators": [
+        "SUICIDAL_IDEATION"
+      ],
+      "detected": [
+        "SUICIDAL_IDEATION"
+      ],
+      "expectedRecs": [
+        "EMERGENCY_SUPPORT",
+        "COUNSELLING"
+      ],
+      "recs": [
+        "EMERGENCY_SUPPORT",
+        "COUNSELLING"
+      ],
+      "ms": 5.634100000000217
+    },
+    {
+      "id": "S053",
+      "language": "en",
+      "gender": "M",
+      "channel": "IVRS",
+      "tags": [
+        "screener-only"
+      ],
+      "expectedBand": "CRITICAL",
+      "band": "CRITICAL",
+      "svi": 23,
+      "overrides": [
+        "OV-2",
+        "OV-9"
+      ],
+      "expectedIndicators": [
+        "INTIMIDATION"
+      ],
+      "detected": [
+        "FEAR_ANXIETY",
+        "INTIMIDATION"
+      ],
+      "expectedRecs": [
+        "EMERGENCY_SUPPORT",
+        "POLICE_INTERVENTION"
+      ],
+      "recs": [
+        "EMERGENCY_SUPPORT",
+        "COUNSELLING",
+        "POLICE_INTERVENTION"
+      ],
+      "ms": 0.14510000000018408
+    },
+    {
+      "id": "S054",
+      "language": "mr",
+      "gender": "F",
+      "channel": "CHATBOT",
+      "tags": [],
+      "expectedBand": "MODERATE",
+      "band": "LOW",
+      "svi": 7,
+      "overrides": [],
+      "expectedIndicators": [
+        "SOCIAL_ISOLATION"
+      ],
+      "detected": [
+        "SOCIAL_ISOLATION"
+      ],
+      "expectedRecs": [
+        "REHABILITATION_RELIEF"
+      ],
+      "recs": [
+        "REHABILITATION_RELIEF",
+        "INFORMATION"
+      ],
+      "ms": 6.173499999999876
+    },
+    {
+      "id": "S055",
+      "language": "mr",
+      "gender": "M",
+      "channel": "CHATBOT",
+      "tags": [],
+      "expectedBand": "HIGH",
+      "band": "HIGH",
+      "svi": 14,
+      "overrides": [
+        "OV-4",
+        "OV-7"
+      ],
+      "expectedIndicators": [
+        "INTIMIDATION"
+      ],
+      "detected": [
+        "INTIMIDATION"
+      ],
+      "expectedRecs": [
+        "WITNESS_PROTECTION",
+        "POLICE_INTERVENTION"
+      ],
+      "recs": [
+        "POLICE_INTERVENTION",
+        "WITNESS_PROTECTION"
+      ],
+      "ms": 6.633700000000317
+    },
+    {
+      "id": "S056",
+      "language": "mr",
+      "gender": "F",
+      "channel": "PORTAL",
+      "tags": [
+        "negation"
+      ],
+      "expectedBand": "LOW",
+      "band": "LOW",
+      "svi": 11,
+      "overrides": [],
+      "expectedIndicators": [],
+      "detected": [
+        "INTIMIDATION"
+      ],
+      "expectedRecs": [
+        "INFORMATION"
+      ],
+      "recs": [
+        "POLICE_INTERVENTION",
+        "INFORMATION"
+      ],
+      "ms": 5.526700000000346
+    },
+    {
+      "id": "S057",
+      "language": "ta",
+      "gender": "F",
+      "channel": "CHATBOT",
+      "tags": [],
+      "expectedBand": "CRITICAL",
+      "band": "CRITICAL",
+      "svi": 25,
+      "overrides": [
+        "OV-2"
+      ],
+      "expectedIndicators": [
+        "INTIMIDATION"
+      ],
+      "detected": [
+        "INTIMIDATION",
+        "EXTREME_VULNERABILITY"
+      ],
+      "expectedRecs": [
+        "EMERGENCY_SUPPORT",
+        "POLICE_INTERVENTION"
+      ],
+      "recs": [
+        "EMERGENCY_SUPPORT",
+        "POLICE_INTERVENTION"
+      ],
+      "ms": 6.581699999999728
+    },
+    {
+      "id": "S058",
+      "language": "ta",
+      "gender": "M",
+      "channel": "VOICE_CALL",
+      "tags": [],
+      "expectedBand": "MODERATE",
+      "band": "LOW",
+      "svi": 15,
+      "overrides": [],
+      "expectedIndicators": [
+        "FEAR_ANXIETY"
+      ],
+      "detected": [
+        "ACUTE_STRESS",
+        "FEAR_ANXIETY"
+      ],
+      "expectedRecs": [
+        "COUNSELLING"
+      ],
+      "recs": [
+        "COUNSELLING",
+        "INFORMATION"
+      ],
+      "ms": 6.412499999999909
+    },
+    {
+      "id": "S059",
+      "language": "ta",
+      "gender": "UNDISCLOSED",
+      "channel": "PORTAL",
+      "tags": [],
+      "expectedBand": "LOW",
+      "band": "LOW",
+      "svi": 0,
+      "overrides": [],
+      "expectedIndicators": [],
+      "detected": [],
+      "expectedRecs": [
+        "INFORMATION"
+      ],
+      "recs": [
+        "INFORMATION"
+      ],
+      "ms": 5.394999999999982
+    },
+    {
+      "id": "S060",
+      "language": "bn",
+      "gender": "M",
+      "channel": "CHATBOT",
+      "tags": [],
+      "expectedBand": "HIGH",
+      "band": "HIGH",
+      "svi": 13,
+      "overrides": [
+        "OV-4"
+      ],
+      "expectedIndicators": [
+        "INTIMIDATION"
+      ],
+      "detected": [
+        "INTIMIDATION"
+      ],
+      "expectedRecs": [
+        "POLICE_INTERVENTION",
+        "WITNESS_PROTECTION"
+      ],
+      "recs": [
+        "POLICE_INTERVENTION"
+      ],
+      "ms": 5.8093000000003485
+    },
+    {
+      "id": "S061",
+      "language": "bn",
+      "gender": "F",
+      "channel": "PORTAL",
+      "tags": [],
+      "expectedBand": "LOW",
+      "band": "LOW",
+      "svi": 0,
+      "overrides": [],
+      "expectedIndicators": [],
+      "detected": [],
+      "expectedRecs": [
+        "INFORMATION"
+      ],
+      "recs": [
+        "INFORMATION"
+      ],
+      "ms": 6.507800000000316
+    },
+    {
+      "id": "S062",
+      "language": "bn",
+      "gender": "F",
+      "channel": "VOICE_CALL",
+      "tags": [],
+      "expectedBand": "CRITICAL",
+      "band": "CRITICAL",
+      "svi": 14,
+      "overrides": [
+        "OV-3"
+      ],
+      "expectedIndicators": [
+        "SEVERE_TRAUMA"
+      ],
+      "detected": [
+        "SEVERE_TRAUMA"
+      ],
+      "expectedRecs": [
+        "EMERGENCY_SUPPORT",
+        "MEDICAL_ASSISTANCE"
+      ],
+      "recs": [
+        "EMERGENCY_SUPPORT",
+        "COUNSELLING",
+        "MEDICAL_ASSISTANCE"
+      ],
+      "ms": 5.534200000000055
     }
   ]
 }

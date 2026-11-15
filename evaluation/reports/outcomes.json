@@ -1,0 +1,42 @@
+{
+  "measuredAt": "2026-11-15T09:19:31.030Z",
+  "queue": {
+    "model": "62 evaluation scenarios, one arrival per minute, one counsellor, 8 min per case, rules-only bands",
+    "avgWaitMinCritical": {
+      "firstComeFirstServed": 231,
+      "riskOrder": 39
+    },
+    "avgWaitMinHigh": {
+      "firstComeFirstServed": 224,
+      "riskOrder": 160
+    },
+    "avgWaitMinAll": {
+      "firstComeFirstServed": 213.5,
+      "riskOrder": 213.5
+    }
+  },
+  "alerts": {
+    "criticalAlerts": {
+      "value": 83,
+      "suppressed": false
+    },
+    "medianAckSec": {
+      "value": 14,
+      "suppressed": false
+    },
+    "medianFirstResponseSec": {
+      "value": 9,
+      "suppressed": false
+    },
+    "note": "synthetic test traffic in the shared dev database"
+  },
+  "referralsByTypeAndDistrict": [
+    {
+      "districtId": "6af890e51c8e3d1fa0e1f006",
+      "supportType": "POLICE_INTERVENTION",
+      "demand": 6,
+      "completed": 0,
+      "suppressed": false
+    }
+  ]
+}
