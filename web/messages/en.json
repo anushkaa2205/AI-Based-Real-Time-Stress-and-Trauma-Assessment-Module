@@ -167,5 +167,113 @@
     "keypad": "Keypad",
     "pressed": "You pressed",
     "invalid": "That key is not an option. Please try again."
+  },
+  "home": {
+    "skip": "Skip to main content",
+    "nav": {
+      "label": "Site",
+      "menu": "Menu",
+      "language": "Language",
+      "howItWorks": "How it works",
+      "privacy": "Privacy",
+      "staff": "Staff sign in"
+    },
+    "hero": {
+      "eyebrow": "A safe place to begin",
+      "title": "You can tell us what happened, in the way that feels easiest.",
+      "lead": "Share a few details by writing, speaking or answering simple questions. You can skip questions you do not want to answer. If you need help right now, the safety numbers are below.",
+      "urgent": "I need urgent help",
+      "reassure": "You do not need to explain everything at once."
+    },
+    "ways": {
+      "title": "Choose how to share",
+      "write": {
+        "title": "Write",
+        "body": "Type in your own words."
+      },
+      "speak": {
+        "title": "Speak",
+        "body": "Speak if that is easier. Nothing is recorded until you press the microphone button."
+      },
+      "guided": {
+        "title": "Guided questions",
+        "body": "Answer a few short questions, one at a time."
+      },
+      "note": "Whichever you choose, you will first see a short privacy choice and a few questions about your safety."
+    },
+    "urgent": {
+      "title": "Are you in immediate danger?",
+      "note": "These numbers connect you directly to each service. This website does not call anyone for you."
+    },
+    "how": {
+      "title": "How it works",
+      "steps": {
+        "choose": {
+          "title": "Choose how to share",
+          "body": "Write, speak or answer guided questions."
+        },
+        "consent": {
+          "title": "Choose what you agree to",
+          "body": "Looking at what you type, listening to your voice and sharing with a counsellor are separate choices. You can say no and still continue."
+        },
+        "people": {
+          "title": "A person decides how to help",
+          "body": "Helpline staff read what you share and decide what support to offer. The automated tool only helps them; it does not decide anything on its own."
+        }
+      }
+    },
+    "privacy": {
+      "title": "Your privacy and choices",
+      "more": "Read the full privacy notice"
+    },
+    "footer": {
+      "note": "This website works alongside the NHAA helpline 14566 and its complaint process. It is not an emergency service and does not replace the official complaint channel.",
+      "numbers": "Helpline numbers"
+    }
+  },
+  "howItWorks": {
+    "title": "How it works",
+    "intro": "This is what happens after you start. You can skip any question, take a break, or leave at any time.",
+    "steps": {
+      "language": {
+        "title": "Choose your language",
+        "body": "All questions are shown in the language you choose. You can change it later."
+      },
+      "consent": {
+        "title": "Choose what you agree to",
+        "body": "You read a short notice and tick only the choices you agree to. Nothing is ticked for you."
+      },
+      "safety": {
+        "title": "A few safety questions",
+        "body": "We first ask whether you are safe right now. If you may be in danger, the emergency numbers are shown at once."
+      },
+      "share": {
+        "title": "Tell us what happened",
+        "body": "Write or speak in your own words. You can skip this."
+      },
+      "more": {
+        "title": "A few more questions",
+        "body": "Some short, optional questions about how you are feeling and your situation. You can skip any of them."
+      },
+      "reference": {
+        "title": "Your reference number",
+        "body": "At the end you get a reference number. Keep it to follow up by calling 14566."
+      }
+    },
+    "back": "Back to the start page"
+  },
+  "privacyPage": {
+    "title": "Privacy",
+    "intro": "This is the same notice you see before you begin.",
+    "q": {
+      "what": "What information is used?",
+      "why": "Why is it used?",
+      "who": "Who may see my information?",
+      "howLong": "How long is it kept?",
+      "refuse": "What happens if I say no?",
+      "withdraw": "Can I change my mind?",
+      "exit": "How do I leave this page quickly?"
+    },
+    "exitBody": "Every page has a “{button}” button at the top. It hides the page at once and opens a different website. If you had started, your conversation is ended."
   }
 }
