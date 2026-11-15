@@ -1,3 +1,5 @@
+> **Superseded (16 Nov 2026).** This document describes a victim-facing website with a question flow. The product is now a plug-in assessment module with two inputs (text and voice) and no victim website or questionnaire: see `docs/PRODUCT_VISION.md`. Phase F stopped after F.2, and the F.2 homepage was removed in Phase M. Kept for history only; do not build from it.
+
 # Frontend Implementation Checklist
 
 ## Replace simulator-first landing page, build the homepage and unified input layer
