@@ -114,6 +114,8 @@ const InteractionSchema = new Schema(
     startedAt: { type: Date, default: Date.now },
     endedAt: Date,
     retentionUntil: Date, // NFR-PRI-04
+    // Added in task 8.7 (not yet in DATABASE.md): when the retention job cleared its evidence quotes
+    contentPurgedAt: Date,
   },
   base,
 );

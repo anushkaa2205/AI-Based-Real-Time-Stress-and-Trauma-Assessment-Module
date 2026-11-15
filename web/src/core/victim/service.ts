@@ -11,6 +11,7 @@ import { NOTICE_VERSION, currentConsent, resolveMode } from "@/core/consent/mode
 import { flowStateOf, nextStep, promptFor } from "@/core/conversation/flow";
 import { t } from "@/core/i18n/messages";
 import { encrypt } from "@/core/privacy/crypto";
+import { startRetention } from "@/core/privacy/retention";
 import { isMinor, type CaseContextInput } from "@/core/scoring/context";
 import { shouldShowEmergency } from "@/core/victim/emergency";
 import { hashSessionToken, newSessionToken, SESSION_TTL_MS } from "@/core/victim/session";
@@ -274,6 +275,7 @@ export async function endInteraction(id: string, reason: "COMPLETED" | "QUICK_EX
     interaction.endedAt = new Date();
     interaction.sessionExpiresAt = new Date(); // the token stops working now
     await interaction.save();
+    await startRetention(interaction._id, interaction.endedAt); // NFR-PRI-04 (task 8.7)
     await record({ actorType: "VICTIM_SESSION", actorId: id, action: "interaction.end", entityType: "interaction", entityId: id, metadata: { reason } });
   }
   return { docketNumber: caseDoc?.docketNumber ?? "", lang: (interaction.uiLanguage === "hi" ? "hi" : "en") as VictimLang };

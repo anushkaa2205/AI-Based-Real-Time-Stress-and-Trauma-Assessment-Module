@@ -6,7 +6,9 @@ const CaseNoteSchema = new Schema(
   {
     caseId: { type: ObjectId, ref: "Case", required: true },
     authorId: { type: ObjectId, ref: "User", required: true },
-    bodyEnc: { type: String, required: true },
+    // Cleared (null) by the retention job after the retention period (task 8.7, NFR-PRI-04)
+    bodyEnc: { type: String, default: null },
+    purgedAt: Date,
   },
   appendOnly,
 );

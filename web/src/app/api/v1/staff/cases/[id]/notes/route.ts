@@ -14,7 +14,7 @@ export const GET = route({ auth: "staff", action: "case.review" }, async ({ para
   const notes = await CaseNote.find({ caseId: loaded.caseDoc._id }).sort({ createdAt: -1 }).limit(200).lean();
   const names = await userNames(notes.map((n) => n.authorId));
   return {
-    items: notes.map((n) => ({ id: String(n._id), body: decrypt(n.bodyEnc), author: userRef(n.authorId, names), createdAt: new Date(n.createdAt).toISOString() })),
+    items: notes.map((n) => ({ id: String(n._id), body: n.bodyEnc ? decrypt(n.bodyEnc) : "[Removed after the retention period]", author: userRef(n.authorId, names), createdAt: new Date(n.createdAt).toISOString() })),
   };
 });
 

@@ -11,7 +11,8 @@ import { analyzeText, defaultDeps } from "@/core/analysis-client/client";
 import { checkAnalysis } from "@/core/analysis-client/guardrails";
 import { record } from "@/core/audit/record";
 import { allowsTextAnalysis } from "@/core/consent/mode";
-import { runRollup } from "@/core/analytics/rollup";
+import { ensureRollupScheduled, runRollup } from "@/core/analytics/rollup";
+import { runPurge } from "@/core/privacy/retention";
 import { remindFollowUp } from "@/core/followups/service";
 import { scoreInteraction } from "@/core/pipeline/score";
 import { decrypt, encrypt } from "@/core/privacy/crypto";
@@ -160,14 +161,28 @@ async function rescore(jobId: string, payload: { interactionId?: string; message
 }
 
 /** Claims and runs up to `limit` due jobs. Never throws; returns how many ran. */
+/** Recurring jobs (roll-up hourly, purge daily) re-schedule themselves; this starts them once per process. */
+const g = globalThis as unknown as { _recurringJobsEnsured?: boolean };
+async function ensureRecurringJobs(now: Date) {
+  if (g._recurringJobsEnsured) return;
+  g._recurringJobsEnsured = true;
+  await Promise.all([
+    ensureRollupScheduled(now),
+    Job.updateOne({ type: "retention.purge", doneAt: null }, { $setOnInsert: { type: "retention.purge", payload: {}, runAt: now, attempts: 0 } }, { upsert: true }),
+  ]);
+}
+
 export async function runDue(limit = 5, now: Date = new Date()): Promise<{ ran: number; failed: number }> {
   await db();
+  await ensureRecurringJobs(now).catch(() => {
+    g._recurringJobsEnsured = false; // try again on the next call
+  });
   let ran = 0;
   let failed = 0;
   for (let i = 0; i < limit; i++) {
     const job = await Job.findOneAndUpdate(
       {
-        type: { $in: ["alert.escalate", "rescore", "followup.remind", "stats.rollup"] }, // retention.purge: task 8.7
+        type: { $in: ["alert.escalate", "rescore", "followup.remind", "stats.rollup", "retention.purge"] },
         doneAt: null,
         runAt: { $lte: now },
         $or: [{ lockedUntil: null }, { lockedUntil: { $lt: now } }],
@@ -186,7 +201,9 @@ export async function runDue(limit = 5, now: Date = new Date()): Promise<{ ran: 
             ? await remindFollowUp(payload as { followUpId?: string; stage?: "due" | "miss" }, now)
             : job.type === "stats.rollup"
               ? await runRollup(now).then(() => ({ done: true as const }))
-              : await rescore(ID(job._id), payload as { interactionId?: string; messageId?: string }, job.attempts, now);
+              : job.type === "retention.purge"
+                ? await runPurge(now).then(() => ({ done: true as const }))
+                : await rescore(ID(job._id), payload as { interactionId?: string; messageId?: string }, job.attempts, now);
     } catch (err) {
       const name = (err as Error)?.name ?? "Error";
       outcome = job.attempts >= MAX_ATTEMPTS ? { done: true } : { done: false, retryAt: backoff(job.attempts, now.getTime()), error: name };
