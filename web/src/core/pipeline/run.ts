@@ -88,6 +88,8 @@ const isDuplicateIdempotencyKey = (err: unknown) => {
 
 /** Whole-turn budget for the AI call, measured from the start of the pipeline. */
 const AI_BUDGET_MS = 2_300;
+/** Voice: deferred AI re-scores wait until the caller has paused this long (debounced per call). */
+export const VOICE_QUIET_MS = 6_000;
 const MIN_AI_MS = 1_000;
 
 export async function runPipeline(input: RunInput): Promise<RunResult> {
@@ -331,8 +333,23 @@ export async function runPipeline(input: RunInput): Promise<RunResult> {
           if (newIndicators.length) await Indicator.insertMany(newIndicators, { session });
           for (const f of lexicon?.facts ?? []) if (!interaction.caseFacts.includes(f)) interaction.caseFacts.push(f);
           if (aiDegraded) {
+            if (aiDeferred) {
+              // Voice: debounce. Re-scores run once the caller pauses, so they never write to the
+              // same case at the same time as the next window (that made both retry and miss 5 s).
+              await Job.updateMany(
+                { type: "rescore", "payload.interactionId": ID(interaction._id), "payload.deferred": true, doneAt: null, lockedUntil: null },
+                { $set: { runAt: new Date(now.getTime() + VOICE_QUIET_MS) } },
+                { session },
+              );
+            }
             await Job.create(
-              [{ type: "rescore", payload: { interactionId: ID(interaction._id), messageId: ID(messageId) }, runAt: new Date(now.getTime() + (aiDeferred ? 0 : 60_000)) }],
+              [
+                {
+                  type: "rescore",
+                  payload: { interactionId: ID(interaction._id), messageId: ID(messageId), deferred: aiDeferred },
+                  runAt: new Date(now.getTime() + (aiDeferred ? VOICE_QUIET_MS : 60_000)),
+                },
+              ],
               { session },
             );
           }

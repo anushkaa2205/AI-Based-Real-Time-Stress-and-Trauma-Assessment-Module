@@ -13,7 +13,7 @@ import { AudioFields, AudioResponse, type VictimLang } from "@/contracts/victim"
 import { analyzeAudio } from "@/core/analysis-client/client";
 import { allowsVoiceAnalysis } from "@/core/consent/mode";
 import { runDue } from "@/core/jobs/runDue";
-import { runPipeline } from "@/core/pipeline/run";
+import { VOICE_QUIET_MS, runPipeline } from "@/core/pipeline/run";
 import { emergencyPanel, shouldShowEmergency } from "@/core/victim/emergency";
 import { ApiError } from "@/lib/problem";
 import { Case, Interaction, VoiceWindow } from "@/models";
@@ -65,6 +65,7 @@ export async function handleAudioChunk(req: Request, interactionId: string, lang
     mimeType,
   });
   audio.fill(0); // drop the raw audio from memory as soon as it is analysed (FR-VOI-09)
+  const analysedAt = Date.now();
   if (r.degraded) {
     console.warn(`[audio] voice analysis degraded (${r.reason})`);
     return reply(false, null, await currentShow());
@@ -78,8 +79,8 @@ export async function handleAudioChunk(req: Request, interactionId: string, lang
     voice: { windowIndex, startMs, analysis: r.result },
     deferAi: true,
   });
-  // The transcript's text analysis runs right after the response (the deferred rescore job).
-  if (text) after(() => runDue().catch(() => undefined));
-  console.info(`[audio] window scored in ${Date.now() - started} ms`);
+  // The transcript's AI analysis runs once the caller pauses (debounced re-score, see run.ts).
+  if (text) after(() => new Promise((r) => setTimeout(r, VOICE_QUIET_MS + 500)).then(() => runDue()).catch(() => undefined));
+  console.info(`[audio] window scored in ${Date.now() - started} ms (analysis ${analysedAt - started} ms, pipeline ${Date.now() - analysedAt} ms)`);
   return reply(true, text || null, run.showEmergencyPanel);
 }
