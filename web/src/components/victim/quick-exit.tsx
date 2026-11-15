@@ -29,20 +29,18 @@ function QuickExitButton() {
     <button
       type="button"
       onClick={exit}
-      className="min-h-12 rounded-md bg-red-700 px-4 py-2 text-base font-semibold text-white shadow focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-red-900"
+      className="btn btn-danger min-h-11 shrink-0 whitespace-nowrap px-3.5"
       aria-label={`${t("quickExit")}: ${t("quickExitHint")}`}
     >
-      {t("quickExit")} ✕
+      <span aria-hidden>✕</span> {t("quickExit")}
     </button>
   );
 }
 
 export function QuickExit() {
   return (
-    <div className="sticky top-0 z-50 flex justify-end bg-background/95 px-4 py-2 backdrop-blur">
-      <Suspense fallback={null}>
-        <QuickExitButton />
-      </Suspense>
-    </div>
+    <Suspense fallback={null}>
+      <QuickExitButton />
+    </Suspense>
   );
 }

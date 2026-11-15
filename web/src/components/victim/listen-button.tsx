@@ -47,7 +47,7 @@ export function ListenButton({ text, lang }: { text: string; lang: string }) {
     <button
       type="button"
       onClick={toggle}
-      className="inline-flex min-h-11 items-center gap-2 rounded-md border border-border px-3 py-1 text-base"
+      className="btn btn-secondary min-h-11 self-start px-3 text-base font-medium"
       aria-pressed={speaking}
     >
       <span aria-hidden>🔊</span> {speaking ? t("stop") : t("listen")}

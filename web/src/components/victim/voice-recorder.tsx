@@ -215,16 +215,16 @@ export function VoiceRecorder({
 
   if (phase === "idle") {
     return (
-      <button type="button" onClick={start} className="min-h-14 rounded-lg border-2 border-primary px-4 text-xl font-semibold" data-testid="voice-start">
+      <button type="button" onClick={start} className="btn btn-secondary btn-lg border-navy text-ink" data-testid="voice-start">
         🎤 {t("speak")}
       </button>
     );
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-lg border-2 border-red-700 p-4" data-testid="voice-recorder">
+    <div className="card flex flex-col gap-3 border-l-[6px] border-l-danger p-4" data-testid="voice-recorder">
       <p role="status" aria-live="polite" className="flex items-center gap-2 text-lg font-semibold">
-        <span aria-hidden className={`inline-block h-3 w-3 rounded-full ${muted ? "bg-muted-foreground" : "animate-pulse bg-red-700"}`} />
+        <span aria-hidden className={`inline-block size-3 rounded-[2px] ${muted ? "bg-muted-foreground" : "animate-pulse bg-danger"}`} />
         {phase === "finishing" ? t("sending") : muted ? t("muted") : t("recording")}
         <span className="font-mono text-base">
           {Math.floor(elapsed / 60)}:{String(elapsed % 60).padStart(2, "0")}
@@ -232,15 +232,15 @@ export function VoiceRecorder({
       </p>
       {heard.length > 0 && (
         <div className="text-base">
-          <p className="text-muted-foreground">{t("heard")}</p>
+          <p className="section-title">{t("heard")}</p>
           <p data-testid="voice-heard">{heard.join(" ")}</p>
         </div>
       )}
       <div className="flex gap-3">
-        <button type="button" onClick={toggleMute} disabled={phase !== "recording"} className="min-h-12 flex-1 rounded-lg border border-border text-lg">
+        <button type="button" onClick={toggleMute} disabled={phase !== "recording"} className="btn btn-secondary min-h-12 flex-1 text-lg">
           {muted ? t("unmute") : t("mute")}
         </button>
-        <button type="button" onClick={stop} disabled={phase !== "recording"} className="min-h-12 flex-1 rounded-lg bg-primary text-lg font-semibold text-primary-foreground" data-testid="voice-stop">
+        <button type="button" onClick={stop} disabled={phase !== "recording"} className="btn btn-primary min-h-12 flex-1 text-lg" data-testid="voice-stop">
           {t("stop")}
         </button>
       </div>

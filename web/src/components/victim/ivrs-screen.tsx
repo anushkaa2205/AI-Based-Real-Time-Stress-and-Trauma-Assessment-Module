@@ -202,29 +202,29 @@ export function IvrsScreen({ initialLang }: { initialLang: Lang }) {
       data-step={step.kind === "item" ? step.code : step.kind}
       data-ready={Object.keys(strings).length > 0}
     >
-      <h1 className="text-2xl font-semibold">{strings["ivrs.title"] ?? t("ivrs.title")}</h1>
+      <h1 className="text-[1.75rem] font-bold leading-tight">{strings["ivrs.title"] ?? t("ivrs.title")}</h1>
       {panel && id && <EmergencyPanel panel={panel} interactionId={id} />}
-      <p aria-live="polite" className="text-xl" data-testid="ivrs-prompt">
+      <p aria-live="polite" className="card card-pad text-xl" data-testid="ivrs-prompt">
         {text}
       </p>
       {step.kind === "done" && (
-        <p className="font-mono text-2xl font-bold tracking-wide" data-testid="docket">
+        <p className="font-mono text-[1.75rem] font-bold tracking-wider text-navy" data-testid="docket">
           {step.docket}
         </p>
       )}
       {note && (
-        <p role="alert" className="text-destructive">
+        <p role="alert" className="border-l-4 border-danger bg-danger-soft px-3 py-2 text-danger">
           {strings["ivrs.invalid"] ?? t("ivrs.invalid")}
         </p>
       )}
       {step.kind !== "done" && step.kind !== "error" && (
-        <div role="group" aria-label={strings["ivrs.keypad"] ?? t("ivrs.keypad")} className="mx-auto grid w-full max-w-xs grid-cols-3 gap-3">
+        <div role="group" aria-label={strings["ivrs.keypad"] ?? t("ivrs.keypad")} className="mx-auto grid w-full max-w-xs grid-cols-3 gap-2">
           {KEYS.map((k) => (
             <button
               key={k}
               type="button"
               onClick={() => press(k)}
-              className="aspect-square rounded-full border-2 border-primary text-3xl font-semibold active:bg-primary active:text-primary-foreground"
+              className="flex h-16 items-center justify-center rounded-[4px] border border-input bg-white font-mono text-[1.75rem] font-semibold text-ink shadow-[inset_0_-2px_0_var(--line)] hover:bg-muted active:bg-navy active:text-white"
               data-testid={`key-${k === "*" ? "star" : k === "#" ? "hash" : k}`}
             >
               {k}
@@ -233,7 +233,7 @@ export function IvrsScreen({ initialLang }: { initialLang: Lang }) {
         </div>
       )}
       {last && (
-        <p className="text-center text-base text-muted-foreground" aria-live="polite">
+        <p className="text-center text-base text-ink-2" aria-live="polite">
           {strings["ivrs.pressed"] ?? t("ivrs.pressed")}: {last}
         </p>
       )}

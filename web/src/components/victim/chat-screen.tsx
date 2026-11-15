@@ -18,7 +18,7 @@ import { VoiceRecorder } from "./voice-recorder";
 
 type View = { kind: "loading" } | { kind: "turn"; turn: Turn } | { kind: "done"; docket: string; closing: string } | { kind: "ended" };
 
-const bigButton = "min-h-14 rounded-lg px-4 text-xl font-semibold disabled:opacity-60";
+const bigButton = "btn btn-lg";
 
 export function ChatScreen() {
   const t = useTranslations();
@@ -161,7 +161,7 @@ export function ChatScreen() {
     return (
       <section className="flex flex-col gap-4">
         <p>{t("common.sessionEnded")}</p>
-        <a href={`/${locale}`} className={`${bigButton} flex items-center justify-center bg-primary text-primary-foreground`}>
+        <a href={`/${locale}`} className={`${bigButton} btn-primary`}>
           {t("common.startAgain")}
         </a>
       </section>
@@ -171,14 +171,14 @@ export function ChatScreen() {
   if (view.kind === "done") {
     return (
       <section className="flex flex-col gap-4" aria-live="polite">
-        <h1 className="text-3xl font-semibold">{t("done.title")}</h1>
+        <h1 className="text-[1.875rem] font-bold leading-tight">{t("done.title")}</h1>
         <p>{view.closing}</p>
-        <div className="rounded-lg border-2 border-primary p-4">
-          <p className="text-base">{t("done.docket")}</p>
-          <p className="font-mono text-2xl font-bold tracking-wide" data-testid="docket">
+        <div className="card border-l-[6px] border-l-navy p-4">
+          <p className="section-title">{t("done.docket")}</p>
+          <p className="mt-1 font-mono text-[1.75rem] font-bold tracking-wider text-navy" data-testid="docket">
             {view.docket}
           </p>
-          <p className="mt-2 text-base">{t("done.keep")}</p>
+          <p className="mt-2 text-base text-ink-2">{t("done.keep")}</p>
         </div>
         <p className="text-base">{t("done.track")}</p>
       </section>
@@ -191,9 +191,9 @@ export function ChatScreen() {
 
   return (
     <section className="flex flex-col gap-5">
-      <div className="flex justify-end gap-2 text-base">
+      <div className="flex flex-wrap justify-end gap-1.5 text-sm">
         {VICTIM_LANGS.filter((l) => l !== locale).map((l) => (
-          <button key={l} type="button" onClick={() => switchLanguage(l)} lang={l} className="min-h-11 rounded-md border border-border px-3">
+          <button key={l} type="button" onClick={() => switchLanguage(l)} lang={l} className="btn btn-secondary btn-sm min-h-11 px-3 font-medium">
             {LANGUAGE_INFO[l].label}
           </button>
         ))}
@@ -202,8 +202,8 @@ export function ChatScreen() {
       {turn.showEmergencyPanel && turn.emergency && <EmergencyPanel panel={turn.emergency} interactionId={id} />}
 
       <div aria-live="polite" className="flex flex-col gap-3">
-        {p.intro && <p className="text-base text-muted-foreground">{p.intro}</p>}
-        <h1 ref={headingRef} tabIndex={-1} className="text-2xl font-semibold outline-none" data-testid="prompt" data-key={p.key}>
+        {p.intro && <p className="text-base text-ink-2">{p.intro}</p>}
+        <h1 ref={headingRef} tabIndex={-1} className="text-[1.625rem] font-bold leading-snug outline-none" data-testid="prompt" data-key={p.key}>
           {p.text}
         </h1>
         <ListenButton text={spoken} lang={locale} />
@@ -217,7 +217,7 @@ export function ChatScreen() {
               type="button"
               disabled={busy}
               onClick={() => answer(p, Number(c.value))}
-              className={`${bigButton} border-2 border-primary bg-background text-foreground`}
+              className={`${bigButton} btn-secondary justify-start border-navy text-left text-ink`}
             >
               {c.label}
             </button>
@@ -245,9 +245,9 @@ export function ChatScreen() {
             rows={5}
             maxLength={2000}
             placeholder={t("common.typeHere")}
-            className="w-full rounded-md border border-input bg-background p-3 text-lg"
+            className="field p-3 text-lg leading-relaxed"
           />
-          <button type="submit" disabled={busy} className={`${bigButton} bg-primary text-primary-foreground`}>
+          <button type="submit" disabled={busy} className={`${bigButton} btn-primary`}>
             {busy ? t("common.loading") : t("common.send")}
           </button>
         </form>
@@ -256,7 +256,7 @@ export function ChatScreen() {
       {p.input === "CONTEXT_FORM" && <ContextForm onSubmit={sendContext} busy={busy} />}
 
       {p.input === "NONE" && p.key === "flow.close" && (
-        <button type="button" disabled={busy} onClick={finish} className={`${bigButton} bg-primary text-primary-foreground`}>
+        <button type="button" disabled={busy} onClick={finish} className={`${bigButton} btn-primary`}>
           {t("common.finish")}
         </button>
       )}
@@ -266,23 +266,23 @@ export function ChatScreen() {
           type="button"
           disabled={busy}
           onClick={() => (p.input === "FREE_TEXT" ? skipText() : answer(p, null))}
-          className="min-h-12 rounded-lg border border-border text-lg"
+          className="btn btn-quiet min-h-12 self-center text-base"
         >
           {t("common.skip")}
         </button>
       )}
 
       {error && (
-        <p role="alert" className="text-destructive">
+        <p role="alert" className="border-l-4 border-danger bg-danger-soft px-3 py-2 text-danger">
           {t("common.errorRetry")}
         </p>
       )}
 
-      <div className="mt-6 border-t border-border pt-4 text-base">
+      <div className="mt-6 border-t border-line pt-4 text-base text-ink-2">
         {withdrawn ? (
           <p role="status">{t("consent.stopped")}</p>
         ) : (
-          <button type="button" onClick={withdraw} disabled={busy} className="underline underline-offset-4">
+          <button type="button" onClick={withdraw} disabled={busy} className="link min-h-11">
             {t("consent.stopAnalysis")}
           </button>
         )}

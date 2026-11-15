@@ -92,7 +92,7 @@ test("full Hindi flow: consent, safety check, story, emergency panel, docket (AC
   await page.getByRole("button", { name: "भेजें" }).click();
   await expect(page.getByText("मदद अभी उपलब्ध है")).toBeVisible();
   expect(Date.now() - t0).toBeLessThan(10_000); // dev server; the 3 s target is measured in Phase 9
-  await expect(page.getByRole("link", { name: /112/ })).toHaveAttribute("href", "tel:112");
+  await expect(page.getByRole("alert").getByRole("link", { name: /112/ })).toHaveAttribute("href", "tel:112"); // the panel, not the footer
 
   await skipToClose(page, "यह सवाल छोड़ें", "ये सवाल छोड़ें");
   await page.getByRole("button", { name: "समाप्त करें" }).click();
@@ -155,7 +155,7 @@ test("'yes' to suicidal thoughts with intent shows the emergency panel (AC-SCR-0
   await page.getByRole("button", { name: "Yes" }).click();
   await expect(page.getByText("Help is available right now")).toBeVisible();
   expect(Date.now() - t0).toBeLessThan(10_000);
-  await expect(page.getByRole("link", { name: /14416/ })).toHaveAttribute("href", "tel:14416");
+  await expect(page.getByRole("alert").getByRole("link", { name: /14416/ })).toHaveAttribute("href", "tel:14416"); // the panel, not the footer
 });
 
 test("quick exit leaves at once and ends the session (AC-CH-05)", async ({ page }) => {

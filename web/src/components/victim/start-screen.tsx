@@ -30,22 +30,21 @@ export function StartScreen() {
 
   const spoken = `${t("title")}. ${t("intro")} ${t("aiDisclosure")}`;
   return (
-    <section className="flex flex-col gap-5">
-      <h1 className="text-3xl font-semibold">{t("title")}</h1>
-      <p>{t("intro")}</p>
-      <p className="rounded-md bg-muted p-3 text-base">{t("aiDisclosure")}</p>
-      <ListenButton text={spoken} lang={locale} />
-      <button
-        type="button"
-        onClick={start}
-        disabled={busy}
-        className="min-h-14 rounded-lg bg-primary px-6 text-xl font-semibold text-primary-foreground disabled:opacity-60"
-      >
-        {busy ? tc("loading") : t("start")}
-      </button>
-      <a href={`/${locale}/ivrs`} className="min-h-12 rounded-lg border border-border px-4 py-3 text-center text-lg" data-testid="ivrs-link">
-        {ti("title")}
-      </a>
+    <section className="flex flex-col gap-6">
+      <div className="flex flex-col gap-3">
+        <h1 className="text-[1.875rem] font-bold leading-tight text-ink">{t("title")}</h1>
+        <p className="text-ink">{t("intro")}</p>
+        <ListenButton text={spoken} lang={locale} />
+      </div>
+      <p className="border-l-4 border-navy bg-white px-4 py-3 text-[0.9375rem] text-ink-2">{t("aiDisclosure")}</p>
+      <div className="flex flex-col gap-3">
+        <button type="button" onClick={start} disabled={busy} className="btn btn-primary btn-lg">
+          {busy ? tc("loading") : t("start")}
+        </button>
+        <a href={`/${locale}/ivrs`} className="btn btn-secondary btn-lg" data-testid="ivrs-link">
+          {ti("title")}
+        </a>
+      </div>
       {error && (
         <p role="alert" className="text-destructive">
           {tc("errorRetry")}

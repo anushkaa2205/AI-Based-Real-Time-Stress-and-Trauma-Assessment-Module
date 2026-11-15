@@ -3,7 +3,6 @@
 /** Staff sign-in: e-mail + password, then a 6-digit authenticator code for TOTP roles (task 1.6). */
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
-import { Button } from "@/components/ui/button";
 
 type Step = "password" | "totp";
 
@@ -17,7 +16,7 @@ async function post(path: string, body: unknown): Promise<{ ok: boolean; data: R
   return { ok: res.ok, data };
 }
 
-const inputClass = "w-full rounded-md border border-input bg-background px-3 py-2 text-base outline-none focus-visible:ring-2 focus-visible:ring-ring";
+const inputClass = "field min-h-10 text-base";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -55,26 +54,35 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-6 p-6">
-      <h1 className="text-2xl font-semibold">Staff sign in</h1>
+    <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-5 px-4 py-10">
+      <div className="flex items-center gap-3">
+        <span aria-hidden className="grid size-10 shrink-0 place-items-center rounded-[3px] bg-navy text-[0.72rem] font-bold text-white">
+          14566
+        </span>
+        <div className="leading-tight">
+          <p className="text-sm font-semibold text-ink-2">NHAA Assist</p>
+          <h1 className="text-xl font-bold">Staff sign in</h1>
+        </div>
+      </div>
+      <div className="card card-pad">
 
       {step === "password" ? (
         <form onSubmit={onPassword} className="flex flex-col gap-4">
-          <label className="flex flex-col gap-1 text-sm font-medium">
+          <label className="flex flex-col gap-1 text-sm font-semibold text-ink-2">
             E-mail
             <input name="email" type="email" autoComplete="username" required className={inputClass} />
           </label>
-          <label className="flex flex-col gap-1 text-sm font-medium">
+          <label className="flex flex-col gap-1 text-sm font-semibold text-ink-2">
             Password
             <input name="password" type="password" autoComplete="current-password" required className={inputClass} />
           </label>
-          <Button type="submit" disabled={busy} size="lg">
+          <button type="submit" disabled={busy} className="btn btn-primary min-h-10 w-full">
             {busy ? "Checking…" : "Continue"}
-          </Button>
+          </button>
         </form>
       ) : (
         <form onSubmit={onTotp} className="flex flex-col gap-4">
-          <label className="flex flex-col gap-1 text-sm font-medium">
+          <label className="flex flex-col gap-1 text-sm font-semibold text-ink-2">
             6-digit code from your authenticator app
             <input
               name="code"
@@ -87,17 +95,19 @@ export default function LoginPage() {
               className={inputClass}
             />
           </label>
-          <Button type="submit" disabled={busy} size="lg">
+          <button type="submit" disabled={busy} className="btn btn-primary min-h-10 w-full">
             {busy ? "Checking…" : "Sign in"}
-          </Button>
+          </button>
         </form>
       )}
 
       {error && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="mt-4 border-l-4 border-danger bg-danger-soft px-3 py-2 text-sm text-danger">
           {error}
         </p>
       )}
+      </div>
+      <p className="text-xs text-ink-2">For helpline staff only. Every sign-in is recorded.</p>
     </main>
   );
 }

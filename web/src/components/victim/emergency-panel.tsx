@@ -32,9 +32,10 @@ export function EmergencyPanel({ panel, interactionId }: { panel: Panel; interac
     <section
       role="alert"
       aria-labelledby="emergency-title"
-      className="flex flex-col gap-3 rounded-lg border-2 border-red-700 bg-red-50 p-4 text-red-950 dark:bg-red-950 dark:text-red-50"
+      className="flex flex-col gap-3 border border-danger border-l-[6px] bg-danger-soft p-4 text-ink"
+      style={{ borderRadius: 4 }}
     >
-      <h2 id="emergency-title" className="text-xl font-bold">
+      <h2 id="emergency-title" className="text-xl font-bold text-danger">
         {t("title")}
       </h2>
       <p>{panel.message}</p>
@@ -43,7 +44,7 @@ export function EmergencyPanel({ panel, interactionId }: { panel: Panel; interac
           <li key={n.number}>
             <a
               href={`tel:${n.number}`}
-              className="flex min-h-12 items-center justify-between rounded-md bg-red-700 px-4 py-2 font-semibold text-white"
+              className="btn btn-danger btn-lg justify-between"
             >
               <span>{n.label}</span>
               <span>
@@ -67,10 +68,10 @@ export function EmergencyPanel({ panel, interactionId }: { panel: Panel; interac
                 autoComplete="tel"
                 required
                 pattern="[0-9 +\-]{10,16}"
-                className="min-h-12 rounded-md border border-red-700 bg-white px-3 text-black"
+                className="field min-h-12 text-lg"
               />
             </label>
-            <button type="submit" disabled={busy} className="min-h-12 rounded-md border-2 border-red-700 bg-white px-4 font-semibold text-red-800">
+            <button type="submit" disabled={busy} className="btn btn-secondary btn-lg border-danger text-danger">
               {t("callbackSend")}
             </button>
             {error && <p>{tc("errorRetry")}</p>}
