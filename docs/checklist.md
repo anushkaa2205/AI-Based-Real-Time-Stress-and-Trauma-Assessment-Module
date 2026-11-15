@@ -54,18 +54,18 @@ Do not assume a feature exists just because it appears in a plan.
 
 ### Replace
 
--   [ ] Replace simulator-first homepage at `/` with a public
-    victim-facing entry point.
--   [ ] Make the primary action "Start" or equivalent.
--   [ ] Provide a simple language selector.
--   [ ] Provide three clear intake choices: Write, Speak, Guided
-    questions.
--   [ ] Add a clear immediate-safety entry.
--   [ ] Explain the service in plain language.
--   [ ] Explain consent and privacy accurately.
--   [ ] Keep staff sign-in as a restrained secondary link.
--   [ ] Keep staff dashboards behind existing authentication and RBAC.
--   [ ] Make the victim flow the primary public experience.
+-   [x] Replace simulator-first homepage at `/` with a public
+    victim-facing entry point. *(F.2: `app/(home)/page.tsx`)*
+-   [x] Make the primary action "Start" or equivalent. *(F.2: one Start button; `tests/e2e/home.spec.ts`)*
+-   [x] Provide a simple language selector. *(F.2: `components/home/language-links.tsx`; `tests/e2e/home.spec.ts`, `languages.spec.ts`)*
+-   [x] Provide three clear intake choices: Write, Speak, Guided
+    questions. *(F.2: three equal cards; `tests/e2e/home.spec.ts`)*
+-   [x] Add a clear immediate-safety entry. *(F.2: `components/home/urgent-help.tsx`; `tests/e2e/home.spec.ts`)*
+-   [x] Explain the service in plain language. *(F.2: homepage, `/how-it-works`)*
+-   [x] Explain consent and privacy accurately. *(F.2: `/privacy` shows the consent notice text (`consent.*`) word for word)*
+-   [x] Keep staff sign-in as a restrained secondary link. *(F.2: small grey link in header (phone menu) and footer)*
+-   [x] Keep staff dashboards behind existing authentication and RBAC. *(unchanged; F.2 adds no staff code)*
+-   [x] Make the victim flow the primary public experience. *(F.2)*
 
 ### Keep
 
@@ -120,19 +120,19 @@ synthetic-only labelling and server-side protections.
 
 ## 2. Route and navigation tasks
 
--   [ ] Decide the smallest route map after inspecting current routes.
--   [ ] Make `/` the public victim-facing homepage.
--   [ ] Keep or refactor the existing `/portal` flow rather than
-    duplicating it.
--   [ ] Ensure the start action opens the correct language/consent flow.
--   [ ] Keep staff sign-in and dashboards separate.
--   [ ] Remove public navigation links to simulator-only content.
--   [ ] Add Privacy, Accessibility and How it works links only when
-    their pages/content are real.
+-   [x] Decide the smallest route map after inspecting current routes. *(F.2: `/`, `/how-it-works`, `/privacy` (route group `(home)`); intake stays at `/portal/<lang>`; `/portal` redirects to `/`)*
+-   [x] Make `/` the public victim-facing homepage. *(F.2; `tests/e2e/home.spec.ts`)*
+-   [x] Keep or refactor the existing `/portal` flow rather than
+    duplicating it. *(F.2: kept; only `?way=` added)*
+-   [x] Ensure the start action opens the correct language/consent flow. *(F.2: Start reaches consent in all five languages, `tests/e2e/home.spec.ts`)*
+-   [x] Keep staff sign-in and dashboards separate. *(F.2: `/` makes no API call and sets no cookie, `tests/e2e/home.spec.ts`)*
+-   [x] Remove public navigation links to simulator-only content. *(F.1)*
+-   [x] Add Privacy, Accessibility and How it works links only when
+    their pages/content are real. *(F.2: Privacy and How it works pages exist; no Accessibility link until that page exists; link check in `tests/e2e/home.spec.ts`)*
 -   [ ] Add a safe not-found page.
--   [ ] Ensure no sensitive narrative content is encoded in route params
-    or query strings.
--   [ ] Ensure page titles do not contain incident details.
+-   [x] Ensure no sensitive narrative content is encoded in route params
+    or query strings. *(F.2: only `lang` and `way`, both allow-listed (`lib/portal.ts`, `tests/unit/portal-paths.test.ts`))*
+-   [x] Ensure page titles do not contain incident details. *(F.2: titles are the service name or the page name)*
 -   [ ] Ensure browser back behaviour does not unexpectedly erase or
     re-submit data.
 
@@ -142,51 +142,51 @@ synthetic-only labelling and server-side protections.
 
 ### Header
 
--   [ ] Add simple wordmark/service identity.
--   [ ] Add language selector.
--   [ ] Add How it works link.
--   [ ] Add Privacy link.
--   [ ] Add Staff sign-in as a secondary link.
--   [ ] Do not add official logos/emblems unless supplied and approved.
--   [ ] Do not add simulator or AI service status.
+-   [x] Add simple wordmark/service identity. *(F.2: text identity, no emblem)*
+-   [x] Add language selector. *(F.2; `tests/e2e/home.spec.ts`)*
+-   [x] Add How it works link. *(F.2)*
+-   [x] Add Privacy link. *(F.2)*
+-   [x] Add Staff sign-in as a secondary link. *(F.2)*
+-   [x] Do not add official logos/emblems unless supplied and approved. *(F.2)*
+-   [x] Do not add simulator or AI service status. *(F.2)*
 
 ### Hero
 
--   [ ] Add concise headline explaining that the person can share in the
-    way that feels easiest.
--   [ ] Add one-sentence supporting copy.
--   [ ] Add one primary Start action.
--   [ ] Add a small reassurance that the person need not explain
-    everything at once.
--   [ ] Avoid claims of guaranteed confidentiality, guaranteed
-    protection or guaranteed response times.
+-   [x] Add concise headline explaining that the person can share in the
+    way that feels easiest. *(F.2)*
+-   [x] Add one-sentence supporting copy. *(F.2)*
+-   [x] Add one primary Start action. *(F.2)*
+-   [x] Add a small reassurance that the person need not explain
+    everything at once. *(F.2)*
+-   [x] Avoid claims of guaranteed confidentiality, guaranteed
+    protection or guaranteed response times. *(F.2: wording check in `tests/e2e/home.spec.ts`)*
 
 ### Input choice
 
--   [ ] Add Write card.
--   [ ] Add Speak card.
--   [ ] Add Guided questions card.
--   [ ] Each card has a clear label, one-line explanation and accessible
-    icon.
--   [ ] Each card opens a real implemented flow.
--   [ ] Keep equal visual prominence.
--   [ ] Do not make users choose technical channel names.
+-   [x] Add Write card. *(F.2)*
+-   [x] Add Speak card. *(F.2)*
+-   [x] Add Guided questions card. *(F.2: goes through today's flow; refined in F.4)*
+-   [x] Each card has a clear label, one-line explanation and accessible
+    icon. *(F.2: icons are `aria-hidden`, the label names the link)*
+-   [x] Each card opens a real implemented flow. *(F.2: `/portal/<lang>?way=…`; Write and Speak order the story step, `tests/e2e/home.spec.ts`)*
+-   [x] Keep equal visual prominence. *(F.2: same card component, equal grid columns)*
+-   [x] Do not make users choose technical channel names. *(F.2)*
 
 ### Safety
 
--   [ ] Add immediate-safety entry.
--   [ ] Reuse approved emergency panel and copy.
+-   [x] Add immediate-safety entry. *(F.2: hero link and `#urgent` section)*
+-   [x] Reuse approved emergency panel and copy. *(F.2: `emergency.*` copy and the same three numbers; `tests/e2e/home.spec.ts`)*
 -   [ ] Verify emergency contact details/availability with the project
     team.
--   [ ] Do not imply that the app dispatches emergency help unless it
-    really does.
+-   [x] Do not imply that the app dispatches emergency help unless it
+    really does. *(F.2: `home.urgent.note` says the site calls no one)*
 
 ### Footer
 
 -   [ ] Add privacy and accessibility links.
--   [ ] Add verified contact/official channel information only.
--   [ ] Explain that this module complements the existing NHAA process.
--   [ ] Keep the footer concise and readable on mobile.
+-   [x] Add verified contact/official channel information only. *(F.2: 112, 14416, 14566 only)*
+-   [x] Explain that this module complements the existing NHAA process. *(F.2: `home.footer.note`)*
+-   [x] Keep the footer concise and readable on mobile. *(F.2)*
 
 ------------------------------------------------------------------------
 
@@ -340,33 +340,33 @@ synthetic-only labelling and server-side protections.
 
 ### Theme
 
--   [ ] Use "Quiet Paper" for victim-facing experience.
--   [ ] Keep the existing warm off-white `#F4F1EA` as the starting page
-    background.
--   [ ] Use deep navy `#1B2A41` for text.
--   [ ] Use calm teal `#245B57` for primary actions (verify contrast).
--   [ ] Use warm grey borders `#D8D2C7`.
--   [ ] Reserve brick red `#A63A2B` for urgent safety actions only.
--   [ ] Keep staff "Case File" theme distinct and more
-    information-dense.
--   [ ] Define tokens in one place (CSS variables/theme file).
--   [ ] Verify contrast for all text, disabled, hover and focus states.
+-   [x] Use "Quiet Paper" for victim-facing experience. *(F.2: `/`, `/how-it-works`, `/privacy` and every `/portal` page)*
+-   [x] Keep the existing warm off-white `#F4F1EA` as the starting page
+    background. *(F.2)*
+-   [x] Use deep navy `#1B2A41` for text. *(F.2)*
+-   [x] Use calm teal `#245B57` for primary actions (verify contrast). *(F.2: white on teal 7.8:1, `tests/unit/theme-contrast.test.ts`)*
+-   [x] Use warm grey borders `#D8D2C7`. *(F.2: dividers only; control borders use `#857F73` (3.5:1, WCAG 1.4.11))*
+-   [x] Reserve brick red `#A63A2B` for urgent safety actions only. *(F.2: quick exit, urgent section edge and numbers)*
+-   [x] Keep staff "Case File" theme distinct and more
+    information-dense. *(F.2: staff pages keep the navy theme, untouched)*
+-   [x] Define tokens in one place (CSS variables/theme file). *(F.2: `[data-theme="quiet-paper"]` in `globals.css`)*
+-   [x] Verify contrast for all text, disabled, hover and focus states. *(F.2: `tests/unit/theme-contrast.test.ts`; disabled grey darkened from `#777777` (4.0:1) to `#686868`; axe 0 violations in `tests/e2e/accessibility.spec.ts`)*
 
 ### Typography
 
--   [ ] Use readable sans-serif.
--   [ ] Check Devanagari, Tamil and Bengali font fallback.
--   [ ] Keep mobile body text at least 16px.
--   [ ] Use comfortable line height.
--   [ ] Avoid condensed all-caps labels and thin weights.
--   [ ] Ensure long translated labels wrap without clipping.
+-   [x] Use readable sans-serif. *(Noto Sans (existing))*
+-   [x] Check Devanagari, Tamil and Bengali font fallback. *(F.2: homepage in hi, mr, ta, bn checked with axe and at 320 px, `tests/e2e/accessibility.spec.ts`, `tests/e2e/home.spec.ts`)*
+-   [x] Keep mobile body text at least 16px. *(F.2: body 17 px, secondary 16 px)*
+-   [x] Use comfortable line height. *(F.2: `leading-relaxed` (1.625))*
+-   [x] Avoid condensed all-caps labels and thin weights. *(F.2: none on the public pages)*
+-   [x] Ensure long translated labels wrap without clipping. *(F.2: Tamil and Bengali at 320 px, `tests/e2e/home.spec.ts`)*
 
 ### Components
 
--   [ ] Header.
--   [ ] Language picker.
--   [ ] Primary/secondary buttons.
--   [ ] Input-method card.
+-   [x] Header. *(F.2: `components/home/site-header.tsx`)*
+-   [x] Language picker. *(F.2: `components/home/language-links.tsx`)*
+-   [x] Primary/secondary buttons. *(F.2: themed `.btn-*`, disabled state 4.6:1)*
+-   [x] Input-method card. *(F.2: `components/home/way-card.tsx`)*
 -   [ ] Consent option control.
 -   [ ] Audio player.
 -   [ ] Safety question card.
@@ -380,30 +380,30 @@ synthetic-only labelling and server-side protections.
 -   [ ] Inline validation/error state.
 -   [ ] Loading/processing state.
 -   [ ] Empty/offline state.
--   [ ] Quick exit.
+-   [x] Quick exit. *(existing component, now in the public header too)*
 -   [ ] Accessible modal/drawer only where needed.
 
 ### Responsive
 
--   [ ] Design mobile first.
--   [ ] Stack input choices vertically on mobile.
--   [ ] Keep primary CTA visible and reachable.
+-   [x] Design mobile first. *(F.2)*
+-   [x] Stack input choices vertically on mobile. *(F.2)*
+-   [x] Keep primary CTA visible and reachable. *(F.2: in view at 320×720 in English; one short scroll in Tamil)*
 -   [ ] Ensure keyboard does not cover submit controls.
--   [ ] Avoid sticky footer overlap.
--   [ ] Check 320px width and common Android viewport sizes.
+-   [x] Avoid sticky footer overlap. *(F.2: no sticky footer on public pages)*
+-   [x] Check 320px width and common Android viewport sizes. *(F.2: 320 px and the Pixel 7 project, `tests/e2e/home.spec.ts`)*
 -   [ ] Check tablet and desktop layouts.
 -   [ ] Check zoom/reflow.
--   [ ] Ensure no horizontal scrolling.
+-   [x] Ensure no horizontal scrolling. *(F.2: `tests/e2e/home.spec.ts`)*
 
 ### Motion and imagery
 
--   [ ] No autoplay audio/video.
--   [ ] No background animation.
--   [ ] No distress stock photos.
--   [ ] No robot/brain/AI avatar.
--   [ ] Respect `prefers-reduced-motion`.
--   [ ] Use icons only when they improve recognition.
--   [ ] Avoid icon-only controls without accessible labels.
+-   [x] No autoplay audio/video. *(F.2)*
+-   [x] No background animation. *(F.2)*
+-   [x] No distress stock photos. *(F.2)*
+-   [x] No robot/brain/AI avatar. *(F.2)*
+-   [x] Respect `prefers-reduced-motion`. *(F.2: the only transition (card hover) is `motion-reduce:transition-none`)*
+-   [x] Use icons only when they improve recognition. *(F.2: one line icon per input card and the phone menu)*
+-   [x] Avoid icon-only controls without accessible labels. *(F.2: none)*
 
 ------------------------------------------------------------------------
 
