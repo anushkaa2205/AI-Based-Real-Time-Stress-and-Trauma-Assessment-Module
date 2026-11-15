@@ -1,0 +1,32 @@
+{
+  "id": "S026",
+  "language": "bn",
+  "channel": "PORTAL",
+  "gender": "F",
+  "summary": "Family driven out of the village after the complaint",
+  "messages": [
+    "অভিযোগ করার পর আমাদের গ্রাম থেকে তাড়িয়ে দিয়েছে। এখন আত্মীয়ের বাড়িতে আছি।"
+  ],
+  "screeners": [
+    {
+      "itemCode": "SAFETY_SAFE_NOW",
+      "value": 1
+    },
+    {
+      "itemCode": "SAFETY_ACCUSED_NEARBY",
+      "value": 0
+    }
+  ],
+  "expected": {
+    "band": "MODERATE",
+    "indicators": [
+      "SOCIAL_ISOLATION"
+    ],
+    "recommendations": [
+      "REHABILITATION_RELIEF"
+    ]
+  },
+  "context": {},
+  "tags": [],
+  "reviewedBy": []
+}

@@ -1,0 +1,29 @@
+{
+  "id": "S025",
+  "language": "bn",
+  "channel": "CHATBOT",
+  "gender": "M",
+  "summary": "States intent to end life today",
+  "messages": [
+    "আর পারছি না। আমি আজ আত্মহত্যা করব।"
+  ],
+  "screeners": [
+    {
+      "itemCode": "SAFETY_SAFE_NOW",
+      "value": 1
+    }
+  ],
+  "expected": {
+    "band": "CRITICAL",
+    "indicators": [
+      "SUICIDAL_IDEATION"
+    ],
+    "recommendations": [
+      "EMERGENCY_SUPPORT",
+      "COUNSELLING"
+    ]
+  },
+  "context": {},
+  "tags": [],
+  "reviewedBy": []
+}

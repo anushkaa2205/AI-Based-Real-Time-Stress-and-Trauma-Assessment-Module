@@ -1,0 +1,34 @@
+{
+  "id": "S022",
+  "language": "mr",
+  "channel": "PORTAL",
+  "gender": "M",
+  "summary": "Asks about complaint status; no current distress",
+  "messages": [
+    "माझ्या तक्रारीची सद्यस्थिती जाणून घ्यायची आहे. त्यानंतर काही नवीन घडलेले नाही."
+  ],
+  "screeners": [
+    {
+      "itemCode": "SAFETY_SAFE_NOW",
+      "value": 1
+    },
+    {
+      "itemCode": "PHQ2_1",
+      "value": 0
+    },
+    {
+      "itemCode": "PHQ2_2",
+      "value": 0
+    }
+  ],
+  "expected": {
+    "band": "LOW",
+    "indicators": [],
+    "recommendations": [
+      "INFORMATION"
+    ]
+  },
+  "context": {},
+  "tags": [],
+  "reviewedBy": []
+}

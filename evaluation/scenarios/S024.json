@@ -1,0 +1,34 @@
+{
+  "id": "S024",
+  "language": "ta",
+  "channel": "PORTAL",
+  "gender": "UNDISCLOSED",
+  "summary": "Asks about compensation timeline; calm",
+  "messages": [
+    "இழப்பீடு எப்போது கிடைக்கும் என்று தெரிந்துகொள்ள விரும்புகிறேன். இப்போது எல்லாம் அமைதியாக இருக்கிறது."
+  ],
+  "screeners": [
+    {
+      "itemCode": "SAFETY_SAFE_NOW",
+      "value": 1
+    },
+    {
+      "itemCode": "GAD2_1",
+      "value": 0
+    },
+    {
+      "itemCode": "GAD2_2",
+      "value": 0
+    }
+  ],
+  "expected": {
+    "band": "LOW",
+    "indicators": [],
+    "recommendations": [
+      "INFORMATION"
+    ]
+  },
+  "context": {},
+  "tags": [],
+  "reviewedBy": []
+}

@@ -1,0 +1,33 @@
+{
+  "id": "S021",
+  "language": "mr",
+  "channel": "CHATBOT",
+  "gender": "F",
+  "summary": "Accused standing outside the house now; not safe",
+  "messages": [
+    "ते लोक आत्ता इथे आहेत, घराबाहेर उभे आहेत. मला खूप भीती वाटते."
+  ],
+  "screeners": [
+    {
+      "itemCode": "SAFETY_SAFE_NOW",
+      "value": 0
+    },
+    {
+      "itemCode": "SAFETY_ACCUSED_NEARBY",
+      "value": 1
+    }
+  ],
+  "expected": {
+    "band": "CRITICAL",
+    "indicators": [
+      "INTIMIDATION"
+    ],
+    "recommendations": [
+      "EMERGENCY_SUPPORT",
+      "POLICE_INTERVENTION"
+    ]
+  },
+  "context": {},
+  "tags": [],
+  "reviewedBy": []
+}

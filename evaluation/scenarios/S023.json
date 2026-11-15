@@ -1,0 +1,33 @@
+{
+  "id": "S023",
+  "language": "ta",
+  "channel": "CHATBOT",
+  "gender": "F",
+  "summary": "Pressured with threats to withdraw the complaint",
+  "messages": [
+    "புகாரை திரும்பப் பெறச் சொல்லி தினமும் மிரட்டுகிறார்கள்."
+  ],
+  "screeners": [
+    {
+      "itemCode": "SAFETY_SAFE_NOW",
+      "value": 1
+    },
+    {
+      "itemCode": "SAFETY_ACCUSED_NEARBY",
+      "value": 0
+    }
+  ],
+  "expected": {
+    "band": "HIGH",
+    "indicators": [
+      "INTIMIDATION"
+    ],
+    "recommendations": [
+      "WITNESS_PROTECTION",
+      "POLICE_INTERVENTION"
+    ]
+  },
+  "context": {},
+  "tags": [],
+  "reviewedBy": []
+}
