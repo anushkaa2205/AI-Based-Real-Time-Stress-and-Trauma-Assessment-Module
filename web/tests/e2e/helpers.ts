@@ -56,7 +56,7 @@ async function signIn(page: Page, role: string): Promise<void> {
 }
 
 /** A victim session driven over the API (synthetic text only). */
-export async function victimSession(request: APIRequestContext, lang: "en" | "hi" = "en") {
+export async function victimSession(request: APIRequestContext, lang: "en" | "hi" | "mr" | "ta" | "bn" = "en") {
   const headers = { "x-forwarded-for": freshIp() };
   const start = await request.post("/api/v1/victim/interactions", { data: { channel: "CHATBOT", language: lang, districtCode: "MH-PUN" }, headers });
   const { interactionId, docketNumber } = await start.json();

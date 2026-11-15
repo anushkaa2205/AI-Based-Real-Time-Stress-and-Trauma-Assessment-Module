@@ -11,6 +11,7 @@
  * limited confidence and a `rescore` job is queued (NFR-REL-01).
  * Logs never contain victim text (rule 9).
  */
+import { toVictimLang, type VictimLang } from "@/contracts/victim";
 import { randomUUID } from "node:crypto";
 import mongoose, { type Types } from "mongoose";
 import { TEXT_TIMEOUT_MS, analyzeText, defaultDeps } from "@/core/analysis-client/client";
@@ -59,7 +60,7 @@ export interface TurnFacts {
   mode: AssessmentMode;
   answered: Map<string, number | null>;
   state: FlowState;
-  lang: "en" | "hi";
+  lang: VictimLang;
 }
 
 export interface RunResult {
@@ -365,7 +366,7 @@ export async function runPipeline(input: RunInput): Promise<RunResult> {
             mode,
             answered: answeredOf(screenerResponsesOf(interaction)),
             state: flow,
-            lang: interaction.uiLanguage === "hi" ? "hi" : "en",
+            lang: toVictimLang(interaction.uiLanguage),
           },
         };
       },

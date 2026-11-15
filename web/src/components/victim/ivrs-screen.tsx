@@ -9,11 +9,14 @@
  */
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { EmergencyPanel as Panel } from "@/contracts/victim";
+import type { EmergencyPanel as Panel, VictimLang } from "@/contracts/victim";
+import { LANGUAGE_INFO } from "@/i18n/languages";
 import { api } from "./api";
 import { EmergencyPanel } from "./emergency-panel";
 
-type Lang = "en" | "hi";
+type Lang = VictimLang;
+/** Key → language, in the order the welcome prompt reads them out. */
+const KEY_LANG: Record<string, Lang> = { "1": "en", "2": "hi", "3": "mr", "4": "ta", "5": "bn" };
 type Step =
   | { kind: "language" }
   | { kind: "consent" }
@@ -94,7 +97,7 @@ export function IvrsScreen({ initialLang }: { initialLang: Lang }) {
       if (typeof window === "undefined" || !("speechSynthesis" in window) || !text) return;
       window.speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(text);
-      u.lang = lang === "hi" ? "hi-IN" : "en-IN";
+      u.lang = LANGUAGE_INFO[lang].speech;
       u.rate = 0.95;
       window.speechSynthesis.speak(u);
     },
@@ -123,8 +126,8 @@ export function IvrsScreen({ initialLang }: { initialLang: Lang }) {
     busy.current = true;
     try {
       if (step.kind === "language") {
-        if (key !== "1" && key !== "2") return setNote("invalid");
-        const chosen: Lang = key === "1" ? "en" : "hi";
+        const chosen = KEY_LANG[key];
+        if (!chosen) return setNote("invalid");
         setLang(chosen);
         const r = await api<{ interactionId: string }>("POST", "/interactions", { channel: "IVRS", language: chosen });
         setId(r.interactionId);

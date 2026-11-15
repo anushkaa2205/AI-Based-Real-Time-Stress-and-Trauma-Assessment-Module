@@ -3,6 +3,7 @@
  * The token (cookie `nhaa_vs`, or `X-Victim-Session` for IVRS/API channels)
  * must match the interaction in the URL: one token, one interaction.
  */
+import { toVictimLang } from "@/contracts/victim";
 import type { NextRequest } from "next/server";
 import type { VictimLang } from "@/contracts/victim";
 import { SESSION_TTL_MS, VICTIM_COOKIE, VICTIM_HEADER, hashSessionToken } from "@/core/victim/session";
@@ -33,6 +34,6 @@ export async function loadVictimSession(req: NextRequest, interactionId: unknown
   return {
     interactionId,
     caseId: String(doc.caseId),
-    lang: (doc.uiLanguage === "hi" ? "hi" : "en") as VictimLang,
+    lang: toVictimLang(doc.uiLanguage),
   };
 }

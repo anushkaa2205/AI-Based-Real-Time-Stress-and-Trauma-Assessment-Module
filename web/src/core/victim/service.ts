@@ -3,6 +3,7 @@
  * victim endpoints. Nothing returned from here reaches the victim except
  * prompts, the emergency flag and the docket number (CLAUDE.md rule 1).
  */
+import { toVictimLang } from "@/contracts/victim";
 import { createHmac, randomInt } from "node:crypto";
 import type { ConsentRequest, Prompt, VictimLang } from "@/contracts/victim";
 import { record } from "@/core/audit/record";
@@ -115,7 +116,7 @@ function answeredMap(responses: { itemCode: string; value?: number | null; skipp
 export async function currentTurn(id: string): Promise<{ prompt: Prompt; showEmergencyPanel: boolean; lang: VictimLang }> {
   const interaction = await loadInteraction(id);
   const caseDoc = await Case.findById(interaction.caseId).select("currentBand").lean();
-  const lang: VictimLang = interaction.uiLanguage === "hi" ? "hi" : "en";
+  const lang: VictimLang = toVictimLang(interaction.uiLanguage);
   const step = nextStep({
     consentGiven: interaction.consents.length > 0,
     mode: interaction.mode,
@@ -284,5 +285,5 @@ export async function endInteraction(id: string, reason: "COMPLETED" | "QUICK_EX
     await startRetention(interaction._id, interaction.endedAt); // NFR-PRI-04 (task 8.7)
     await record({ actorType: "VICTIM_SESSION", actorId: id, action: "interaction.end", entityType: "interaction", entityId: id, metadata: { reason } });
   }
-  return { docketNumber: caseDoc?.docketNumber ?? "", lang: (interaction.uiLanguage === "hi" ? "hi" : "en") as VictimLang };
+  return { docketNumber: caseDoc?.docketNumber ?? "", lang: toVictimLang(interaction.uiLanguage) };
 }

@@ -2,6 +2,7 @@
  * GET /api/v1/staff/interactions/{id}/suggested-questions (API_CONTRACTS §5.3, FR-CH-04).
  * Scripted questions only (rule 2), in the caller's language with English alongside.
  */
+import { toVictimLang } from "@/contracts/victim";
 import { flowStateOf } from "@/core/conversation/flow";
 import { suggestQuestions } from "@/core/conversation/suggest";
 import { loadInteractionResource } from "@/core/cases/resource";
@@ -23,7 +24,7 @@ export const GET = route({ auth: "staff", action: "case.read" }, async ({ params
   const raw = (latest?.dimensions instanceof Map ? Object.fromEntries(latest.dimensions) : latest?.dimensions) as Record<string, { score?: number }> | undefined;
   const dimensions: Partial<Record<Dimension, number>> = {};
   for (const [k, v] of Object.entries(raw ?? {})) if (v?.score != null) dimensions[k as Dimension] = v.score;
-  const lang = interaction?.uiLanguage === "hi" ? "hi" : "en";
+  const lang = toVictimLang(interaction?.uiLanguage);
   const items = suggestQuestions({ answered, dimensions, suicideSignal: flowStateOf(interaction?.flowState).suicideSignal }).map((s) => ({
     key: s.key,
     text: t(lang, s.key),

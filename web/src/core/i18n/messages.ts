@@ -5,15 +5,21 @@
 import { createTranslator } from "next-intl";
 import type { VictimLang } from "@/contracts/victim";
 import en from "../../../messages/en.json";
+import bn from "../../../messages/bn.json";
 import hi from "../../../messages/hi.json";
+import mr from "../../../messages/mr.json";
+import ta from "../../../messages/ta.json";
 
 export type Messages = typeof en;
 
-export const MESSAGES: Record<VictimLang, Messages> = { en, hi };
+export const MESSAGES: Record<VictimLang, Messages> = { en, hi, mr, ta, bn };
 
 const translators = {
   en: createTranslator({ locale: "en", messages: en }),
   hi: createTranslator({ locale: "hi", messages: hi }),
+  mr: createTranslator({ locale: "mr", messages: mr }),
+  ta: createTranslator({ locale: "ta", messages: ta }),
+  bn: createTranslator({ locale: "bn", messages: bn }),
 };
 
 /** Translate a dotted key, e.g. t("hi", "flow.narrative.open"). */

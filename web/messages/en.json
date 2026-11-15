@@ -158,7 +158,7 @@
   },
   "ivrs": {
     "title": "Phone menu (keypad)",
-    "welcome": "Welcome to the National Helpline Against Atrocities. For English, press 1. Hindi ke liye 2 dabaiye.",
+    "welcome": "Welcome. For English, press 1. हिंदी के लिए 2 दबाइए। मराठीसाठी 3 दाबा. தமிழுக்கு 4 அழுத்தவும். বাংলার জন্য 5 টিপুন।",
     "consent": "We will ask a few short questions. Press 1 if we may use your answers to understand how you are feeling and to get you help. Press 2 to answer only the safety questions.",
     "yesNo": "Press 1 for yes. Press 2 for no. Press star to skip.",
     "scale": "Press 0 for not at all. 1 for several days. 2 for more than half the days. 3 for nearly every day. Press star to skip.",

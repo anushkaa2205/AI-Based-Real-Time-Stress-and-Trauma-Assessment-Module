@@ -1,12 +1,12 @@
 /** Builds victim turn responses; always parsed through the strict contracts (rule 1). */
-import { TurnResponse, type Prompt } from "@/contracts/victim";
+import { TurnResponse, type Prompt, type VictimLang } from "@/contracts/victim";
 import { nextStep, promptFor } from "@/core/conversation/flow";
 import type { RunResult } from "@/core/pipeline/run";
 import { emergencyPanel } from "./emergency";
 import { currentTurn } from "./service";
 
 /** Next prompt after a pipeline run, without another database read (except for replays). */
-export async function turnAfter(interactionId: string, run: RunResult): Promise<{ prompt: Prompt; show: boolean; lang: "en" | "hi" }> {
+export async function turnAfter(interactionId: string, run: RunResult): Promise<{ prompt: Prompt; show: boolean; lang: VictimLang }> {
   if (!run.turn) {
     const t = await currentTurn(interactionId);
     return { prompt: t.prompt, show: t.showEmergencyPanel, lang: t.lang };

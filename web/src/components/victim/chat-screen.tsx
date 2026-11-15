@@ -8,7 +8,8 @@
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import type { Prompt } from "@/contracts/victim";
+import { VICTIM_LANGS, type Prompt } from "@/contracts/victim";
+import { LANGUAGE_INFO } from "@/i18n/languages";
 import { api, VictimApiError, type Turn } from "./api";
 import { ContextForm } from "./context-form";
 import { EmergencyPanel } from "./emergency-panel";
@@ -191,13 +192,11 @@ export function ChatScreen() {
   return (
     <section className="flex flex-col gap-5">
       <div className="flex justify-end gap-2 text-base">
-        {(["en", "hi"] as const)
-          .filter((l) => l !== locale)
-          .map((l) => (
-            <button key={l} type="button" onClick={() => switchLanguage(l)} className="min-h-11 rounded-md border border-border px-3">
-              {l === "hi" ? "हिंदी" : "English"}
-            </button>
-          ))}
+        {VICTIM_LANGS.filter((l) => l !== locale).map((l) => (
+          <button key={l} type="button" onClick={() => switchLanguage(l)} lang={l} className="min-h-11 rounded-md border border-border px-3">
+            {LANGUAGE_INFO[l].label}
+          </button>
+        ))}
       </div>
 
       {turn.showEmergencyPanel && turn.emergency && <EmergencyPanel panel={turn.emergency} interactionId={id} />}

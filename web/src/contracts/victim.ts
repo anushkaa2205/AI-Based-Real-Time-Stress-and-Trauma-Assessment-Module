@@ -9,9 +9,14 @@
 import { z } from "zod";
 import { ObjectIdStr } from "./common";
 
-export const VICTIM_LANGS = ["en", "hi"] as const; // mr, ta, bn arrive in task 8.1
+export const VICTIM_LANGS = ["en", "hi", "mr", "ta", "bn"] as const; // FR-LANG-01 (task 8.1)
 export const VictimLang = z.enum(VICTIM_LANGS);
 export type VictimLang = z.infer<typeof VictimLang>;
+
+/** A stored language code → a supported victim language (English if unknown). */
+export function toVictimLang(code: unknown): VictimLang {
+  return (VICTIM_LANGS as readonly string[]).includes(String(code)) ? (code as VictimLang) : "en";
+}
 
 export const VictimChannel = z.enum(["PORTAL", "CHATBOT", "IVRS", "MOBILE_APP"]);
 

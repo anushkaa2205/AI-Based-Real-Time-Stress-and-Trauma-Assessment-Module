@@ -8,6 +8,7 @@
  * Runs inside the caller's transaction. Without analysis consent (SAFETY_ONLY)
  * no SVI is calculated (AC-CON-03): only life-safety overrides can raise the band.
  */
+import { toVictimLang } from "@/contracts/victim";
 import type { ClientSession, Types } from "mongoose";
 import { record } from "@/core/audit/record";
 import { allowsScreeners, allowsTextAnalysis } from "@/core/consent/mode";
@@ -368,7 +369,7 @@ export async function scoreInteraction(
   }
   if (newBand === "CRITICAL" && prevBand !== "CRITICAL") {
     // The victim's own channel carries only the emergency panel (rule 1).
-    const lang = interaction.uiLanguage === "hi" ? "hi" : "en";
+    const lang = toVictimLang(interaction.uiLanguage);
     events.push({ channel: victimChannel(ID(interaction._id)), event: "emergency.show", data: { emergency: emergencyPanel(lang) } });
   }
   const districtId = caseDoc.districtId ? ID(caseDoc.districtId) : null;

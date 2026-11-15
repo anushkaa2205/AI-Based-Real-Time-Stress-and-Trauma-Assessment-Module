@@ -7,6 +7,8 @@
  */
 import { useTranslations } from "next-intl";
 import { useEffect, useState, useSyncExternalStore } from "react";
+import { toVictimLang } from "@/contracts/victim";
+import { LANGUAGE_INFO } from "@/i18n/languages";
 
 const noSubscribe = () => () => {};
 
@@ -33,7 +35,7 @@ export function ListenButton({ text, lang }: { text: string; lang: string }) {
       return;
     }
     const u = new SpeechSynthesisUtterance(text);
-    u.lang = lang === "hi" ? "hi-IN" : "en-IN";
+    u.lang = LANGUAGE_INFO[toVictimLang(lang)].speech;
     u.rate = 0.9;
     u.onend = () => setSpeaking(false);
     synth.cancel();
