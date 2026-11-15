@@ -62,7 +62,7 @@ export async function victimSession(request: APIRequestContext, lang: "en" | "hi
   const { interactionId, docketNumber } = await start.json();
   const call = (path: string, data: unknown, method: "post" | "put" = "post") =>
     request[method](`/api/v1/victim/interactions/${interactionId}${path}`, { data, headers });
-  return { interactionId: interactionId as string, docketNumber: docketNumber as string, call };
+  return { interactionId: interactionId as string, docketNumber: docketNumber as string, call, headers };
 }
 
 export async function withDb<T>(fn: (db: mongoose.mongo.Db) => Promise<T>): Promise<T> {

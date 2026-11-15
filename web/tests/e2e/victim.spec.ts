@@ -167,7 +167,7 @@ test("quick exit leaves at once and ends the session (AC-CH-05)", async ({ page 
   expect(Date.now() - t0).toBeLessThan(1_000);
   // The session no longer works.
   await expect
-    .poll(async () => (await page.request.get(`http://localhost:3000/api/v1/victim/interactions/${id}/next`)).status())
+    .poll(async () => (await page.request.get(`/api/v1/victim/interactions/${id}/next`)).status())
     .toBe(401);
 });
 
