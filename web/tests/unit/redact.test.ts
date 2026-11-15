@@ -92,3 +92,30 @@ describe("redact (task 1.4)", () => {
     expect(redact(s, ctx)).toEqual(redact(s, ctx));
   });
 });
+
+/** AC-SEC-02 (task 9.5): ten synthetic messages with names and phone numbers, as the AI would see them. */
+describe("redaction before AI: ten scenarios with names and phone numbers", () => {
+  const CASES: [string, string[]][] = [
+    ["My name is Sunita Devi and my number is 9876543210.", ["Sunita", "9876543210"]],
+    ["my name is ravi, call me on +91 98765 43210 please", ["ravi", "98765 43210"]],
+    ["I'm called Meena. My brother's phone is 07123 456789.", ["Meena", "456789"]],
+    ["मेरा नाम सुनीता है, मेरा नंबर 9876501234 है।", ["सुनीता", "9876501234"]],
+    ["मेरा नाम रामू कुमार है और फ़ोन ९८७६५४३२१० है", ["रामू कुमार", "९८७६५४३२१०"]],
+    ["mera naam Pooja hai, mera phone 8765432109 hai", ["Pooja", "8765432109"]],
+    ["माझे नाव सीमा आहे, फोन 9123456780", ["सीमा", "9123456780"]],
+    ["என் பெயர் கவிதா, என் எண் 9988776655", ["கவிதா", "9988776655"]],
+    ["আমার নাম রিনা, ফোন 9012345678", ["রিনা", "9012345678"]],
+    ["Write to me at asha.k@example.org, my name is Asha.", ["asha.k@example.org", "Asha"]],
+  ];
+  for (const [text, secrets] of CASES) {
+    it(text.slice(0, 40), () => {
+      const out = redact(text).text;
+      for (const s of secrets) expect(out, out).not.toContain(s);
+    });
+  }
+  it("keeps safety words and the rest of the sentence", () => {
+    expect(redact("My name is Sunita and they will kill me tonight").text).toBe("My name is [NAME] and they will kill me tonight");
+    expect(redact("I want to kill myself tonight").text).toBe("I want to kill myself tonight");
+    expect(redact("मेरा नाम सुनीता है").text).toBe("मेरा नाम [NAME] है");
+  });
+});

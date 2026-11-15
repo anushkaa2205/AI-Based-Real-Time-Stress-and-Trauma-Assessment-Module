@@ -43,7 +43,24 @@ const NOT_D_BEFORE = `(?<!${D})`;
 const NOT_D_AFTER = `(?!${D})`;
 const SEP = "[\\s\\-.]?";
 
+/** Letters of any script (with combining marks). */
+const W = String.raw`[\p{L}\p{M}]+`;
+const NOT_L = String.raw`(?<![\p{L}\p{M}])`;
+const END_L = String.raw`(?![\p{L}\p{M}])`;
+/** "my name is …" style introductions, per language: [look-behind, optional stop words, optional look-ahead]. */
+const INTRO_NAME = (before: string, stop: string, after = "", flags = "gu") =>
+  new RegExp(String.raw`(?<=${before}\s+)${W}(?:\s+(?!(?:${stop})${END_L})${W})?${after}`, flags);
+
 const PATTERNS: readonly (readonly [PiiType, RegExp])[] = [
+  // Self-introductions (task 9.5): the name after "my name is …" in each supported language.
+  // Only the name is matched (look-behind), at most two words. The safety lexicon reads the
+  // original text, so redaction never hides a safety sign from the rule-based path.
+  ["NAME", INTRO_NAME(String.raw`${NOT_L}(?:my name is|my name's|i am called|i'm called)`, "and|from|i|my|the|is|am", "", "giu")],
+  ["NAME", INTRO_NAME(String.raw`${NOT_L}mera\s+naam`, "hai|h|he", String.raw`(?=\s+(?:hai|h|he)${END_L})`, "giu")],
+  ["NAME", INTRO_NAME(String.raw`मेरा\s+नाम`, "है|हैं", String.raw`(?=\s+(?:है|हैं))`)],
+  ["NAME", INTRO_NAME(String.raw`माझे\s+नाव`, "आहे", String.raw`(?=\s+आहे)`)],
+  ["NAME", INTRO_NAME(String.raw`என்\s+பெயர்`, "நான்|மற்றும்")],
+  ["NAME", INTRO_NAME(String.raw`আমার\s+নাম`, "এবং|আর|আমি")],
   ["EMAIL", /[\p{L}\p{N}._%+-]+@[\p{L}\p{N}-]+(?:\.[\p{L}\p{N}-]+)*\.\p{L}{2,}/gu],
   // 12-digit identity number, optionally grouped 4-4-4
   // (not after "+", which starts an international phone number like +919876543210)
