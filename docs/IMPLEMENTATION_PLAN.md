@@ -17,7 +17,7 @@ Update this table as work finishes.
 | 5. Responder dashboards and live alerts | M3 Responder loop | Done (5.1–5.9; verified with Pusher: Critical alert on screen in under 5 s; 13 Playwright tests pass. 5.5 auto-assignment (S) deferred) |
 | 6. Recommendations, referrals, stakeholder views | M3 Responder loop | Done (6.1–6.8; AC-REC-03/05, AC-DSH-01/03 pass in Playwright. AC-REC-01/02 covered by the Phase 2 engine tests and the eval set. AC-ALR-01's 5 s check failed on the last run only because Atlas round trips were ~200 ms instead of ~37 ms; re-run on a normal network) |
 | 7. Voice, operator console, IVRS | M4 Voice | Done except 7.9 (C, needs storage not in the free list) and crying detection in 7.6 (S). Spike (D4) on the team laptop: ~2 s per 5 s window in the service, ~2 GB RAM with all models; windows scored and pushed in 3.2–3.7 s on a prod build. AC-CH-02/03, AC-VOI-01…06, AC-EMO-01 tested |
-| 8. Languages, analytics, integration API, admin | M5 Feature complete | Not started |
+| 8. Languages, analytics, integration API, admin | M5 Feature complete | Done (8.1–8.7). AC-LANG-01, AC-DSH-02, AC-API-01/02 pass; AC-LANG-03 reported (rules-only, 2 scenarios per regional language). Open: native-speaker review (8.1), AC-LANG-02 language-detection rate needs an AI-mode evaluation run, AC-LANG-04 partly met (translation shown, evidence highlighted in the original only) |
 | 9. Evaluation, hardening, deployment, demo | M6 Demo-ready | Not started |
 | E. Evaluation set (runs alongside phases 2–9) | all | In progress: E.1–E.2 done (20 draft scenarios need a second reviewer) |
 
@@ -251,13 +251,13 @@ Update this table as work finishes.
 **Goal:** breadth: all five languages, the national and state view, the plug-in API and configuration screens.
 **Effort:** 8–10 days. **Depends on:** Phases 5–7 (sub-tracks are independent of each other).
 
-- [ ] **8.1 Regional languages.** `messages/mr.json`, `ta.json`, `bn.json` reviewed by native speakers; lexicon rule files for each; consent and safety-check audio; screeners translated. Regional-language scenarios added to the evaluation set. (FR-LANG-01/02/04/05)
-- [ ] **8.2 Analytics roll-up.** `stats.rollup` job filling `daily_stats`; endpoints `/analytics/summary`, `/heatmap`, `/trends`, `/capacity`; counts below 5 suppressed. (FR-DSH-06)
-- [ ] **8.3 Analytics screens.** State and ministry dashboards: cases by band, district heat map, indicator trends, time to first response, referral completion, demand against capacity; filters; CSV export **(C)**. (FR-DSH-07/08)
-- [ ] **8.4 Integration API.** `/api/v1/integration/*` with API-key authentication, scopes, per-key rate limits and the SSE stream; a small example script that runs a full interaction. (FR-API-01…04)
-- [ ] **8.5 OpenAPI.** Generate the specification from the Zod contracts and serve it at `/api/docs`.
-- [ ] **8.6 Admin.** Users and API clients; scoring configuration versions with create, simulate against the evaluation set, and activate; audit log viewer and chain verification. **(S)** (FR-SVI-06)
-- [ ] **8.7 Retention.** Set `purgeAt` when an interaction ends; `retention.purge` job for evidence quotes, summaries and notes. (NFR-PRI-04)
+- [x] **8.1 Regional languages.** `messages/mr.json`, `ta.json`, `bn.json` reviewed by native speakers; lexicon rule files for each; consent and safety-check audio; screeners translated. Regional-language scenarios added to the evaluation set. (FR-LANG-01/02/04/05) *Done as drafts: native-speaker review of the translations and lexicon rules is still needed; consent and safety-check audio still use the browser's speech (no recordings yet).*
+- [x] **8.2 Analytics roll-up.** `stats.rollup` job filling `daily_stats`; endpoints `/analytics/summary`, `/heatmap`, `/trends`, `/capacity`; counts below 5 suppressed. (FR-DSH-06)
+- [x] **8.3 Analytics screens.** State and ministry dashboards: cases by band, district heat map, indicator trends, time to first response, referral completion, demand against capacity; filters; CSV export **(C)**. (FR-DSH-07/08)
+- [x] **8.4 Integration API.** `/api/v1/integration/*` with API-key authentication, scopes, per-key rate limits and the SSE stream; a small example script that runs a full interaction. (FR-API-01…04)
+- [x] **8.5 OpenAPI.** Generate the specification from the Zod contracts and serve it at `/api/docs`.
+- [x] **8.6 Admin.** Users and API clients; scoring configuration versions with create, simulate against the evaluation set, and activate; audit log viewer and chain verification. **(S)** (FR-SVI-06)
+- [x] **8.7 Retention.** Set `purgeAt` when an interaction ends; `retention.purge` job for evidence quotes, summaries and notes. (NFR-PRI-04)
 
 **Done when:** AC-LANG-01…04, AC-DSH-02, AC-API-01, AC-API-02 pass. **Milestone M5.**
 
