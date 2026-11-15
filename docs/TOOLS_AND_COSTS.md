@@ -19,7 +19,7 @@ Free tiers change often: re-check before the demo.
 |---|---|---|---|---|
 | **Groq: `openai/gpt-oss-120b`** (and `gpt-oss-20b`) | Warning signs + text emotion (strict JSON) | ✅ Free, no card | 30 req/min, 1,000 req/day, 8K tokens/min, 200K tokens/day, per model | Groq does not train on API data. Limits are per model, so `gpt-oss-20b` gives a second quota for development. |
 | **Groq: `whisper-large-v3-turbo`** | Speech-to-text (Hindi, English) | ✅ Free | 20 req/min, 2,000 req/day, 2 h audio/hour, 8 h audio/day | 5-second chunks = 12 req/min per live call → one call at a time on the free tier. |
-| **Google Gemini (Flash / Flash-Lite)** | Backup LLM | ✅ Free | Limits shown per project in AI Studio | Free-tier content **is used to improve Google products** → synthetic test data only. |
+| **Google Gemini (Flash-Lite; currently `gemini-3.5-flash-lite`, thinking level low)** | Backup LLM. `gemini-2.5-flash` is closed to new API keys; `3.8-flash` was overloaded and slow when tested | ✅ Free | Limits shown per project in AI Studio | Free-tier content **is used to improve Google products** → synthetic test data only. |
 | **Bhashini (Govt. of India)** | Backup for regional ASR/translation | ✅ Free (registration) | Not verified on the official site | Use only if self-hosted IndicConformer fails or is too slow on the team laptop. |
 
 ## Open-source models and libraries (run on our own machine, free)

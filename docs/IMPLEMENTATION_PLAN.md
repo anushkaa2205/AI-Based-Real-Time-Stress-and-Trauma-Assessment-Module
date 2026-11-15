@@ -9,7 +9,7 @@ Update this table as work finishes.
 
 | Phase | Milestone | Status |
 |---|---|---|
-| 0. Project setup | M1 Walking skeleton | In progress: all done except 0.6 (Atlas done; Groq/Gemini/Pusher/HF accounts to do) |
+| 0. Project setup | M1 Walking skeleton | Done (0.6 finished: Atlas, Groq, Gemini, Pusher and Hugging Face set up; IndicConformer access granted) |
 | 1. Foundation: data, security, staff login | M1 Walking skeleton | Done (verified on Atlas: indexes, seed, all 10 roles log in, police 403) |
 | 2. Scoring core (no AI) | M2 Text MVP | Done (2.1–2.10; coverage 98% on scoring folders) |
 | 3. Victim text flow | M2 Text MVP | Done (unit + Playwright on desktop and mobile; rules-only baseline 75% recorded) |
@@ -86,7 +86,7 @@ Update this table as work finishes.
 - [x] **0.3 Scripts in `web/package.json`:** `dev`, `build`, `typecheck` (`tsc --noEmit`), `lint`, `test` (`vitest run`), `test:cov`, `e2e`, `seed`, `db:indexes`, `jobs`, `eval`.
 - [x] **0.4 Folders from `ARCHITECTURE.md` §13:** `src/core/*`, `src/models`, `src/contracts`, `src/lib`, `messages/`, `scripts/`, `tests/unit`, `tests/e2e`.
 - [x] **0.5 Environment.** `web/.env.example` with every key from `CLAUDE.md`; `src/lib/env.ts` validates them with Zod at start-up and fails with a clear message.
-- [ ] **0.6 Database and accounts.** Create the Atlas Free cluster and two databases, `nhaa_assess` and `nhaa_pii`. Create free accounts and keys: Groq, Google AI Studio (Gemini), Pusher (Sandbox), Hugging Face (accept the IndicConformer model terms).
+- [x] **0.6 Database and accounts.** Create the Atlas Free cluster and two databases, `nhaa_assess` and `nhaa_pii`. Create free accounts and keys: Groq, Google AI Studio (Gemini), Pusher (Sandbox), Hugging Face (accept the IndicConformer model terms).
 - [x] **0.7 CI.** GitHub Actions workflow: install, type-check, lint, unit tests on every push.
 - [x] **0.8 Python service skeleton.** `analysis-service/` with a virtual environment, FastAPI, `GET /v1/health`, `requirements.txt`, `.env.example`, `ruff` and `pytest` configured. Runs locally with `uvicorn`; no Docker needed.
 

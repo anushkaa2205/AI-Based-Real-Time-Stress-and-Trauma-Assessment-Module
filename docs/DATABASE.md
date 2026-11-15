@@ -212,6 +212,7 @@ Legend: **🔒** = encrypted field, **TTL** = auto-deleted by MongoDB, **U** = u
 | `subject_identities` (PII DB) | `_id` = subject id, `fullNameEnc` 🔒, `phoneEnc` 🔒, `phoneHash` (HMAC, for de-duplication), `addressEnc` 🔒 | `phoneHash` |
 | `case_notes` | `caseId`, `authorId`, `bodyEnc` 🔒 | `{caseId, createdAt:-1}` |
 | `follow_ups` | `caseId`, `dueAt`, `channel`, `status`, `assignedToId`, `outcomeNote` | `{status, dueAt}` |
+| `rate_limits` | `key` (SHA-256 of scope + subject; never a raw IP), `windowStart`, `count`, `expiresAt` | `{key, windowStart}` U, **TTL** on `expiresAt` |
 | `audit_logs` | `actorType`, `actorId`, `action`, `entityType`, `entityId`, `metadata` (never content), `ipHash`, `prevHash` U, `hash` U | `{entityType, entityId, createdAt}`, `{actorId, createdAt}` |
 | `jobs` | `type`, `payload`, `runAt`, `attempts`, `lockedUntil`, `doneAt`, `lastError`, `cleanupAt` **TTL** | `{doneAt, runAt}` |
 | `daily_stats` | `day`, `stateId`, `districtId`, `channel`, `language`, `band`, counts, median times, referral counts by type | U on the full dimension key |
