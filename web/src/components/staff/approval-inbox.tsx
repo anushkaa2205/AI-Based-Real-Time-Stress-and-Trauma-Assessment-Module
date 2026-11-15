@@ -22,6 +22,7 @@ interface Item extends RecLike {
 
 const lower = (s: string) => s.replace(/_/g, " ").toLowerCase();
 const POLL_MS = 15_000;
+const PAGE = 50;
 
 function List({ items, caseHref, onDone }: { items: Item[]; caseHref: string | null; onDone: (m: string) => void }) {
   return (
@@ -55,16 +56,29 @@ export function ApprovalInbox({ caseHref, showReviews = true }: { caseHref: stri
   const [proposed, setProposed] = useState<Item[] | null>(null);
   const [reviews, setReviews] = useState<Item[]>([]);
   const [msg, setMsg] = useState<string | null>(null);
+  /** Pages of PAGE items shown; "Load more" adds one, so no proposal is ever out of reach. */
+  const [pages, setPages] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
 
   const load = useCallback(async () => {
-    const get = async (q: string) => {
-      const res = await fetch(`/api/v1/staff/recommendations${q}`, { cache: "no-store" }).catch(() => null);
-      return res?.ok ? ((await res.json()) as { items: Item[] }).items : [];
+    const get = async (q: string, maxPages: number) => {
+      const items: Item[] = [];
+      let cursor: string | null = null;
+      for (let i = 0; i < maxPages; i++) {
+        const res = await fetch(`/api/v1/staff/recommendations${q}&limit=${PAGE}${cursor ? `&cursor=${cursor}` : ""}`, { cache: "no-store" }).catch(() => null);
+        if (!res?.ok) break;
+        const d = (await res.json()) as { items: Item[]; nextCursor: string | null };
+        items.push(...d.items);
+        cursor = d.nextCursor;
+        if (!cursor) break;
+      }
+      return { items, more: !!cursor };
     };
-    const [p, r] = await Promise.all([get("?status=PROPOSED"), showReviews ? get("?needsReview=true") : Promise.resolve([])]);
-    setProposed(p);
-    setReviews(r);
-  }, [showReviews]);
+    const [p, r] = await Promise.all([get("?status=PROPOSED", pages), showReviews ? get("?needsReview=true", 1) : Promise.resolve({ items: [], more: false })]);
+    setProposed(p.items);
+    setHasMore(p.more);
+    setReviews(r.items);
+  }, [showReviews, pages]);
 
   useEffect(() => {
     const first = setTimeout(load, 0);
@@ -101,6 +115,11 @@ export function ApprovalInbox({ caseHref, showReviews = true }: { caseHref: stri
           <p className="text-muted-foreground">Nothing waiting.</p>
         ) : (
           <List items={proposed} caseHref={caseHref} onDone={done} />
+        )}
+        {hasMore && (
+          <button type="button" onClick={() => setPages((n) => n + 1)} className="self-start text-sm underline underline-offset-4" data-testid="inbox-more">
+            Load more
+          </button>
         )}
       </section>
     </div>

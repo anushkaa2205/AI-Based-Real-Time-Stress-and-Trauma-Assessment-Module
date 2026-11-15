@@ -21,8 +21,17 @@ async function policeCase(request: Parameters<typeof victimSession>[0]) {
 }
 
 async function recFor(page: Page, docket: string, query: string, type: string) {
-  const inbox = await page.request.get(`/api/v1/staff/recommendations${query}`).then((r) => r.json());
-  return (inbox.items as { id: string; type: string; docketNumber: string }[]).find((i) => i.docketNumber === docket && i.type === type);
+  // Page through the inbox: earlier runs leave many pending proposals in the shared test database.
+  let cursor: string | null = null;
+  do {
+    const sep = query.includes("?") ? "&" : "?";
+    const url: string = `/api/v1/staff/recommendations${query}${sep}limit=100${cursor ? `&cursor=${cursor}` : ""}`;
+    const inbox = (await page.request.get(url).then((r) => r.json())) as { items: { id: string; type: string; docketNumber: string }[]; nextCursor: string | null };
+    const hit = inbox.items.find((i) => i.docketNumber === docket && i.type === type);
+    if (hit) return hit;
+    cursor = inbox.nextCursor;
+  } while (cursor);
+  return undefined;
 }
 
 const REFERRAL_KEYS = ["actionRequested", "contactRoute", "createdAt", "docketNumber", "dueAt", "id", "locationHint", "outcomeNote", "status", "type", "urgency"];
@@ -48,14 +57,16 @@ test("police see nothing until a counsellor approves; then only a minimal action
   expect(long.status()).toBe(422);
   expect((await long.json()).code).toBe("REFERRAL_TOO_DETAILED");
 
-  // The counsellor approves from the inbox.
-  await counsellor.goto("/approvals");
-  const row = counsellor.getByTestId("approval-row").filter({ hasText: v.docketNumber }).and(counsellor.locator("[data-type=POLICE_INTERVENTION]"));
+  // The counsellor approves from the case page (the shared test database holds many older proposals).
+  await counsellor.goto(`/counsellor/case/${v.caseId}`);
+  const row = counsellor.getByTestId("rec-actions-POLICE_INTERVENTION");
   await row.getByRole("button", { name: "Approve" }).click();
   await expect(row.getByRole("note")).toContainText("outside agency");
   await row.getByPlaceholder(/Village or ward/).fill("Ward 7 (synthetic)");
   await row.getByRole("button", { name: "Approve and send referral" }).click();
-  await expect(counsellor.getByTestId("approval-message")).toContainText("referral was sent");
+  await expect(counsellor.getByTestId("case-message")).toContainText("referral was sent");
+  await counsellor.goto("/approvals");
+  await expect(counsellor.getByTestId("approval-inbox")).toBeVisible();
   const again = await counsellor.request.post(`/api/v1/staff/recommendations/${rec!.id}/decision`, { data: { decision: "APPROVE" } });
   expect(again.status()).toBe(409);
 
