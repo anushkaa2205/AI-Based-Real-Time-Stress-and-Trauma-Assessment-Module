@@ -262,23 +262,6 @@ Long-term monitoring after the complaint is filed is covered by the sister probl
 | FR-AUD-02 | The system shall log every AI output with its **model version and configuration version**. | M |
 | FR-AUD-03 | Audit logs shall be **tamper-evident** (e.g. hash-chained entries) and readable only by authorised auditors. | S |
 
-### 3.17 Simulator (FR-SIM)
-The module has no screen of its own, so a simulator plays the part of NHAA for demonstrations: synthetic cases arrive through each channel, the module analyses them for real, and each stakeholder's view of the result is shown. Design: `SIMULATOR_PLAN.md`. These requirements add to the ones above and change none of them.
-
-| ID | Requirement | Priority |
-|---|---|---|
-| FR-SIM-01 | The website's home page (`/`) shall be the simulator's front door. It is public, needs no sign-in and shows **no case data**: the problem, what the module does, the three-part map (cases come in → module reads → help goes out) and the actions Start presentation, Explore cases and Reset demo. The victim start, consent and chat pages are served under `/portal`. | M |
-| FR-SIM-02 | The simulator shall hold a **library of twelve synthetic cases** covering every channel (phone call, IVRS, chatbot, mobile app, portal) and every risk band. Each case is a validated file with its script, channel, language, expected band and what it proves. A case file never contains an SVI, band result, indicator result or recommendation. | M |
-| FR-SIM-03 | A **signed-in staff member** shall be able to play a case. The simulator sends it to the module through the **integration API** (`/api/v1/integration/*`) in real time, as an NHAA system would: 5 s audio windows, chat messages one at a time, key presses and spoken answers. The API key stays on the server; the browser only says which step to send next. | M |
-| FR-SIM-04 | Each played case shall have an **analysis report** built only from what the module stored when the case was played: verdict (band, SVI, explanation), summary, indicators with their evidence, voice reading, risk over time and proposed help, with the footer "Decision support for staff. The caller does not see this." No value is computed, stored or written by the simulator itself. | M |
-| FR-SIM-05 | Reports of **simulator cases** shall be readable by anyone without sign-in, through a read-only endpoint that serves only cases tagged as simulator cases and answers 404 for every other case. | M |
-| FR-SIM-06 | The **outbound desks** (Counsellor, Police, Welfare, District, Ministry) shall reuse the staff screens and the same server-side policies (`core/policies`). Each desk needs a sign-in **as that role**, made by the presenter from the sign-in button in the simulator's top bar. There is no auto-login, shared demo session or policy bypass. | M |
-| FR-SIM-07 | Simulator records shall be **tagged** on the server (from the API client that created them, never from the request body), shown with a permanent "Simulation: synthetic data only" stamp, and **excluded from real analytics** (`daily_stats`). | M |
-| FR-SIM-08 | **Reset demo** shall delete simulator-tagged records and their linked documents only, for a signed-in staff member, and write an audit entry with the counts. | M |
-| FR-SIM-09 | The top bar shall show whether the **AI service** is reachable. When it is not, played cases are still scored by the rules path and the report says "limited confidence" (NFR-REL-01). | S |
-| FR-SIM-10 | A **presenter mode** shall hide the left rail and step through the running order in `SIMULATOR_PLAN.md` with Next and Back. | S |
-| FR-SIM-11 | The simulator shall use the **"case file" theme** in `SIMULATOR_PLAN.md`, meet WCAG 2.1 AA contrast and respect `prefers-reduced-motion`. | S |
-
 ---
 
 ## 4. Non-functional requirements
@@ -510,19 +493,6 @@ The module has no screen of its own, so a simulator plays the part of NHAA for d
 | AC-ACC-01 | NFR-ACC-01 | Lighthouse/axe accessibility score ≥ 90 on all victim-facing pages. |
 | AC-REL-01 | NFR-REL-01 | With the AI service down, a new complaint is still filed, scored in fallback mode, marked "limited confidence" and placed in the queue. |
 | AC-MNT-01 | NFR-MNT-03 | Unit-test coverage of the scoring module is ≥ 80%. |
-
-### 6.12 Simulator
-| ID | Linked FR | Criterion |
-|---|---|---|
-| AC-SIM-01 | FR-SIM-01 | `/` loads without sign-in, and the page contains no docket number, SVI, band result or indicator. The victim flow works end to end at `/portal`. |
-| AC-SIM-02 | FR-SIM-02 | The validator accepts all twelve case files; together they cover all five channels and all four bands; no case file contains a result field. |
-| AC-SIM-03 | FR-SIM-03, 04 | Playing a case creates a tagged interaction through the integration API, and the band and SVI on its report equal the module's current assessment for that interaction. |
-| AC-SIM-04 | FR-SIM-05 | The public report endpoint returns 404 for a case that is not tagged as a simulator case, and returns the report without sign-in for one that is. |
-| AC-SIM-05 | FR-SIM-06, FR-DSH-04 | On the Police desk, "View full case" calls the case endpoint and shows the API's real **403**. A desk opened without its role shows a sign-in prompt, and its data endpoints refuse the request. |
-| AC-SIM-06 | FR-SIM-07 | After cases are played and the rollup job runs, the real analytics counts are unchanged. |
-| AC-SIM-07 | FR-SIM-08 | Reset demo removes every tagged record, and the counts of untagged cases, interactions, assessments and referrals are the same before and after. |
-| AC-SIM-08 | FR-SIM-09 | With the AI service stopped, a replayed C3 is still Critical and its report says "limited confidence". |
-| AC-SIM-09 | FR-SIM-10, 11 | The running order plays through in presenter mode in about eight minutes; an axe check of the simulator pages finds no WCAG 2.1 AA violations. |
 
 ---
 

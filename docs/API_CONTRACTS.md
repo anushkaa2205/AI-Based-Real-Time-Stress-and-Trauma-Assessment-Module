@@ -353,8 +353,8 @@ Base: `/api/v1/staff`. Auth.js session. Responses shaped by role (§4).
 
 ### 5.2 Case queue and detail
 #### `GET /cases`
-Query: `status` (multi), `band` (multi), `districtId`, `assignedTo=me|unassigned|<id>`, `channel`, `language`, `from`, `to`, `limit`, `cursor`, `simulation=only|exclude` (FR-SIM-06; default: all), `sort=risk|arrival` (default `risk`; `arrival` = first contact ↑, for the simulator's queue toggle).
-Sorted by **band ↓, SVI ↓, waiting time ↑** (FR-CASE-01) unless `sort=arrival`.
+Query: `status` (multi), `band` (multi), `districtId`, `assignedTo=me|unassigned|<id>`, `channel`, `language`, `from`, `to`, `limit`, `cursor`.
+Sorted by **band ↓, SVI ↓, waiting time ↑** (FR-CASE-01).
 
 **200** `Page<CaseQueueItem>`
 ```json
@@ -439,7 +439,7 @@ For `DISTRICT_OFFICER` / `STATE_ADMIN` the response omits `summary`, `summaryTra
 **200** `{ "indicator": IndicatorDto, "assessment": AssessmentDto }`: the SVI is recalculated immediately with trigger `INDICATOR_REVIEW`. A safety-override lock is **not** released by this; only `band-override` can do that.
 
 ### 5.5 Recommendations and referrals
-#### `GET /recommendations?status=PROPOSED&responsibleRole=&districtId=&simulation=only|exclude`
+#### `GET /recommendations?status=PROPOSED&responsibleRole=&districtId=`
 Approval inbox → `Page<RecommendationDto & { caseId, docketNumber, band }>`.
 
 #### `POST /recommendations/{id}/decision`
@@ -538,20 +538,6 @@ data: {"interactionId":"6735a1f0c2a4b1e0f0a1in01","svi":81,"band":"CRITICAL","se
 ```
 
 Errors specific to integration: `401 INVALID_API_KEY`, `403 SCOPE_MISSING`, `404` for interactions created by another client, `429 RATE_LIMITED`.
-
-### 6.1 Simulator API (FR-SIM, `ARCHITECTURE.md` §15)
-
-Base: `/api/v1/sim`. Used only by the simulator pages. Playback goes **through the integration API above**, using the simulator's own API key, which stays on the server.
-
-| Method | Path | Access | Request → Response |
-|---|---|---|---|
-| `POST` | `/plays` | Staff session | `{ caseId: "C01"…"C12", take?: string }` → `201 { interactionId, steps: [{ n, kind, atMs }] }`. Creates the interaction through `POST /integration/interactions` with the case's channel, language, district and consent; `externalRef` = `SIM:<caseId>[:<take>]`. Rate limit 30 per user per minute. |
-| `POST` | `/plays/{interactionId}/steps/{n}` | The staff user who started the play | No body → `202 { n, done }`. Reads step *n* from the case file and sends it through the matching integration endpoint (`/messages`, `/audio`, `/screeners`, `/context`, `/end`). Steps must be sent in order; a repeated *n* is ignored. |
-| `GET` | `/reports/{interactionId}` | **Public** | `200 SimReport`: docket header (docket number, channel, language, case id, started at), current assessment (band, SVI, explanation, overrides fired, limited confidence), summary, transcript lines with translations, indicators with evidence spans, voice windows (pauses, pitch, energy, emotion), assessment history, recommendations with status, whether the emergency panel was shown. **404** when the interaction is not `simulation: true`. Built only from stored module output. |
-| `GET` | `/status` | Public | `200 { aiService: "online" \| "offline", checkedAt }`. No case data. |
-| `POST` | `/reset` | Staff session | No body → `200 { deleted: { cases, interactions, messages, indicators, assessments, recommendations, referrals, alerts } }`. Deletes `simulation: true` records only, in one transaction; one audit entry with the counts. |
-
-Errors: the usual problem+json codes (§9). `404` on reports deliberately does not say whether a non-simulator interaction exists.
 
 ---
 
@@ -721,7 +707,6 @@ For victims, `title` and `detail` are localised and calm, and never mention inte
 | FR-CH-03/04 | `/victim/…/audio`, `/staff/interactions/{id}/transcript`, `/suggested-questions`, `/operator-message`, `transcript.appended` |
 | FR-CH-05 (IVRS) | Victim API with `X-Victim-Session`, `/screeners` with keypad values |
 | FR-CH-07 | `docketNumber` on interaction and case; integration `POST /interactions` |
-| FR-SIM-03…08 | `/sim/plays`, `/sim/plays/{id}/steps/{n}`, `/sim/reports/{id}`, `/sim/status`, `/sim/reset`; `simulation` and `sort` filters on staff lists |
 | FR-CH-08 | `PUT /victim/…/context` |
 | FR-CH-09 | `/end {QUICK_EXIT}`, `skippable` prompts |
 | FR-CON-01…06 | `/consent`, `/consent/withdraw`, `/consent-notices`, `CONSENT_REQUIRED` |

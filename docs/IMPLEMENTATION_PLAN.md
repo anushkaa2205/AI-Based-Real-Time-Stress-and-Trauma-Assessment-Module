@@ -1,7 +1,7 @@
 # Implementation Plan
 ## AI-Based Real-Time Stress and Trauma Assessment Module (SIH26093)
 
-> Companion documents: `REQUIREMENTS.md` (requirement and acceptance IDs), `ARCHITECTURE.md`, `DATABASE.md`, `models.ts`, `API_CONTRACTS.md`, `TOOLS_AND_COSTS.md` (free-tier limits). Project rules: `/CLAUDE.md`.
+> Companion documents: `REQUIREMENTS.md` (requirement and acceptance IDs), `ARCHITECTURE.md`, `DATABASE.md`, `models.ts`, `API_CONTRACTS.md`, `TOOLS_AND_COSTS.md` (free-tier limits), `FRONTEND_UX_PRODUCT_BRIEF.md` and `checklist.md` (victim-facing frontend, Phase F). Project rules: `/CLAUDE.md`.
 
 ## Status
 
@@ -20,7 +20,7 @@ Update this table as work finishes.
 | 8. Languages, analytics, integration API, admin | M5 Feature complete | Done (8.1–8.7). AC-LANG-01, AC-DSH-02, AC-API-01/02 pass; AC-LANG-03 reported (rules-only, 2 scenarios per regional language). Open: native-speaker review (8.1), AC-LANG-02 language-detection rate needs an AI-mode evaluation run, AC-LANG-04 partly met (translation shown, evidence highlighted in the original only) |
 | 9. Evaluation, hardening, deployment, demo | M6 Demo-ready | In progress: 9.1–9.7 done (see docs/EVALUATION_REPORT.md; band accuracy 79% and text p95 3.43 s just miss targets); 9.8 needs volunteers; 9.9–9.11 deferred until the project is finished |
 | E. Evaluation set (runs alongside phases 2–9) | all | In progress: 62 draft scenarios (E.3 needs a second reviewer); E.4 voice recordings by the team not done |
-| S. Simulator (the website's front door) | M6 Demo-ready | In progress on `feature/simulator`: S.1–S.2 done (FR-SIM/AC-SIM spec; 12 cases valid, `npm run sim:validate`). Open: second-person review of all 12 scripts; recordings for C2, C3, C4, C9 |
+| F. Victim-facing frontend (homepage, unified input) | M6 Demo-ready | In progress: F.0 audit (`docs/FRONTEND_AUDIT.md`) and F.1 simulator removal done (15 Nov 2026). F.2 waits on decisions Q1–Q4 in the audit |
 
 ---
 
@@ -66,9 +66,7 @@ Update this table as work finishes.
 | D5 | Three regional languages | Phase 8 | Marathi, Tamil, Bengali (as proposed in FR-LANG-01) |
 | D6 | ~~Local MongoDB~~ **Decided:** Atlas Free for development and demo (no Docker) | — | — |
 | D7 | ~~Hosting~~ **Decided:** web on Vercel Hobby; analysis service on a team laptop behind a Cloudflare Quick Tunnel; no separate worker (jobs run inside requests) | — | See `TOOLS_AND_COSTS.md` |
-| D8 | ~~Front door~~ **Decided:** the module has no screen of its own, so the NHAA Simulator is the website's home page (`/`); victim pages move to `/portal` as the simulated NHAA portal | — | See `SIMULATOR_PLAN.md` |
-| D9 | Voice-first victim flow (story first, mic default, screeners moved to the counsellor) | After Phase S | Keep the current flow; the simulator does not depend on it |
-| D10 | Text-to-speech for calm demo cases, or team recordings for every call | S.3 | Text-to-speech for C1 and IVRS prompts; team recordings for C2, C3, C4, C9 |
+| D8 | ~~Front door~~ **Decided (15 Nov 2026):** the public home page `/` is a calm victim-facing entry point; the victim intake pages live under `/portal/<locale>`. The NHAA simulator planned earlier is dropped (code, cases and spec removed) | — | See `FRONTEND_UX_PRODUCT_BRIEF.md`, `checklist.md` |
 
 ---
 
@@ -282,30 +280,26 @@ Update this table as work finishes.
 - [ ] **9.8 Usability test** with 5 or more volunteers playing scripted roles; short comfort rating afterwards; fix the top issues. *Not done: needs 5+ volunteers.*
 - [ ] **9.9 Deployment.** Vercel Hobby (web), Atlas Free, Pusher Sandbox; analysis service on the team laptop exposed with `cloudflared tunnel --url http://localhost:8000` and that URL set as `ANALYSIS_URL` on Vercel; indexes synced; demo data seeded; health check green. Write a pre-demo checklist (start service, start tunnel, update the URL, warm-up message). *Deferred by the team until the project is finished.*
 - [ ] **9.10 Documentation.** README with set-up steps, architecture diagram, API docs link, evaluation report, known limitations and ethical statement. (C-PRJ-03) *Deferred by the team until the project is finished.*
-- [ ] **9.11 Demo script and rehearsal** (now run from the simulator, Phase S; see §4), with a recorded backup video in case the network fails on the day. *Deferred by the team until the project is finished.*
+- [ ] **9.11 Demo script and rehearsal** (see §4), with a recorded backup video in case the network fails on the day. *Deferred by the team until the project is finished.*
 
 **Done when:** every Must-priority acceptance criterion in `REQUIREMENTS.md` §6 is ticked in a checklist appended to the evaluation report. **Milestone M6.**
 
 ---
 
-## Phase S. Simulator (the website's front door)
+## Phase F. Victim-facing frontend: homepage and unified input layer
 
-**Goal:** a simulator that plays the part of NHAA, so an audience can see the module work: synthetic cases arrive through each channel, the module analyses them for real, and each stakeholder's view of the result is shown. Full design: `docs/SIMULATOR_PLAN.md`.
-**Effort:** 6–8 days. **Depends on:** Phases 5–8 (uses the integration API and the staff screens). Replaces the demo approach in §4 and feeds task 9.11.
+**Goal:** a calm, accessible public homepage at `/`, and one coherent intake experience (write, speak or guided questions, then review and an honest confirmation) on top of the existing victim API, conversation engine and consent logic. Full brief: `docs/FRONTEND_UX_PRODUCT_BRIEF.md`; step-by-step checklist with evidence: `docs/checklist.md`.
+**Depends on:** Phases 3, 7 and 8 (victim flow, voice, languages). **Must not change:** scoring, lexicon, prompts, screener wording, consent rules, staff dashboards or API contracts, except the smallest additive change the audit shows is needed (brief §0).
 
-- [x] **S.1 Spec.** Short sections in `REQUIREMENTS.md` (simulator requirements, IDs `FR-SIM-…`, acceptance `AC-SIM-…`) and `ARCHITECTURE.md` (simulator as an integration API client; route map). No existing requirement changes.
-- [x] **S.2 Case library.** Twelve synthetic cases C1–C12 under `evaluation/simulator/` (script, channel, language, expected band, what it proves); Zod schema and validator script; second-person review of every script. (C-DAT-01, C-DAT-03) *Done: `contracts/simulator.ts`, `core/simulator/`, `npm run sim:validate`, 19 unit tests. The second-person review is a team task and is still open (`reviewedBy` is empty in every case).*
-- [ ] **S.3 Audio.** Text-to-speech for C1 and the IVRS prompts (free option only, D10); clearly marked placeholders for C2, C3, C4 (two takes) and the C9 voice note until the team records them.
-- [ ] **S.4 Home page and routes.** Simulator home at `/` (public, no case data): top bar with status light and Simulation stamp, title and one sentence, today vs with the module, the three-part map, Start presentation / Explore cases / Reset demo, footer. Victim start, consent and chat pages move to `/portal` (all locales). Update Playwright tests, links, redirects, quick exit and the PWA `start_url`. (D8)
-- [ ] **S.5 Inbound tabs and playback.** Phone call, IVRS, Chatbot, Mobile app and Portal tabs with their case lists; a player that sends each case to the module through `/api/v1/integration/*` in real time (5 s audio windows, chat messages one by one, key presses plus spoken answers). Simulator cases are tagged so they can be reset and are excluded from real analytics. Staff sign-in required.
-- [ ] **S.6 Analysis report.** Input on the left (audio with waveform and live transcript plus translation, chat, or written complaint); on the right the verdict line, summary, signals with evidence highlighting, voice reading timeline, risk over time and proposed help; footer "Decision support for staff. The caller does not see this."; the C3 victim inset; the C4 split view. All values from the module at play time, never stored or hand-written.
-- [ ] **S.7 Outbound desks.** Counsellor (risk order with an arrival-order toggle, approve or reject, correct an indicator), Police (with a "View full case" link that returns a real 403), Welfare, District, Ministry, reusing the existing staff components and the same server-side policies. Reset demo deletes only tagged simulator cases.
-- [ ] **S.8 Theme, presenter mode and run-through.** "Case file" theme from the plan (paper, navy ink, ruled tables, brick-red stamp, Noto Serif / Noto Sans with Indic scripts / IBM Plex Mono via `next/font`); presenter mode stepping through the running order; WCAG AA contrast and `prefers-reduced-motion`; every case played and a table of expected band vs actual band recorded. Scripts may be adjusted to fit; scoring, lexicon and prompts may not.
-- [ ] **S.9 Tests.** Playwright: home page loads without sign-in and shows no case data; a played case produces a report from the live module; police desk gets 403 on full-case endpoints; Reset demo leaves non-simulator cases untouched; victim flow works at `/portal`. Unit tests for the case schema and the reset filter.
+- [x] **F.0 Audit.** `docs/FRONTEND_AUDIT.md`: routes, components, flow, endpoints actually used, gaps between docs and code, reusable parts, proposed minimal changes, test baseline. No code changes. (checklist §0)
+- [x] **F.1 Remove the simulator.** Simulator pages, `/api/v1/sim`, components, contracts, `core/simulator`, case files, validator, tests and spec sections removed; victim intake kept under `/portal/<locale>`; `/` shows the language choice until F.2. (checklist §1, D8)
+- [ ] **F.2 Homepage and visual foundation.** "Quiet Paper" tokens in one place; header and footer; `/` as the victim homepage with Start, Write / Speak / Guided questions and an immediate-safety entry; staff sign-in as a quiet link; every action goes somewhere real. (brief §2, §5; checklist §2, §3, §6)
+- [ ] **F.3 Consent and safety flow.** Consent presentation with audio, no pre-selected options, "continue without analysis"; safety check first in every mode; minor-without-guardian route; emergency panel. (brief §3.3–3.4; checklist §4)
+- [ ] **F.4 Unified input layer.** Input-method choice mapped to the existing conversation engine (no second state machine); text composer; voice note with playback and transcript review; live voice kept distinct; guided questions; provenance kept; `channel` never repurposed. (brief §3.5–3.9, §4; checklist §5)
+- [ ] **F.5 Context, review and confirmation.** Optional context; one review step before closing; confirmation that shows only what the backend accepted. (brief §3.10–3.13; checklist §5)
+- [ ] **F.6 Hardening and docs.** Accessibility, languages, low-end Android, slow network, PWA privacy, voice failure paths, session expiry, quick exit, full Playwright run; then the doc updates in checklist §10.
 
-**Done when:** all twelve cases play end to end with real analysis; the presentation flow in `SIMULATOR_PLAN.md` runs in about 8 minutes in presenter mode; type-check, lint, unit and Playwright tests pass; no rule in `CLAUDE.md` is broken.
-
-**Team-only tasks:** record C2, C3, both takes of C4 and the C9 voice note; review the twelve scripts; native-speaker check of C6, C11, C12; rehearse twice with a timer.
+**Done when:** every applicable item in `checklist.md` §12 is true; type-check, lint, unit and Playwright tests pass; no rule in `CLAUDE.md` is broken.
 
 ---
 
@@ -326,7 +320,14 @@ A change to the lexicon, the prompt or the weights is not finished until the eva
 
 ## 4. Demo script (target: 8 minutes)
 
-Superseded by the simulator. The running order, what the audience sees at each step and what to say are in `docs/SIMULATOR_PLAN.md` ("Presentation flow"), and the simulator's presenter mode steps through it (task S.8).
+1. **The gap (30 s).** Today every complaint looks the same; nobody measures how the person is.
+2. **Victim, Hindi chat (2 min).** Language choice → consent with separate toggles → safety check → a message about threats outside the house. The emergency panel appears. Point out: the victim sees help, never a score.
+3. **Counsellor (2 min).** The case jumps to the top of the queue with a Critical alert. Open it: SVI, the dimension breakdown, the highlighted quote that triggered it, the safety override. Reject one indicator and watch the SVI recalculate.
+4. **Action (1 min).** Approve the police-intervention recommendation. Switch to the police login: a short action request and nothing else. Try to open the case as police: refused.
+5. **Voice (1.5 min).** Simulated call: live transcript, pauses and pitch strip, SVI moving on the operator console.
+6. **Resilience (30 s).** Switch the AI service off; send a high-risk message; it is still flagged, marked "limited confidence".
+7. **Ministry view (30 s).** Anonymised heat map and response times; small counts suppressed.
+8. **Evidence (30 s).** Evaluation numbers and the ethical safeguards.
 
 ---
 
