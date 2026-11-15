@@ -6,9 +6,15 @@ import { victimSession } from "./helpers";
 
 const msg = (lang: string) => JSON.parse(readFileSync(resolve(__dirname, `../../messages/${lang}.json`), "utf8"));
 
-test("the start page offers all five languages, each in its own script", async ({ page }) => {
-  await page.goto("/portal");
-  for (const label of ["English", "हिंदी", "मराठी", "தமிழ்", "বাংলা"]) await expect(page.getByRole("link", { name: label })).toBeVisible();
+test("the homepage offers all five languages, each in its own script (task F.2)", async ({ page }) => {
+  await page.goto("/");
+  const nav = page.getByRole("navigation", { name: msg("en").home.nav.language });
+  for (const label of ["English", "हिंदी", "मराठी", "தமிழ்", "বাংলা"]) await expect(nav.getByRole("link", { name: label })).toBeVisible();
+  for (const lang of ["hi", "mr", "ta", "bn"]) {
+    await page.goto(`/?lang=${lang}`);
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(msg(lang).home.hero.title);
+    await expect(page.getByTestId("home-start")).toHaveText(msg(lang).start.start);
+  }
   for (const lang of ["mr", "ta", "bn"]) {
     await page.goto(`/portal/${lang}`);
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(msg(lang).start.title);

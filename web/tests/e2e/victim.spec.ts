@@ -41,8 +41,10 @@ async function waitForPrompt(page: Page, key: string | RegExp) {
 }
 
 async function start(page: Page, lang: "en" | "hi") {
-  await page.goto("/portal");
-  await page.getByRole("link", { name: lang === "hi" ? "हिंदी" : "English" }).click();
+  await page.goto("/");
+  await page.getByRole("navigation", { name: "Language" }).getByRole("link", { name: lang === "hi" ? "हिंदी" : "English" }).click();
+  await expect(page.getByTestId("home-start")).toHaveAttribute("href", `/portal/${lang}`); // the language switch has loaded
+  await page.getByTestId("home-start").click();
   const created = page.waitForRequest((r) => r.method() === "POST" && r.url().endsWith("/api/v1/victim/interactions"));
   await page.getByRole("button", { name: lang === "hi" ? "शुरू करें" : "Start" }).click();
   expect((await created).postDataJSON().channel).toBe("PORTAL"); // audit G1: the portal is not the chatbot channel
