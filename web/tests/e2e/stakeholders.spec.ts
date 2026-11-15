@@ -132,9 +132,16 @@ test("district officer decides police proposals in the district and sees band an
   const row = page.getByTestId("district-case-row").filter({ hasText: v.docketNumber });
   await expect(row).toBeVisible();
   await expect(row.locator("[data-band=CRITICAL]")).toBeVisible();
-  const queue = await page.request.get("/api/v1/staff/cases?band=CRITICAL").then((r) => r.json());
-  const item = (queue.items as Record<string, unknown>[]).find((c) => c.docketNumber === v.docketNumber)!;
-  expect(item.topReason).toBeUndefined();
+  // Page through the reduced queue (the shared test database holds many Critical cases).
+  let item: Record<string, unknown> | undefined;
+  for (let cursor: string | null = null, n = 0; !item && n < 20; n++) {
+    const q = (await page.request.get(`/api/v1/staff/cases?band=CRITICAL&limit=100${cursor ? `&cursor=${cursor}` : ""}`).then((r) => r.json())) as { items: Record<string, unknown>[]; nextCursor: string | null };
+    item = q.items.find((c) => c.docketNumber === v.docketNumber);
+    cursor = q.nextCursor;
+    if (!cursor) break;
+  }
+  expect(item, "the case is in the district queue").toBeTruthy();
+  expect(item!.topReason).toBeUndefined(); // reduced view: no evidence-based reason
   expect((await page.request.get(`/api/v1/staff/interactions/${v.interactionId}/transcript`)).status()).toBe(403);
   // Escalated alerts reach the district without the evidence-based reason (§4 rule 2).
   const alerts = await page.request.get("/api/v1/staff/alerts").then((r) => r.json());

@@ -93,8 +93,10 @@ test("keys, scopes, ownership and rate limits (AC-API-02)", async ({ request }) 
   // Another client's interaction → 404 (it cannot even learn it exists).
   expect((await api(request, other).get(`/interactions/${interactionId}/assessment`)).status()).toBe(404);
 
-  // Over the per-key limit (4/min here) → 429.
-  let last = 0;
-  for (let n = 0; n < 4; n++) last = (await w.post(`/interactions/${interactionId}/screeners`, { instrument: "SAFETY_CHECK", itemCode: "SAFETY_SAFE_NOW", value: 1 })).status();
-  expect(last).toBe(429);
+  // Over the per-key limit → 429. The limit counts per minute, so with 2/min, five calls trip it
+  // even if they straddle a minute boundary.
+  const limited = api(request, await client(["assessments:read"], 2));
+  const statuses: number[] = [];
+  for (let n = 0; n < 5; n++) statuses.push((await limited.get(`/interactions/${interactionId}/assessment`)).status());
+  expect(statuses).toContain(429);
 });

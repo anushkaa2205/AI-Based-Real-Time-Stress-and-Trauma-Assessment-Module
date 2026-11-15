@@ -19,14 +19,28 @@ interface Row {
 }
 
 const POLL_MS = 15_000;
+const MAX_PAGES = 10;
 
 export function DistrictCases({ channels }: { channels: string[] }) {
   const [rows, setRows] = useState<Row[] | null>(null);
   const [now, setNow] = useState(() => Date.now());
 
   const load = useCallback(async () => {
-    const res = await fetch("/api/v1/staff/cases?band=HIGH,CRITICAL&status=NEW,UNDER_REVIEW,ACTION_TAKEN,FOLLOW_UP_SCHEDULED", { cache: "no-store" }).catch(() => null);
-    if (res?.ok) setRows(((await res.json()) as { items: Row[] }).items);
+    // A district officer must see every open High and Critical case, not just the first page.
+    const all: Row[] = [];
+    let cursor: string | null = null;
+    for (let page = 0; page < MAX_PAGES; page++) {
+      const res: Response | null = await fetch(
+        `/api/v1/staff/cases?band=HIGH,CRITICAL&status=NEW,UNDER_REVIEW,ACTION_TAKEN,FOLLOW_UP_SCHEDULED&limit=100${cursor ? `&cursor=${cursor}` : ""}`,
+        { cache: "no-store" },
+      ).catch(() => null);
+      if (!res?.ok) break;
+      const d = (await res.json()) as { items: Row[]; nextCursor: string | null };
+      all.push(...d.items);
+      cursor = d.nextCursor;
+      if (!cursor) break;
+    }
+    setRows(all);
     setNow(Date.now());
   }, []);
 
