@@ -69,3 +69,17 @@ describe("regional safety lexicon (task 8.1)", () => {
     expect((performance.now() - t0) / 20).toBeLessThan(50);
   });
 });
+
+describe("English plan, means and time (en-1.1, OV-1/OV-4)", () => {
+  it("means kept ready or a time set counts as intent", () => {
+    for (const t of ["I have kept the sleeping pills ready", "I am going to swallow all the tablets tonight", "I'll drink the pesticide right now"])
+      expect(flagsOf(t), t).toContain("SUICIDAL_INTENT");
+  });
+  it("veiled threats to life count as threats to life", () => {
+    for (const t of ["They said my father won't survive the month if we testify", "They told us we will be killed"]) expect(flagsOf(t), t).toContain("THREAT_TO_LIFE");
+  });
+  it("ordinary medicine talk and denials do not", () => {
+    expect(flagsOf("The doctor gave me tablets for my mother")).not.toContain("SUICIDAL_INTENT");
+    expect(flagsOf("I will not take the pills tonight, I am feeling better")).not.toContain("SUICIDAL_INTENT");
+  });
+});

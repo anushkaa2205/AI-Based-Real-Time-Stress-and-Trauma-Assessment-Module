@@ -1,12 +1,32 @@
 {
   "id": "en",
-  "version": "en-1.0",
+  "version": "en-1.1",
   "negation": {
-    "cues": ["never", "not", "no", "don't", "dont", "won't", "wont", "wouldn't", "wouldnt", "nor"],
+    "cues": [
+      "never",
+      "not",
+      "no",
+      "don't",
+      "dont",
+      "won't",
+      "wont",
+      "wouldn't",
+      "wouldnt",
+      "nor"
+    ],
     "before": 4,
     "after": 0
   },
-  "clauseBreaks": ["but", "and", "so", "though", "although", "however", "because", "or"],
+  "clauseBreaks": [
+    "but",
+    "and",
+    "so",
+    "though",
+    "although",
+    "however",
+    "because",
+    "or"
+  ],
   "rules": [
     {
       "id": "EN-SI-INTENT-1",
@@ -14,13 +34,17 @@
       "dimension": "SUICIDAL_IDEATION",
       "score": 0.95,
       "confidence": 0.85,
-      "flags": ["SUICIDAL_INTENT"],
+      "flags": [
+        "SUICIDAL_INTENT"
+      ],
       "patterns": [
         "(?:going|planning|plan|decided|about) to (?:kill myself|end (?:my|this) life|take my (?:own )?life|end it(?: all)?|commit suicide)",
         "(?:will|i['’]ll|gonna) (?:kill myself|end (?:my|this) life|take my (?:own )?life|commit suicide)",
         "(?:kill|killing) myself (?:tonight|today|now|right now)",
         "(?:bought|got|have|kept|saved|collected) (?:the |some )?(?:poison|pills|tablets|rope) to (?:die|end (?:it|my life)|kill myself)",
-        "(?:wrote|written|writing|left) (?:a |my )?(?:suicide|goodbye) (?:note|letter)"
+        "(?:wrote|written|writing|left) (?:a |my )?(?:suicide|goodbye) (?:note|letter)",
+        "(?:have|got|kept|keep|keeping) (?:the |my |some |all the |all my )?(?:poison|pills|tablets|sleeping pills|rope|pesticide|kerosene) (?:ready|with me)",
+        "(?:will|i['’]ll|going to|gonna) (?:take|swallow|drink|eat) (?:them all|all of them|them|(?:all )?(?:the |my )?(?:pills|tablets|sleeping pills|poison|pesticide)) (?:tonight|today|now|right now|this evening)"
       ]
     },
     {
@@ -29,7 +53,9 @@
       "dimension": "SUICIDAL_IDEATION",
       "score": 0.9,
       "confidence": 0.8,
-      "flags": ["PASSIVE_SUICIDAL_IDEATION"],
+      "flags": [
+        "PASSIVE_SUICIDAL_IDEATION"
+      ],
       "patterns": [
         "(?:want|wanna|wish|wishing) to (?:die|kill myself|end (?:my|this) life|end it all|commit suicide|be dead)",
         "(?:thinking|thought|thoughts|think) (?:of|about) (?:suicide|killing myself|ending (?:my|this) life|ending it(?: all)?|dying)",
@@ -43,7 +69,9 @@
       "dimension": "SUICIDAL_IDEATION",
       "score": 0.75,
       "confidence": 0.7,
-      "flags": ["PASSIVE_SUICIDAL_IDEATION"],
+      "flags": [
+        "PASSIVE_SUICIDAL_IDEATION"
+      ],
       "patterns": [
         "no (?:point|reason|use) (?:in living|to live|living|in going on|anymore|any more)",
         "(?:my )?(?:family|everyone|they|children|kids) (?:would|will) be (?:better|happier) (?:off )?without me",
@@ -57,8 +85,12 @@
       "dimension": "SUICIDAL_IDEATION",
       "score": 0.7,
       "confidence": 0.55,
-      "flags": ["PASSIVE_SUICIDAL_IDEATION"],
-      "patterns": ["suicid(?:e|al)"]
+      "flags": [
+        "PASSIVE_SUICIDAL_IDEATION"
+      ],
+      "patterns": [
+        "suicid(?:e|al)"
+      ]
     },
     {
       "id": "EN-SELFHARM-1",
@@ -66,8 +98,13 @@
       "dimension": "SUICIDAL_IDEATION",
       "score": 0.8,
       "confidence": 0.7,
-      "flags": ["PASSIVE_SUICIDAL_IDEATION"],
-      "patterns": ["(?:hurt|harm|harming|hurting|cut|cutting) myself", "self[- ]harm"]
+      "flags": [
+        "PASSIVE_SUICIDAL_IDEATION"
+      ],
+      "patterns": [
+        "(?:hurt|harm|harming|hurting|cut|cutting) myself",
+        "self[- ]harm"
+      ]
     },
     {
       "id": "EN-HOPELESS-1",
@@ -75,7 +112,9 @@
       "dimension": "SUICIDAL_IDEATION",
       "score": 0.6,
       "confidence": 0.6,
-      "patterns": ["(?:can['’]?t|cannot) (?:go on|take (?:it|this) any ?more|live like this|bear (?:it|this) any ?more)"]
+      "patterns": [
+        "(?:can['’]?t|cannot) (?:go on|take (?:it|this) any ?more|live like this|bear (?:it|this) any ?more)"
+      ]
     },
     {
       "id": "EN-DANGER-PRESENT-1",
@@ -83,7 +122,9 @@
       "dimension": "INTIMIDATION",
       "score": 0.95,
       "confidence": 0.8,
-      "flags": ["ACCUSED_PRESENT"],
+      "flags": [
+        "ACCUSED_PRESENT"
+      ],
       "patterns": [
         "(?:they|he|the accused|those (?:people|men)|they['’]re|he['’]s) (?:are |is )?(?:standing |waiting |sitting )?(?:outside|in front of|at) (?:my|our|the) (?:house|home|door|gate)",
         "(?:standing|waiting|sitting) outside (?:my|our|the) (?:house|home|door|gate)",
@@ -97,7 +138,9 @@
       "dimension": "INTIMIDATION",
       "score": 0.9,
       "confidence": 0.8,
-      "flags": ["CONFINED"],
+      "flags": [
+        "CONFINED"
+      ],
       "patterns": [
         "locked (?:me |us )?(?:in|inside|up)",
         "(?:not|won['’]?t|will not) (?:let|letting) (?:me|us) (?:leave|go out|out|go)",
@@ -110,7 +153,9 @@
       "dimension": "SEVERE_TRAUMA",
       "score": 0.85,
       "confidence": 0.75,
-      "flags": ["SERIOUS_INJURY"],
+      "flags": [
+        "SERIOUS_INJURY"
+      ],
       "patterns": [
         "(?:i am|i['’]m|she is|he is|they are) (?:badly |still )?(?:bleeding|injured|hurt badly)",
         "(?:broken|fractured) (?:arm|leg|bone|hand|ribs?)",
@@ -123,11 +168,15 @@
       "dimension": "INTIMIDATION",
       "score": 0.9,
       "confidence": 0.8,
-      "flags": ["THREAT_TO_LIFE"],
+      "flags": [
+        "THREAT_TO_LIFE"
+      ],
       "patterns": [
         "(?:threaten(?:ed|ing|s)?|said (?:they|he) (?:will|would)|will) (?:to )?kill (?:me|us|my (?:family|son|daughter|husband|wife|father|mother|children|brother|sister))",
         "kill (?:me|us|my family) if",
-        "threats? to (?:my|our) li(?:fe|ves)"
+        "threats? to (?:my|our) li(?:fe|ves)",
+        "(?:will not|won['’]t|would not|wouldn['’]t) (?:live long|survive|stay alive)",
+        "(?:you|he|she|they|we|i) will be killed"
       ]
     },
     {
@@ -136,7 +185,10 @@
       "dimension": "INTIMIDATION",
       "score": 0.75,
       "confidence": 0.7,
-      "patterns": ["threat(?:en|ened|ening|ens|s)?", "(?:warned|warning) (?:me|us)"]
+      "patterns": [
+        "threat(?:en|ened|ening|ens|s)?",
+        "(?:warned|warning) (?:me|us)"
+      ]
     },
     {
       "id": "EN-PRESSURE-1",
@@ -144,7 +196,9 @@
       "dimension": "INTIMIDATION",
       "score": 0.85,
       "confidence": 0.8,
-      "flags": ["PRESSURE_TO_WITHDRAW"],
+      "flags": [
+        "PRESSURE_TO_WITHDRAW"
+      ],
       "patterns": [
         "withdraw (?:the|my|our) (?:case|complaint|fir)",
         "take back (?:the|my|our) (?:case|complaint|fir)",
@@ -159,7 +213,10 @@
       "dimension": "SOCIAL_ISOLATION",
       "score": 0.8,
       "confidence": 0.75,
-      "patterns": ["(?:social(?:ly)? )?boycott(?:ed)?", "not allowed to (?:take|use|draw|fetch) water"]
+      "patterns": [
+        "(?:social(?:ly)? )?boycott(?:ed)?",
+        "not allowed to (?:take|use|draw|fetch) water"
+      ]
     },
     {
       "id": "EN-ISOLATION-DISPLACED-1",
@@ -167,8 +224,12 @@
       "dimension": "SOCIAL_ISOLATION",
       "score": 0.85,
       "confidence": 0.75,
-      "flags": ["DISPLACED"],
-      "patterns": ["(?:thrown|forced|driven|chased) out of (?:the |our |my )?(?:village|house|home|community)"]
+      "flags": [
+        "DISPLACED"
+      ],
+      "patterns": [
+        "(?:thrown|forced|driven|chased) out of (?:the |our |my )?(?:village|house|home|community)"
+      ]
     },
     {
       "id": "EN-ISOLATION-ALONE-1",
@@ -196,19 +257,25 @@
       "id": "EN-FACT-RIGHTS-1",
       "label": "Unsure of rights or what to do",
       "fact": "RIGHTS_CONFUSION",
-      "patterns": ["do(?:n['’]?t| not) know (?:my rights|what to do|where to go|who to ask)"]
+      "patterns": [
+        "do(?:n['’]?t| not) know (?:my rights|what to do|where to go|who to ask)"
+      ]
     },
     {
       "id": "EN-FACT-LONG-CASE-1",
       "label": "Long-running case",
       "fact": "LONG_RUNNING_CASE",
-      "patterns": ["case (?:has been|is) (?:going on|pending|running|dragging) for (?:years|\\d+ years|many (?:months|years))"]
+      "patterns": [
+        "case (?:has been|is) (?:going on|pending|running|dragging) for (?:years|\\d+ years|many (?:months|years))"
+      ]
     },
     {
       "id": "EN-FACT-WITNESS-1",
       "label": "Witness under threat",
       "fact": "WITNESS_UNDER_THREAT",
-      "patterns": ["witness(?:es)? (?:is|are|was|were|being) (?:threatened|beaten|pressured|scared)"]
+      "patterns": [
+        "witness(?:es)? (?:is|are|was|were|being) (?:threatened|beaten|pressured|scared)"
+      ]
     }
   ]
 }
