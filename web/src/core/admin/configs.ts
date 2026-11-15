@@ -50,7 +50,11 @@ export async function loadConfig(id: string): Promise<ScoringConfigShape> {
   return checked.config;
 }
 
-export async function activateConfig(userId: string, id: string): Promise<{ version: number; rescored: number }> {
+/**
+ * Switches the active version. Returns at once with how many live interactions will be re-scored;
+ * the caller runs `rescore()` after the response (it can take a while with many live sessions).
+ */
+export async function activateConfig(userId: string, id: string): Promise<{ version: number; rescoring: number; rescore: () => Promise<number> }> {
   const config = await loadConfig(id);
   const session = await mongoose.startSession();
   try {
@@ -63,15 +67,17 @@ export async function activateConfig(userId: string, id: string): Promise<{ vers
     await session.endSession();
   }
   clearConfigCache();
-  const rescored = await rescoreActive(config, userId);
-  return { version: config.version, rescored };
+  const rescoring = Math.min(RESCORE_LIMIT, await Interaction.countDocuments({ status: "ACTIVE" }));
+  return { version: config.version, rescoring, rescore: () => rescoreActive(config, id, userId) };
 }
 
 /** CONFIG_RESCORE for live interactions, one transaction each; events after each commit. */
-async function rescoreActive(config: ScoringConfigShape, userId: string): Promise<number> {
+async function rescoreActive(config: ScoringConfigShape, configId: string, userId: string): Promise<number> {
   const live = await Interaction.find({ status: "ACTIVE" }).select("_id caseId").sort({ startedAt: -1 }).limit(RESCORE_LIMIT).lean();
   let n = 0;
   for (const l of live) {
+    // Another version was activated meanwhile: that activation re-scores; stop here.
+    if (!(await ScoringConfig.exists({ _id: configId, isActive: true }))) break;
     const session = await mongoose.startSession();
     let events: OutboundEvent[] = [];
     try {

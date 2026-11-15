@@ -169,8 +169,8 @@ export function AdminConsole({ districts }: { districts: { id: string; name: str
 
   async function activate(c: ConfigRow) {
     if (!confirm(`Activate version ${c.version}? Live interactions are re-scored with it. Human band locks stay.`)) return;
-    const r = await call<{ version: number; rescored: number }>("POST", `/api/v1/staff/admin/scoring-configs/${c.id}/activate`);
-    say(r.ok, r.data, `Version ${r.data.version} is active; ${r.data.rescored} live interaction(s) re-scored.`);
+    const r = await call<{ version: number; rescoring: number }>("POST", `/api/v1/staff/admin/scoring-configs/${c.id}/activate`);
+    say(r.ok, r.data, `Version ${r.data.version} is active; ${r.data.rescoring} live interaction(s) are being re-scored.`);
     void load();
   }
 
