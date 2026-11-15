@@ -1,7 +1,7 @@
 # System Architecture
 ## AI-Based Real-Time Stress and Trauma Assessment Module (SIH26093)
 
-> Companion documents: `REQUIREMENTS.md` (what), `DATABASE.md` + `models.ts` (data), `API_CONTRACTS.md` (interfaces).
+> Companion documents: `PRODUCT_VISION.md` (what the product is: a plug-in module), `REQUIREMENTS.md` (what), `DATABASE.md` + `models.ts` (data), `API_CONTRACTS.md` (interfaces).
 > Requirement IDs (FR-…, NFR-…, C-…) refer to `REQUIREMENTS.md`.
 
 ---
@@ -39,15 +39,16 @@
 ### Key decisions (ADR summary)
 | # | Decision | Alternatives considered | Why |
 |---|---|---|---|
-| ADR-1 | **Next.js (App Router) monolith** for the victim UI, staff dashboards and the public API | Separate React SPA + Express API | One codebase and one deploy; route handlers are enough for the API; server components keep sensitive data on the server. |
+| ADR-1 | **Next.js (App Router) monolith** for the integration API, the staff dashboards (reference consuming system) and, later, the demo input layer | Separate React SPA + Express API | One codebase and one deploy; route handlers are enough for the API; server components keep sensitive data on the server. |
 | ADR-2 | **Separate Python FastAPI "analysis service"** for STT, acoustics, emotion and NLP | Doing everything in Node | The audio/ML ecosystem (Praat/parselmouth, librosa, Whisper, Hugging Face) is Python-first. |
-| ADR-3 | **Victim conversation uses scripted, pre-translated prompts**, not free LLM chat | An LLM chatbot that talks to the victim | Safety and predictability: a generative bot could say something harmful to a traumatised person. LLMs are used only for *analysis*, never to talk to the victim. |
+| ADR-3 | **The module never talks to the person.** NHAA's chatbot or operator holds the conversation; the module only analyses it. Text it returns for the person (emergency options) and questions it suggests to operators are scripted and pre-translated | An LLM chatbot that talks to the victim; a built-in questionnaire | Safety and predictability: a generative bot could say something harmful to a traumatised person. LLMs are used only for *analysis*. |
 | ADR-4 | **The AI outputs indicators; deterministic rules output SVI, bands and recommendations** | End-to-end model predicting the band | Explainability, auditability, tunable thresholds, and it works even when the model is down. |
 | ADR-5 | **MongoDB (Atlas, replica set) + Mongoose** | PostgreSQL + Prisma | Team choice and familiarity; flexible documents suit variable AI outputs (indicators, voice features); TTL indexes give automatic retention; Atlas free tier is a replica set, so multi-document transactions work. Relations are handled by embedding bounded data and referencing unbounded data (see `DATABASE.md`). |
 | ADR-6 | **Pusher Channels for real-time** (SSE fallback locally) | Self-hosted WebSocket server | Vercel serverless functions cannot hold long-lived sockets; Pusher's private channels give per-role authorisation. |
 | ADR-7 | **DB-backed `jobs` collection, run inside normal requests** (no separate worker) for escalations, retention purges and follow-ups | Separate worker process; Redis/BullMQ | Free hosting has no always-on background workers (see `TOOLS_AND_COSTS.md`). Staff dashboards already poll every 10 s, which is often enough for a 2-minute escalation timer. |
 | ADR-9 | **Free-tier AI stack**: Groq (LLM + Whisper), self-hosted IndicConformer for regional speech, analysis service on a team laptop behind a Cloudflare Quick Tunnel | Paid APIs; cloud GPU hosting | Coursework budget is ₹0; every choice was verified free on 14 Nov 2026 (`TOOLS_AND_COSTS.md`). The analysis-service interface stays the same, so production can move to government cloud without app changes. |
 | ADR-8 | **Application-level field encryption** (AES-256-GCM) for message text, summaries, notes and PII | Relying only on disk encryption | Protects data even from someone with database read access (backups, dumps, admins). |
+| ADR-10 | **A plug-in module with two inputs** (text messages, voice audio) behind one integration API; no victim website, no questionnaire, no structured answers (decided 16 Nov 2026, `PRODUCT_VISION.md` §5) | A victim portal with a scripted question flow and screeners | NHAA already has channels; a second front end for victims would duplicate them. Answers to questions asked by NHAA's chatbot or operator arrive as ordinary words. Trade-off: risk that is never put into words is not detected, and short answers need their question as context (FR-NLP-11). |
 
 ---
 
@@ -55,7 +56,7 @@
 
 ```mermaid
 flowchart LR
-    V["Victim / complainant<br/>(phone or browser)"]
+    V["Victim / complainant"]
     OP["NHAA operator<br/>(14566 desk)"]
     CO["Counsellor /<br/>mental-health professional"]
     DO["District officer"]
@@ -63,20 +64,22 @@ flowchart LR
     WO["Welfare / rehabilitation officer"]
     SM["State admin /<br/>Ministry (DoSJE)"]
     SYS(("Assessment Module"))
-    NHAA["Existing NHAA systems<br/>(portal, docket DB, IVRS, app)"]
+    NHAA["NHAA systems<br/>(chatbot, helpline, IVRS,<br/>app / portal, operator desk)"]
+    DEMO["Demo input layer<br/>(detachable, Phase M)"]
     AI["External AI APIs<br/>(Groq LLM + Whisper)"]
     EM["Emergency services<br/>112 · Tele-MANAS 14416"]
 
-    V -- "chat / voice / IVRS / app" --> SYS
+    V -- "chat / call / app" --> NHAA
     OP -- "live call assist" --> SYS
     CO -- "review, approve, follow up" --> SYS
     DO -- "district actions" --> SYS
     PL -- "action requests only" --> SYS
     WO -- "referrals" --> SYS
     SM -- "anonymised analytics" --> SYS
-    NHAA <-- "REST API + docket no." --> SYS
+    NHAA <-- "integration API: text, audio,<br/>context, docket no." --> SYS
+    DEMO -. "same API, demo key" .-> SYS
     SYS -- "de-identified text / audio" --> AI
-    SYS -. "shows numbers / callback" .-> EM
+    NHAA -. "shows emergency options" .-> EM
 ```
 
 ---
@@ -85,15 +88,15 @@ flowchart LR
 
 ```mermaid
 flowchart TB
-    subgraph Client["Browsers"]
-        VU["Victim UI (PWA)<br/>chat · voice · IVRS sim · help"]
+    subgraph Client["Callers and browsers"]
+        VU["NHAA systems<br/>(API key) · demo input layer"]
         SU["Staff UI<br/>operator · counsellor · district ·<br/>police · welfare · analytics · admin"]
     end
 
     subgraph Web["Next.js app (Vercel)"]
         RH["Route handlers /api/v1/*"]
         SC["Server components<br/>(role-filtered pages)"]
-        CORE["Core modules<br/>conversation · lexicon · scoring ·<br/>recommendations · privacy · audit"]
+        CORE["Core modules<br/>interactions · lexicon · scoring ·<br/>recommendations · privacy · audit"]
     end
 
     AS["Analysis service<br/>Python FastAPI (team laptop + tunnel)<br/>STT · acoustics · emotion · NLP"]
@@ -112,20 +115,20 @@ flowchart TB
     AS -- "redacted text only" --> EXT
     CORE -- publish --> PU
     PU -- "private channels" --> SU
-    PU -- "interaction channel" --> VU
+    RH -. "SSE stream" .-> VU
     CORE -. optional .-> OBJ
 ```
 
 | Container | Responsibility | Technology | Scales by |
 |---|---|---|---|
-| **Victim UI** | Consent, conversational intake, voice capture (5-second chunks), IVRS simulation, quick exit, emergency panel. No scores ever shown. | Next.js pages, `next-intl`, MediaRecorder API, PWA manifest + service worker | Static + CDN |
+| **Calling systems** | NHAA's chatbot, helpline, IVRS, app or operator desk: own the person's interface and consent, call the integration API, show the returned emergency options. Not part of this repository. A detachable **demo input layer** (Phase M) plays this role for presentations. | Any HTTP client with an API key | Outside the module |
 | **Staff UI** | Role-specific dashboards, live updates, approvals | Next.js server components + client islands, `pusher-js` | Static + CDN |
-| **API (route handlers)** | Victim session API, staff API, integration API (API keys) | Next.js route handlers, Zod validation | Serverless instances |
-| **Core modules** | Conversation flow, safety lexicon, scoring, recommendations, RBAC, privacy, audit | TypeScript libraries inside the Next app | With the API |
+| **API (route handlers)** | Integration API (API keys, the module's only input), staff API (Auth.js) | Next.js route handlers, Zod validation | Serverless instances |
+| **Core modules** | Interactions (start, consent, end), safety lexicon, scoring, recommendations, RBAC, privacy, audit | TypeScript libraries inside the Next app | With the API |
 | **Analysis service** (team laptop, exposed via Cloudflare Quick Tunnel for the demo) | STT, language ID, translation, acoustic features, speech emotion, text NLP (indicators + evidence), summaries | Python, FastAPI, Groq (LLM + Whisper), IndicConformer, Silero VAD, parselmouth, librosa, emotion2vec+; Silero VAD, Hugging Face, LLM API | Horizontal (stateless) |
 | **Job runner** (inside the web app) | Alert escalation timers, follow-up reminders, retention purges, re-scoring after config changes | `core/jobs/runDue()` called from dashboard polling and a protected internal route; no separate process | Atomic claim with `findOneAndUpdate` + `lockedUntil`, so concurrent requests never run a job twice |
 | **MongoDB** | All persistent data | MongoDB 8 (Atlas), Mongoose 9 | Managed (Atlas M0 for demo, M10+ for production) |
-| **Pusher** | Push events to staff dashboards and the victim's emergency panel | Pusher Channels (private/presence channels) | Managed |
+| **Pusher** | Push events to staff dashboards (calling systems use the integration SSE stream) | Pusher Channels (private/presence channels) | Managed |
 | **Object storage** | Encrypted audio, only with explicit consent | S3-compatible (Supabase Storage / R2) | Managed |
 
 ---
@@ -135,14 +138,13 @@ flowchart TB
 ```mermaid
 flowchart LR
     subgraph API["API layer (route handlers)"]
-        A1["victim/*"]
         A2["staff/*"]
         A3["integration/*"]
         MW["middleware: auth · RBAC ·<br/>rate limit · CSP"]
     end
 
     subgraph Core["Core (pure TS where possible)"]
-        CF["conversation<br/>(flow state machine,<br/>scripted i18n prompts)"]
+        CF["interactions<br/>(start, consent, end,<br/>emergency copy)"]
         CON["consent<br/>(mode resolution)"]
         LEX["safety-lexicon<br/>(per-language rules,<br/>negation handling)"]
         PRV["privacy<br/>(PII redaction, crypto)"]
@@ -158,8 +160,8 @@ flowchart LR
 
     DB[("Mongoose / MongoDB")]
 
-    A1 --> CF & CON
-    A1 & A2 & A3 --> MW
+    A3 --> CF & CON
+    A2 & A3 --> MW
     CF --> LEX --> SCO
     CF --> PRV --> ACL
     ACL --> SCO
@@ -173,12 +175,13 @@ flowchart LR
 
 | Component | Key responsibilities | Requirements |
 |---|---|---|
-| `conversation` | State machine: greeting → consent → safety check → context (optional) → open narrative → screeners (adaptive) → summary/close. Chooses the next scripted prompt in the victim's language; supports skip and pause; never asks for a retelling. | FR-CH-01/02/09/10, NFR-ETH-06 |
+| `interactions` | Starts an interaction with the caller's consent state, records consent changes and withdrawal, ends it, writes the case summary, and builds the emergency options in the interaction's language. No question flow: the module never decides what to ask. | FR-CH-01/02/07/10, FR-CON-*, FR-REC-06 |
+| `operator` | Suggests scripted, pre-translated questions for the operator to ask aloud (safety first, then what the evidence points at). Suggestions only; answers arrive as speech. | FR-DSH-01, ADR-3 |
 | `consent` | Turns consent choices into an `AssessmentMode` (SAFETY_ONLY / TEXT_ONLY / VOICE_ONLY / FULL); every analysis call checks the mode first. | FR-CON-* |
 | `safety-lexicon` | Per-language JSON rules (keywords, regexes, Hinglish spellings) for suicidal ideation, immediate danger and threats; negation window; runs in < 50 ms in-process. | FR-NLP-10, NFR-PERF-04, AC-NLP-06 |
 | `privacy` | `redact()` for phone numbers, Aadhaar-like numbers, emails, addresses and names (from context + NER hints from the analysis service); `encrypt()`/`decrypt()` AES-256-GCM with key versioning. | NFR-SEC-05, NFR-PRI-* |
 | `analysis-client` | Typed client for the analysis service; 2.5 s timeout for text, 4 s for audio; circuit breaker; on failure returns `{degraded: true}` so scoring runs in fallback mode. | NFR-REL-01/02 |
-| `scoring` | Pure functions `fuseDimensions()`, `computeSvi()`, `assignBand()`, `applyOverrides()`, `explain()`; input = indicators + screeners + context + config; output = immutable `Assessment`. | FR-IND-03, FR-SVI-*, FR-RISK-* |
+| `scoring` | Pure functions `fuseDimensions()`, `computeSvi()`, `assignBand()`, `applyOverrides()`, `explain()`; input = indicators (text NLP, lexicon, voice) + context + config; output = immutable `Assessment`. | FR-IND-03, FR-SVI-*, FR-RISK-* |
 | `recommendations` | Evaluates the rule table (Appendix C) against the latest assessment; creates / supersedes `Recommendation` documents; auto-triggers EMERGENCY_SUPPORT for Critical. | FR-REC-* |
 | `case` | Computes queue rank (`bandRank`, `currentSvi`, `waitingSince`); auto-assigns a counsellor by language + district + workload. | FR-CASE-* |
 | `alerts` | Creates alerts on band rises; schedules `alert.escalate` jobs; handles acknowledgement. | FR-ALR-* |
@@ -189,12 +192,12 @@ flowchart LR
 
 ## 5. The assessment pipeline
 
-Every new signal (a text message, a 5-second voice window, a screener answer, a context update or a human review) runs through the same pipeline:
+Every new signal (a message from the person, a 5-second voice window, a case-context update or a human review) runs through the same pipeline. Messages from NHAA's chatbot or operator (`sender: OPERATOR`) are stored as context only and never scored (FR-CH-02). Audio that holds both voices is scored as limited confidence until speaker separation exists (FR-VOI-10).
 
 ```mermaid
 flowchart LR
     S["New signal"] --> C{"Consent mode<br/>allows it?"}
-    C -- no --> SK["Store only what's needed<br/>(safety check still runs)"]
+    C -- no --> SK["Store only what's needed<br/>(safety lexicon still runs)"]
     C -- yes --> L["① Safety lexicon<br/>(in-process, < 50 ms)"]
     L --> R["② Redact PII"]
     R --> AN["③ Analysis service<br/>text and/or audio"]
@@ -223,18 +226,18 @@ flowchart LR
 | Recommendations, alert, publish | 200 ms |
 | **Total** | **≈ 2.7 s** |
 
-If the analysis service times out, steps ⑥–⑬ still run using lexicon + screener + context signals only, and the assessment is marked `limitedConfidence = true`. A `rescore` job retries the analysis later and creates a new snapshot.
+If the analysis service times out, steps ⑥–⑬ still run using lexicon + context signals only, and the assessment is marked `limitedConfidence = true`. A `rescore` job retries the analysis later and creates a new snapshot.
 
 ---
 
 ## 6. Key flows (sequence diagrams)
 
-### 6.1 Text message from victim (portal / chatbot)
+### 6.1 Text message (NHAA chatbot)
 ```mermaid
 sequenceDiagram
     autonumber
-    participant V as Victim UI
-    participant API as /api/v1/victim
+    participant V as NHAA chatbot (API key)
+    participant API as /api/v1/integration
     participant LEX as Safety lexicon
     participant AS as Analysis service
     participant SC as Scoring engine
@@ -243,27 +246,27 @@ sequenceDiagram
     participant ST as Staff UI
 
     V->>API: POST /interactions/{id}/messages (Idempotency-Key)
-    API->>DB: verify session + consent mode, store Message (encrypted)
+    API->>DB: verify API key, ownership + consent mode, store Message (encrypted)
     API->>LEX: scan(text, lang)
     LEX-->>API: lexicon indicators (e.g. SUICIDAL_IDEATION 0.9)
     API->>AS: POST /v1/analyze/text (redacted text, context)
     AS-->>API: language, translation, emotions, indicators + evidence spans
-    API->>SC: score(indicators, screeners, context, config)
+    API->>SC: score(indicators, context, config)
     SC-->>API: Assessment (SVI, band, overrides, explanation)
     API->>DB: tx: indicators, assessment, case rank, recommendations, alert?, audit
     API->>PU: assessment.updated → private-interaction-{id}, private-queue-{district}
     API->>PU: alert.created → private-oncall (if Critical)
     PU-->>ST: live update
-    API-->>V: { reply (next scripted prompt), showEmergencyPanel }
+    API-->>V: { messageId, showEmergencyPanel, emergency }
 ```
-The victim response **never contains SVI, band or indicator names** (NFR-ETH-02). It only says whether to show the emergency panel.
+The `/messages` response carries no SVI, band or indicator names: only whether to show emergency options, and their text in the interaction's language, for the chatbot to show the person (NFR-ETH-02). Authorised callers read the assessment separately (`GET …/assessment`, scope `assessments:read`). A chatbot question such as "Are you safe right now?" is sent as `sender: OPERATOR`; it is stored as context for the next reply (FR-NLP-11) and not scored.
 
-### 6.2 Voice: browser "call" with operator assist
+### 6.2 Voice: helpline call with operator assist
 ```mermaid
 sequenceDiagram
     autonumber
-    participant V as Victim UI (mic)
-    participant API as /api/v1/victim
+    participant V as Helpline system or demo microphone
+    participant API as /api/v1/integration
     participant AS as Analysis service
     participant SC as Scoring engine
     participant PU as Pusher
@@ -282,7 +285,7 @@ sequenceDiagram
         PU-->>OP: live transcript, SVI gauge, indicators, suggested question
     end
 ```
-Budget per window: ≤ 5 s after the window ends (NFR-PERF-02). The first 20–30 s set the speaker's baseline (`Interaction.voiceBaseline`), and later windows are compared to it (FR-VOI-03).
+Budget per window: ≤ 5 s after the window ends (NFR-PERF-02). The first 20–30 s set the speaker's baseline (`Interaction.voiceBaseline`), and later windows are compared to it (FR-VOI-03). The caller's channel should be sent on its own (call centres usually record agent and caller separately). Two-voice audio needs speaker separation (FR-VOI-10, Phase M); until it exists, its assessments are marked limited confidence.
 
 ### 6.3 Critical: alert, emergency panel, escalation
 ```mermaid
@@ -291,15 +294,15 @@ sequenceDiagram
     participant API as API
     participant DB as MongoDB
     participant PU as Pusher
-    participant V as Victim UI
+    participant V as Calling system
     participant CO as On-duty counsellors
     participant JR as Job runner (inside API requests)
     participant SV as Supervisor / District
 
     API->>DB: band → CRITICAL (override OV-1), cases.overrideLockedBand = CRITICAL
     API->>DB: Recommendation EMERGENCY_SUPPORT (AUTO_TRIGGERED), Alert(OPEN), Job(alert.escalate, +120 s)
-    API->>PU: emergency.show → private-interaction-{id}
-    PU-->>V: show 112 · Tele-MANAS 14416 · "Call me back now"
+    API-->>V: showEmergencyPanel + emergency (response, and `emergency.show` on the SSE stream)
+    Note over V: shows 112 · Tele-MANAS 14416 · NHAA 14566
     API->>PU: alert.created → private-oncall
     PU-->>CO: banner + sound
     alt acknowledged within 120 s
@@ -332,7 +335,7 @@ sequenceDiagram
 ```
 
 ### 6.5 Consent withdrawal mid-session
-1. `POST /interactions/{id}/consent/withdraw` → a `WITHDRAWN` entry is pushed to `interactions.consents`; `interactions.mode = SAFETY_ONLY`.
+1. The calling system sends `POST /api/v1/integration/interactions/{id}/consent/withdraw` → a `WITHDRAWN` entry is pushed to `interactions.consents`; `interactions.mode = SAFETY_ONLY`.
 2. Any in-flight analysis results that arrive after this are discarded (checked against the mode at write time).
 3. `stored_audio` documents are deleted and objects removed; a `retention.purge` job double-checks.
 4. The complaint itself (docket and context) stays, so redressal continues (FR-CON-03/04).
@@ -392,8 +395,7 @@ Pure TypeScript in `src/core/scoring/`, with no I/O, so it is unit-testable (NFR
 type DimensionScore = { score: number; confidence: number; bySource: Partial<Record<SignalSource, number>> };
 
 function fuseDimensions(input: {
-  indicators: IndicatorInput[];        // active, non-negated, reviewed values take priority
-  screeners: ScreenerScoreInput[];     // mapped to dimensions (PHQ-2 → DEPRESSION, …)
+  indicators: IndicatorInput[];        // text NLP, lexicon, voice; reviewed values take priority
   context: CaseContextInput | null;    // → EXTREME_VULNERABILITY, INTIMIDATION, …
   config: ScoringConfig;
 }): Record<Dimension, DimensionScore>;
@@ -424,14 +426,14 @@ function explain(result: AssessmentDraft, lang: "en" | "hi"): string; // FR-RISK
 ```mermaid
 flowchart LR
     subgraph Public
-        V["Victim browser"]
+        V["Calling system<br/>(API key)"]
     end
     subgraph Edge["Edge / middleware"]
         TLS["TLS · HSTS · CSP"]
         RL["Rate limit<br/>(per IP / session / API key)"]
     end
     subgraph App["Next.js server"]
-        AUTH["AuthN<br/>staff: Auth.js + TOTP<br/>victim: session token<br/>integration: API key"]
+        AUTH["AuthN<br/>staff: Auth.js + TOTP<br/>integration: API key"]
         RBAC["AuthZ policies<br/>role + district scope"]
         SER["Role serialisers<br/>(field filtering)"]
         RED["PII redaction"]
@@ -453,7 +455,6 @@ flowchart LR
 
 | Concern | Design | Requirement |
 |---|---|---|
-| Victim authentication | No login. `POST /interactions` returns a random 256-bit session token in an `HttpOnly; Secure; SameSite=Strict` cookie (and a header for IVRS/API); only its SHA-256 hash is stored; expires after 2 h of inactivity. Quick exit clears it. | FR-CH-09 |
 | Staff authentication | Auth.js v5 credentials + TOTP (mandatory for supervisor/admin roles), 15-minute idle timeout, rotating JWT session. | NFR-SEC-02/03 |
 | Integration authentication | `Authorization: ApiKey <prefix>.<secret>`; hash stored; scopes; per-key rate limit. | FR-API-02 |
 | Authorisation | `can(user, action, resource)` policy table (see `API_CONTRACTS.md` §4), always applied server-side, plus district scoping for district/police/welfare roles. | NFR-PRI-02 |
@@ -474,13 +475,13 @@ flowchart LR
 ### 10.1 Real-time channels (Pusher)
 | Channel | Who can subscribe | Events |
 |---|---|---|
-| `private-interaction-{id}` | Assigned operator/counsellor, supervisors; the victim session (emergency events only) | `transcript.appended`, `assessment.updated`, `emergency.show` |
+| `private-interaction-{id}` | Assigned operator/counsellor, supervisors | `transcript.appended`, `assessment.updated`, `emergency.show` |
 | `private-queue-{districtId}` / `private-queue-national` | Counsellors, operators, supervisors in scope | `case.updated`, `case.created` |
 | `private-oncall` | On-duty counsellors | `alert.created`, `alert.acknowledged` |
 | `private-supervisors` | NHAA supervisors | `alert.escalated` |
 | `private-role-{ROLE}-{districtId}` | District officer, police liaison, welfare officer | `referral.created`, `referral.updated` |
 
-Channel authorisation goes through `POST /api/v1/realtime/auth`, which applies the same policies as the REST API. Payloads carry IDs plus role-safe summaries; clients fetch details over REST.
+Channel authorisation goes through `POST /api/v1/realtime/auth`, which applies the same policies as the REST API. Payloads carry IDs plus role-safe summaries; clients fetch details over REST. Calling systems get live updates from `GET /api/v1/integration/interactions/{id}/stream` (SSE, scope `stream:read`).
 
 ### 10.2 Jobs
 Jobs live in the `jobs` collection. There is no separate worker process: `core/jobs/runDue()` atomically claims and runs up to 5 due jobs, and is called (a) at the end of `GET /staff/alerts`, which every open staff dashboard polls every 10 s, and (b) from `POST /api/v1/internal/jobs/run` (protected by a secret) for manual or scripted runs. For local development `npm run jobs` calls the same function in a loop.
@@ -496,11 +497,11 @@ Jobs live in the `jobs` collection. There is no separate worker process: `core/j
 ### 10.3 Failure modes
 | Failure | Behaviour |
 |---|---|
-| Analysis service down or slow | Lexicon + screener + context scoring; `limitedConfidence`; `rescore` job; UI shows "Limited AI analysis" badge (NFR-REL-01) |
-| Microphone denied / audio fails | Switch to text mode with no data loss (NFR-REL-02) |
+| Analysis service down or slow | Lexicon + context scoring; `limitedConfidence`; `rescore` job; UI shows "Limited AI analysis" badge (NFR-REL-01) |
+| Audio analysis fails | The window is skipped and marked; text already received keeps its scores (NFR-REL-02) |
 | Pusher down | Staff UI polls `GET /alerts?status=OPEN` and the queue every 10 s |
 | DB write fails mid-pipeline | Single multi-document transaction (`session.withTransaction`): nothing partial is saved; the client retries with the same `Idempotency-Key` |
-| Victim on a slow network | Small JSON responses; text-first UI; audio chunks retried with exponential back-off |
+| Calling system on a slow network | Small JSON responses; `Idempotency-Key` on messages so retries are safe |
 
 ---
 
@@ -540,13 +541,13 @@ flowchart LR
 | Layer | Choice |
 |---|---|
 | Framework | **Next.js 16** (App Router), React, **TypeScript** (strict) |
-| UI | Tailwind CSS + shadcn/ui; Recharts for dashboards; `next-intl` for i18n (en, hi, mr, ta, bn) |
+| UI | Tailwind CSS + shadcn/ui; Recharts for dashboards; translated emergency options and operator questions in `messages/*.json` (en, hi, mr, ta, bn) |
 | Validation and contracts | **Zod** schemas shared by routes and client; OpenAPI generated from Zod (`zod-to-openapi`) |
 | Database | **MongoDB 8** (Atlas) + **Mongoose 9** (schemas, validation, indexes); Zod at the API boundary |
-| Auth | Auth.js v5 (credentials + TOTP via `otplib`) for staff; custom session tokens for victims; API keys for integrations |
+| Auth | Auth.js v5 (credentials + TOTP via `otplib`) for staff; API keys for integrations |
 | Real-time | Pusher Channels (`pusher` server, `pusher-js` client); SSE fallback for local dev |
 | Rate limiting | MongoDB-backed fixed-window counters (Upstash free tier optional) |
-| Audio capture | MediaRecorder (opus/webm, 5 s timeslice) |
+| Audio capture (demo input layer) | MediaRecorder (opus/webm, 5 s timeslice); recorder logic kept in `components/audio/` for the demo |
 | Analysis service | Python 3.12, FastAPI, Pydantic, `groq` SDK, silero-vad, praat-parselmouth, librosa, funasr (emotion2vec+), transformers (IndicConformer) |
 | Testing | Vitest (unit, scoring), Playwright (E2E per role), pytest (analysis), k6 (latency checks) |
 | Quality | ESLint, Prettier, Ruff, GitHub Actions CI |
@@ -563,11 +564,10 @@ flowchart LR
 │   ├── scripts/
 │   │   ├── seed.ts                     # demo users per role + synthetic cases
 │   │   └── sync-indexes.ts             # Model.syncIndexes() for every model (run on deploy)
-│   ├── messages/                       # i18n: en.json hi.json mr.json ta.json bn.json
+│   ├── messages/                       # emergency options + operator questions: en hi mr ta bn
 │   ├── src/
 │   │   ├── app/
-│   │   │   ├── page.tsx                # public home page (FRONTEND_UX_PRODUCT_BRIEF.md §2)
-│   │   │   ├── portal/[locale]/        # victim intake: start, consent, chat, voice, ivrs
+│   │   │   ├── page.tsx                # redirects to /login (no victim website)
 │   │   │   ├── (staff)/
 │   │   │   │   ├── operator/           # live call console
 │   │   │   │   ├── counsellor/         # queue, case/[id]
@@ -577,12 +577,12 @@ flowchart LR
 │   │   │   │   ├── analytics/          # state + ministry
 │   │   │   │   └── admin/              # users, scoring configs, audit
 │   │   │   └── api/v1/
-│   │   │       ├── victim/…            # session-token API
+│   │   │       ├── integration/…       # API-key API: the module's only input
 │   │   │       ├── staff/…             # Auth.js session API
-│   │   │       ├── integration/…       # API-key API
 │   │   │       └── realtime/auth/
 │   │   ├── core/
-│   │   │   ├── conversation/           # flow.ts, prompts.ts
+│   │   │   ├── interactions/           # start, consent, end, emergency copy, summary
+│   │   │   ├── operator/               # suggested questions for the operator
 │   │   │   ├── consent/
 │   │   │   ├── safety-lexicon/         # engine.ts + rules/{en,hi,hinglish,mr,ta,bn}.json
 │   │   │   ├── scoring/                # fuse.ts svi.ts bands.ts overrides.ts explain.ts
@@ -591,6 +591,7 @@ flowchart LR
 │   │   │   ├── privacy/                # redact.ts crypto.ts
 │   │   │   ├── policies/               # rbac.ts serializers.ts
 │   │   │   └── analysis-client/
+│   │   ├── components/                 # staff/, ui/, audio/ (live recorder kept for the demo)
 │   │   ├── contracts/                  # Zod schemas = API contracts
 │   │   ├── lib/                        # db.ts (cached Mongoose connection), realtime.ts, ratelimit.ts
 │   │   └── models/                     # Mongoose models (one file per collection)
@@ -614,20 +615,19 @@ flowchart LR
 
 | Requirement group | Where it lives |
 |---|---|
-| FR-CH (channels) | Victim UI routes, operator console, IVRS simulation page, `conversation` |
-| FR-CON (consent) | `consent` module, `interactions.consents[]`, consent endpoints |
-| FR-VOI (voice) | MediaRecorder client, `/v1/analyze/audio`, `voice_windows` |
+| FR-CH (inputs) | `/api/v1/integration/*` (text, audio, context), `messages.sender`, operator console |
+| FR-CON (consent) | `consent` module, `interactions.consents[]`, consent state on integration start, integration withdraw endpoint |
+| FR-VOI (voice) | `/api/v1/integration/…/audio`, `/v1/analyze/audio`, `voice_windows`; speaker separation planned (Phase M) |
 | FR-NLP, FR-EMO | `safety-lexicon`, `/v1/analyze/text`, `indicators`, guardrail validation |
-| FR-SCR | `conversation` (screener steps), `interactions.screenerResponses` / `screenerScores` |
 | FR-IND, FR-SVI, FR-RISK | `scoring`, `indicators`, `assessments`, `scoring_configs`, `cases.bandOverrides` |
 | FR-REC | `recommendations` module, `recommendations` + `referrals` collections |
-| FR-LANG | `next-intl` messages, lexicon rules per language, LID/MT in the analysis service |
+| FR-LANG | `messages/*.json` (emergency options, operator questions), lexicon rules per language, LID/MT in the analysis service |
 | FR-CASE, FR-ALR, FR-DSH | `cases`, `alerts`, staff pages, Pusher channels, in-request job runner |
 | FR-API | `/api/v1/integration/*`, `api_clients` |
 | FR-AUD | `audit` module, `audit_logs` |
 | NFR-PRI, NFR-SEC | §9 |
-| NFR-ETH | ADR-3, ADR-4, §8 rules, victim response contract |
+| NFR-ETH | ADR-3, ADR-4, ADR-10, §8 rules, integration `/messages` response contract |
 | NFR-PERF | §5 latency budget, §6.2 window budget |
 | NFR-REL | §10.3 |
 | NFR-MNT | ADR-2, ADR-4, repository structure, tests |
-| NFR-ACC | Victim UI: WCAG 2.1 AA components (shadcn/Radix), audio for every scripted prompt (`Prompt.audioUrl`), voice input, icon-first layout, text-first pages under ~150 KB so they work on low-end phones over 3G; checked with Lighthouse/axe in CI |
+| NFR-ACC | Staff UI and (later) demo pages: WCAG 2.1 AA components (shadcn/Radix), checked with axe in the e2e suite. Victim-facing screens belong to the calling system. |

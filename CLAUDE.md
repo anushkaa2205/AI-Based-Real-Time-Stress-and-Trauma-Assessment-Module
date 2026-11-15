@@ -4,14 +4,17 @@ Read this file first in every session. It is the short version of the rules; the
 
 ## What this project is
 
-An **AI-based real-time stress and trauma assessment module** for victims and complainants contacting the National Helpline Against Atrocities (NHAA 14566) and its portal. Problem statement: Smart India Hackathon 2026, **SIH26093**, Ministry of Social Justice and Empowerment. Built as a Next.js coursework project. Project name: TBD.
+An **AI-based real-time stress and trauma assessment module** for victims and complainants contacting the National Helpline Against Atrocities (NHAA 14566). Problem statement: Smart India Hackathon 2026, **SIH26093**, Ministry of Social Justice and Empowerment. Built as a Next.js coursework project. Project name: TBD.
 
-The module listens to a victim's text and voice at first contact, detects warning signs, calculates a **Stress Vulnerability Index (SVI, 0–100)**, assigns a risk band (Low / Moderate / High / Critical), recommends support, and puts the highest-risk people in front of a human responder first.
+It is a **channel-independent, plug-in module** (`docs/PRODUCT_VISION.md`). NHAA's own systems (chatbot, helpline, IVRS, mobile app, portal, operator desk) hold the conversation with the person, obtain consent, and call the module through the **integration API** (`/api/v1/integration/*`), its only input. The module accepts exactly two inputs: **text messages and voice audio**. It never asks the person questions: there is no questionnaire, no structured answers and no key presses. Questions asked by NHAA's chatbot or operator arrive as `OPERATOR` turns or as speech; case details from NHAA's record arrive as metadata (`/context`).
+
+From what the person says or writes, the module detects warning signs, calculates a **Stress Vulnerability Index (SVI, 0–100)**, assigns a risk band (Low / Moderate / High / Critical), recommends support, and puts the highest-risk people in front of a human responder first. The staff dashboards are kept as the reference consuming system. A detachable demo input layer (Phase M) will present the module through the same API; there is no victim website.
 
 ## Documents (source of truth)
 
 | File | Use it for |
 |---|---|
+| `docs/PRODUCT_VISION.md` | What the product is (a plug-in module, two inputs, no questionnaire). Wins over older documents on scope. |
 | `docs/REQUIREMENTS.md` | What to build. Requirement IDs (`FR-…`, `NFR-…`, `C-…`) and acceptance criteria (`AC-…`). SVI formula, safety overrides and recommendation rules are in its appendices. |
 | `docs/ARCHITECTURE.md` | How the parts fit: components, pipeline, flows, security, folder structure. |
 | `docs/DATABASE.md` + `docs/models.ts` | MongoDB collections, indexes, transactions, retention. `models.ts` is the reference schema; split it into `web/src/models/`. |
@@ -42,7 +45,7 @@ These come from the requirements and are the reason the design looks the way it 
 
 - **Web:** Next.js 16 (App Router), React, TypeScript strict, Tailwind + shadcn/ui, `next-intl` (en, hi, mr, ta, bn), Zod
 - **Database:** MongoDB (Atlas, replica set) + Mongoose 9
-- **Auth:** Auth.js v5 for staff (credentials + TOTP); random session token for victims; API keys for integrations
+- **Auth:** Auth.js v5 for staff (credentials + TOTP); API keys for integrations (the module's only input)
 - **Real-time:** Pusher Channels Sandbox (SSE fallback locally)
 - **AI service:** Python 3.12 + FastAPI in `analysis-service/`, run on a team laptop (Cloudflare Quick Tunnel for the deployed demo)
 - **LLM:** Groq `openai/gpt-oss-120b` (use `gpt-oss-20b` while developing); Gemini Flash free tier only as overflow on HTTP 429
@@ -55,18 +58,19 @@ These come from the requirements and are the reason the design looks the way it 
 
 ```
 web/                 Next.js app
-  src/app/           pages and /api/v1 route handlers (victim, staff, integration)
-  src/core/          conversation, consent, safety-lexicon, scoring, recommendations,
+  src/app/           staff pages and /api/v1 route handlers (integration, staff); / redirects to /login
+  src/core/          interactions, consent, safety-lexicon, scoring, recommendations, operator,
                      cases, alerts, audit, privacy, policies, analysis-client, pipeline
+  src/components/    staff/, ui/, audio/ (live recorder kept for the demo input layer)
   src/models/        Mongoose models (one file per collection)
   src/contracts/     Zod schemas = the API contracts
   src/lib/           db.ts, realtime.ts, ratelimit.ts
-  messages/          i18n JSON per language
+  messages/          emergency options + operator questions, per language
   scripts/           seed.ts, sync-indexes.ts, jobs.ts (local job loop)
   tests/             unit/ and e2e/
 analysis-service/    Python FastAPI (text and audio analysis)
 evaluation/          synthetic scenarios + run_eval.ts
-docs/                the five documents above
+docs/                the documents above (FRONTEND_* and checklist.md are superseded)
 ```
 
 ## Commands

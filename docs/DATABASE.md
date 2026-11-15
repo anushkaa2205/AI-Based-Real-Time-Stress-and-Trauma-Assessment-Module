@@ -71,7 +71,7 @@ erDiagram
 |---|---|
 | Reference data | `states`, `districts` |
 | People and access | `users`, `api_clients`, `subjects`, `subject_identities` (PII DB) |
-| Case core | `cases`, `interactions` (embeds context, consents, screeners, latest-assessment head) |
+| Case core | `cases`, `interactions` (embeds context, consents, latest-assessment head) |
 | Raw signals | `messages`, `voice_windows`, `stored_audio` |
 | Derived signals | `indicators`, `assessments`, `scoring_configs` |
 | Response | `case_notes`, `recommendations`, `referrals`, `alerts`, `follow_ups` |
@@ -87,7 +87,6 @@ The rule: **embed** data that is small, bounded and always read with its parent;
 |---|---|---|
 | Case context (offence type, age group, threats…) | **Embedded** in `interactions.context` | One small object, always read with the interaction |
 | Consent entries | **Embedded array** in `interactions.consents` | A few entries per session; the latest is read on every request; append-only by convention |
-| Screener answers and scores | **Embedded arrays** in `interactions` | At most ~20 items; used together by the scoring engine |
 | Latest SVI and band | **Embedded head** `interactions.current` + denormalised on `cases` | Queue sorting and dashboards without joins |
 | Band overrides | **Embedded array** in `cases.bandOverrides` | Rare (a handful per case), always shown with the case |
 | Messages, voice windows | **Separate collections** | Unbounded per interaction; need TTL deletion |
@@ -125,31 +124,30 @@ Legend: **🔒** = encrypted field, **TTL** = auto-deleted by MongoDB, **U** = u
 |---|---|---|
 | `caseId`, `subjectId` | ObjectId | |
 | `channel` | enum | PORTAL, CHATBOT, VOICE_CALL, IVRS, MOBILE_APP, OPERATOR_ASSISTED, API |
-| `status` | enum | ACTIVE, ENDED, ABANDONED (quick exit / timeout) |
+| `status` | enum | ACTIVE, ENDED, ABANDONED (timeout) |
 | `mode` | enum | SAFETY_ONLY · TEXT_ONLY · VOICE_ONLY · FULL, derived from consent; default SAFETY_ONLY |
 | `uiLanguage`, `detectedLanguages[]` | string | BCP-47 codes |
 | `operatorId`, `apiClientId`, `districtId` | ObjectId | |
-| `sessionTokenHash` | string, partial **U**, not selected by default | SHA-256 of the victim session token |
-| `sessionExpiresAt` | Date | 2 h sliding expiry |
 | `messageSeq`, `assessmentSeq` | number | Counters, incremented with `$inc` to number child documents |
-| `flowState`, `voiceBaseline` | object | Conversation state; speaker baseline (FR-VOI-03) |
-| `context` | embedded | Optional vulnerability facts (FR-CH-08) |
+| `voiceBaseline` | object | Speaker baseline (FR-VOI-03) |
+| `context` | embedded | Optional case details from NHAA's record (FR-CH-08) |
 | `consents[]` | embedded | `{action, noticeVersion, language, textAnalysis, voiceAnalysis, shareWithCounsellor, followUpContact, audioRetention, guardianConsent, at}` |
-| `screenerResponses[]`, `screenerScores[]` | embedded | FR-SCR-02/04 |
 | `current` | embedded | `{assessmentId, svi, band, confidence, at}` |
 | `startedAt`, `endedAt`, `retentionUntil` | Date | |
 
-**Indexes:** `caseId` · `{status:1, startedAt:-1}` · `sessionTokenHash` (unique, partial on existing strings).
+**Indexes:** `caseId` · `{status:1, startedAt:-1}`.
+
+*Removed 16 Nov 2026 (`PRODUCT_VISION.md` §5): `sessionTokenHash`, `sessionExpiresAt`, `flowState`, `screenerResponses[]`, `screenerScores[]` (no victim session, no question flow, no screeners). `scripts/drop-screener-data.ts` removes them from existing synthetic documents; drop the old `sessionTokenHash_1` index with `npm run db:indexes`.*
 
 ### 4.3 `messages`
 | Field | Type | Notes |
 |---|---|---|
 | `interactionId`, `seq` | ObjectId, number | **U** together |
-| `sender` | enum | VICTIM, SYSTEM (scripted prompt), OPERATOR |
-| `modality` | enum | TEXT, VOICE_TRANSCRIPT, IVR_KEYPRESS |
+| `sender` | enum | VICTIM (the person; scored), OPERATOR (NHAA's chatbot or operator; stored as context, never scored), SYSTEM (legacy scripted prompts; no longer written) |
+| `modality` | enum | TEXT, VOICE_TRANSCRIPT (`IVR_KEYPRESS` removed 16 Nov 2026) |
 | `textEnc` 🔒 | string | Original text or transcript |
 | `translationEnc` 🔒 | string | EN/HI for responders (FR-LANG-06) |
-| `language`, `sttConfidence`, `promptKey` | | |
+| `language`, `sttConfidence` | | |
 | `idempotencyKey` | string | Partial **U** with `interactionId`, so retries over slow networks never duplicate |
 | `purgeAt` | Date **TTL** | Retention (NFR-PRI-04) |
 
@@ -164,9 +162,9 @@ Legend: **🔒** = encrypted field, **TTL** = auto-deleted by MongoDB, **U** = u
 |---|---|---|
 | `interactionId`, `caseId` | ObjectId | |
 | `dimension` | enum (8) | ACUTE_STRESS, SEVERE_TRAUMA, FEAR_ANXIETY, DEPRESSION, SUICIDAL_IDEATION, INTIMIDATION, SOCIAL_ISOLATION, EXTREME_VULNERABILITY |
-| `source` | enum | TEXT_NLP, SAFETY_LEXICON, VOICE, SCREENER, CONTEXT |
+| `source` | enum | TEXT_NLP, SAFETY_LEXICON, VOICE, CONTEXT (`SCREENER` removed in config v3) |
 | `score`, `confidence` | 0–1 | Validated range |
-| `evidence` | embedded | `{type, messageId, spanStart, spanEnd, quoteEnc 🔒, voiceWindowId, eventType, itemCode, contextField}` |
+| `evidence` | embedded | `{type, messageId, spanStart, spanEnd, quoteEnc 🔒, voiceWindowId, eventType, contextField}` |
 | `negated` | bool | Stored for audit, excluded from scoring (FR-NLP-08) |
 | `modelVersion` | string | |
 | `status` | enum | ACTIVE, CONFIRMED, REJECTED, ADJUSTED (FR-IND-05) |
@@ -178,7 +176,7 @@ Legend: **🔒** = encrypted field, **TTL** = auto-deleted by MongoDB, **U** = u
 | Field | Type | Notes |
 |---|---|---|
 | `interactionId`, `caseId`, `seq` | | `{interactionId, seq}` **U** |
-| `trigger` | enum | TEXT_MESSAGE, VOICE_WINDOW, SCREENER, CONTEXT_UPDATE, INDICATOR_REVIEW, CONFIG_RESCORE |
+| `trigger` | enum | TEXT_MESSAGE, VOICE_WINDOW, CONTEXT_UPDATE, INDICATOR_REVIEW, CONFIG_RESCORE |
 | `svi` | 0–100 | FR-SVI-01 |
 | `computedBand` / `band` | enum | Before / after safety overrides |
 | `overridesFired[]` | string | e.g. `["OV-1"]` |
@@ -264,11 +262,6 @@ Legend: **🔒** = encrypted field, **TTL** = auto-deleted by MongoDB, **U** = u
       "textAnalysis": true, "voiceAnalysis": true, "shareWithCounsellor": true,
       "followUpContact": true, "audioRetention": false, "at": "2026-11-14T11:28:55Z" }
   ],
-  "screenerResponses": [
-    { "instrument": "SAFETY_CHECK", "itemCode": "SAFETY_ACCUSED_NEARBY", "value": 1, "skipped": false },
-    { "instrument": "PHQ2", "itemCode": "PHQ2_1", "value": 3, "skipped": false }
-  ],
-  "screenerScores": [{ "instrument": "PHQ2", "total": 5, "maxTotal": 6, "isPositive": true, "itemsAnswered": 2 }],
   "current": { "assessmentId": "6735a1f0c2a4b1e0f0a1as07", "svi": 81, "band": "CRITICAL", "confidence": 0.78 }
 }
 ```
@@ -288,7 +281,7 @@ Legend: **🔒** = encrypted field, **TTL** = auto-deleted by MongoDB, **U** = u
   "dimensions": {
     "INTIMIDATION":          { "score": 0.95, "confidence": 0.9,  "bySource": { "TEXT_NLP": 0.95, "CONTEXT": 1.0 }, "contribution": 14.3 },
     "FEAR_ANXIETY":          { "score": 0.85, "confidence": 0.8,  "bySource": { "TEXT_NLP": 0.8, "VOICE": 0.7 },   "contribution": 10.2 },
-    "SUICIDAL_IDEATION":     { "score": 0.4,  "confidence": 0.7,  "bySource": { "SCREENER": 0.4 },               "contribution": 8.0 },
+    "SUICIDAL_IDEATION":     { "score": 0.4,  "confidence": 0.7,  "bySource": { "TEXT_NLP": 0.4 },               "contribution": 8.0 },
     "EXTREME_VULNERABILITY": { "score": 0.9,  "confidence": 0.95, "bySource": { "CONTEXT": 0.9 },                "contribution": 10.8 }
   },
   "confidence": 0.78,

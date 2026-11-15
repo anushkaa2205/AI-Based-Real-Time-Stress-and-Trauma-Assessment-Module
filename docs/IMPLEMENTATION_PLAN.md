@@ -1,7 +1,7 @@
 # Implementation Plan
 ## AI-Based Real-Time Stress and Trauma Assessment Module (SIH26093)
 
-> Companion documents: `REQUIREMENTS.md` (requirement and acceptance IDs), `ARCHITECTURE.md`, `DATABASE.md`, `models.ts`, `API_CONTRACTS.md`, `TOOLS_AND_COSTS.md` (free-tier limits), `FRONTEND_UX_PRODUCT_BRIEF.md` and `checklist.md` (victim-facing frontend, Phase F). Project rules: `/CLAUDE.md`.
+> Companion documents: `REQUIREMENTS.md` (requirement and acceptance IDs), `ARCHITECTURE.md`, `DATABASE.md`, `models.ts`, `API_CONTRACTS.md`, `TOOLS_AND_COSTS.md` (free-tier limits), `PRODUCT_VISION.md` (what the product is; Phase M). `FRONTEND_UX_PRODUCT_BRIEF.md`, `checklist.md` and `FRONTEND_AUDIT.md` are superseded. Project rules: `/CLAUDE.md`.
 
 ## Status
 
@@ -20,7 +20,8 @@ Update this table as work finishes.
 | 8. Languages, analytics, integration API, admin | M5 Feature complete | Done (8.1–8.7). AC-LANG-01, AC-DSH-02, AC-API-01/02 pass; AC-LANG-03 reported (rules-only, 2 scenarios per regional language). Open: native-speaker review (8.1), AC-LANG-02 language-detection rate needs an AI-mode evaluation run, AC-LANG-04 partly met (translation shown, evidence highlighted in the original only) |
 | 9. Evaluation, hardening, deployment, demo | M6 Demo-ready | In progress: 9.1–9.7 done (see docs/EVALUATION_REPORT.md; band accuracy 79% and text p95 3.43 s just miss targets); 9.8 needs volunteers; 9.9–9.11 deferred until the project is finished |
 | E. Evaluation set (runs alongside phases 2–9) | all | In progress: 62 draft scenarios (E.3 needs a second reviewer); E.4 voice recordings by the team not done |
-| F. Victim-facing frontend (homepage, unified input) | M6 Demo-ready | In progress: F.0 audit, F.1 simulator removal, audit fixes G1–G3 and F.2 homepage done (15 Nov 2026). Next: F.3. Open: native review of the new homepage text (`web/messages/TRANSLATION_REVIEW.md`); audit decisions Q1–Q3 before F.4 |
+| F. Victim-facing frontend (homepage, unified input) | – | **Stopped 16 Nov 2026** after F.2 (`PRODUCT_VISION.md`): the victim website is not part of the product. F.0–F.2 done; F.3–F.6 cancelled; the F.2 pages are removed in M.2 |
+| M. Module contract and demo input layer | M6 Demo-ready | In progress (16 Nov 2026): M.1–M.4 (docs, removal, scoring v3, evaluation) under way; M.5–M.14 not started |
 
 ---
 
@@ -66,7 +67,7 @@ Update this table as work finishes.
 | D5 | Three regional languages | Phase 8 | Marathi, Tamil, Bengali (as proposed in FR-LANG-01) |
 | D6 | ~~Local MongoDB~~ **Decided:** Atlas Free for development and demo (no Docker) | — | — |
 | D7 | ~~Hosting~~ **Decided:** web on Vercel Hobby; analysis service on a team laptop behind a Cloudflare Quick Tunnel; no separate worker (jobs run inside requests) | — | See `TOOLS_AND_COSTS.md` |
-| D8 | ~~Front door~~ **Decided (15 Nov 2026):** the public home page `/` is a calm victim-facing entry point; the victim intake pages live under `/portal/<locale>`. The NHAA simulator planned earlier is dropped (code, cases and spec removed) | — | See `FRONTEND_UX_PRODUCT_BRIEF.md`, `checklist.md` |
+| D8 | ~~Front door~~ **Decided (15 Nov 2026):** the public home page `/` is a calm victim-facing entry point; the victim intake pages live under `/portal/<locale>`. The NHAA simulator planned earlier is dropped (code, cases and spec removed) | — | See `FRONTEND_UX_PRODUCT_BRIEF.md`, `checklist.md` *Superseded 16 Nov 2026 by PRODUCT_VISION.md: no victim website; `/` redirects to `/login`.* |
 
 ---
 
@@ -123,7 +124,7 @@ Update this table as work finishes.
 **Effort:** 5–6 days. **Depends on:** Phase 0 (can run in parallel with Phase 1).
 
 - [x] **2.1 Types and config.** `src/core/scoring/types.ts`; `defaultConfig.ts` with the weights, thresholds, voice-only cap, override rules and recommendation rules from the appendices; a Zod schema that rejects weights not summing to 1 or thresholds out of order.
-- [x] **2.2 Screener scoring.** `src/core/screeners/`: item definitions and scoring for the safety check, PHQ-2, GAD-2, PC-PTSD-5 and the suicide-risk screen; mapping from screener results to dimensions. (FR-SCR-02, AC-SCR-02)
+- [x] **2.2 Screener scoring.** `src/core/screeners/`: item definitions and scoring for the safety check, PHQ-2, GAD-2, PC-PTSD-5 and the suicide-risk screen; mapping from screener results to dimensions. (FR-SCR-02, AC-SCR-02) *Removed 16 Nov 2026 in M.2/M.3: no screeners (PRODUCT_VISION.md §5).*
 - [x] **2.3 Context mapping.** `contextToIndicators()`: case context → EXTREME_VULNERABILITY, INTIMIDATION and others. (FR-IND-02)
 - [x] **2.4 Fusion.** `fuse.ts`: maximum within a source, confidence-weighted average across sources, reviewed indicators replace AI values, rejected and negated ones excluded, voice-only cap of 0.6. (FR-IND-03, FR-VOI-08)
 - [x] **2.5 SVI and bands.** `svi.ts`, `bands.ts`: 0–100 integer, per-dimension contributions that add up to the SVI (±1), overall confidence. (FR-SVI-01/03/04, FR-RISK-01)
@@ -160,9 +161,9 @@ Update this table as work finishes.
 - [x] **3.1 Contracts.** Zod schemas for every victim endpoint in `API_CONTRACTS.md` §3 (`src/contracts/victim.ts`).
 - [x] **3.2 Victim session.** `POST /victim/interactions`: creates subject, case (new docket or attach to an existing one) and interaction; sets the HttpOnly session cookie; stores only the token hash. Session middleware bound to one interaction. (FR-CH-07)
 - [x] **3.3 Consent.** `src/core/consent/`: choices → assessment mode. Endpoints `/consent`, `/consent/withdraw`, `/consent-notices/{version}`. Consent notice text and audio placeholder per language. (FR-CON-01…06)
-- [x] **3.4 Conversation engine.** `src/core/conversation/flow.ts`: state machine (greeting → consent → safety check → optional context → open narrative → adaptive screeners → close). Prompts are i18n keys; every question skippable; resume after reload via `GET /next`. (FR-CH-01/09/10)
+- [x] **3.4 Conversation engine.** `src/core/conversation/flow.ts`: state machine (greeting → consent → safety check → optional context → open narrative → adaptive screeners → close). Prompts are i18n keys; every question skippable; resume after reload via `GET /next`. (FR-CH-01/09/10) *Removed 16 Nov 2026 in M.2: the module has no question flow.*
 - [x] **3.5 Pipeline v1.** `src/core/pipeline/run.ts`: consent check → store message (encrypted) → lexicon → fuse → SVI → band → overrides → save assessment → update case → recommendations → alert record. One transaction; idempotency key honoured (`DATABASE.md` §6).
-- [x] **3.6 Remaining victim endpoints.** `/messages`, `/screeners`, `/context`, `/language`, `/callback-request`, `/end`.
+- [x] **3.6 Remaining victim endpoints.** `/messages`, `/screeners`, `/context`, `/language`, `/callback-request`, `/end`. *Removed 16 Nov 2026 in M.2: no victim API; the integration API is the only input.*
 - [x] **3.7 Victim UI.** `[locale]/(victim)`: start page with language choice, consent screen with separate toggles and audio, chat screen, emergency panel (112, Tele-MANAS 14416, NHAA 14566, "call me back"), quick-exit button on every screen, closing page with the docket number. Large touch targets, simple wording.
 - [x] **3.8 i18n.** `next-intl` with `messages/en.json` and `messages/hi.json`; script `check-i18n.ts` fails if any key is missing in any language. (AC-LANG-01 for the first two languages)
 - [x] **3.9 Tests.** Playwright: full Hindi flow; all consent declined still files the complaint and runs the safety check; withdrawing consent stops analysis; quick exit; a safety-check "yes" to suicidal thoughts shows the emergency panel. A response-shape test asserts that no victim response contains `svi`, `band` or `dimension`.
@@ -240,7 +241,7 @@ Update this table as work finishes.
 - [x] **7.5 Pipeline v3 and operator console.** `POST /victim/…/audio` → features stored in `voice_windows`, raw audio discarded → transcript through the text pipeline → voice indicators (capped) → fused emotion. Operator console: live transcript, SVI gauge, indicator chips with evidence, pause and pitch strip, suggested next questions, "type what the caller said" input. (FR-CH-04, FR-VOI-07/09, FR-EMO-02, FR-DSH-01)
 - [x] **7.6 Paralinguistic events.** Crying, sobbing, long silence after a question. **(S)** (FR-VOI-05) *Long silences done; crying/sobbing needs the optional YAMNet tagger and is not built.*
 - [x] **7.7 Emotion timeline.** Chart of text, voice and fused emotion across the session. **(S)** (FR-EMO-03)
-- [x] **7.8 IVRS simulation.** Keypad page with spoken prompts: language choice, safety check, PHQ-2 and GAD-2 by key press. **(S)** (FR-CH-05)
+- [x] **7.8 IVRS simulation.** Keypad page with spoken prompts: language choice, safety check, PHQ-2 and GAD-2 by key press. **(S)** (FR-CH-05) *Removed 16 Nov 2026 in M.2: no keypad input.*
 - [ ] **7.9 Audio retention.** Only with consent: encrypted object storage, deletion job. **(C)** *Not built: no free object storage is listed in TOOLS_AND_COSTS.md. Without it, audio is never stored at all (AC-VOI-06).*
 - [x] **7.10 Tests.** Reference recordings: 5 inserted pauses detected within ±0.3 s; pitch within ±10%; speech rate within ±15%; no stored audio after a session without retention consent; no scenario reaches Critical on voice alone.
 
@@ -294,12 +295,38 @@ Update this table as work finishes.
 - [x] **F.0 Audit.** `docs/FRONTEND_AUDIT.md`: routes, components, flow, endpoints actually used, gaps between docs and code, reusable parts, proposed minimal changes, test baseline. No code changes. (checklist §0)
 - [x] **F.1 Remove the simulator.** Simulator pages, `/api/v1/sim`, components, contracts, `core/simulator`, case files, validator, tests and spec sections removed; victim intake kept under `/portal/<locale>`; `/` shows the language choice until F.2. (checklist §1, D8)
 - [x] **F.2 Homepage and visual foundation.** "Quiet Paper" tokens in one place; header and footer; `/` as the victim homepage with Start, Write / Speak / Guided questions and an immediate-safety entry; staff sign-in as a quiet link; every action goes somewhere real. (brief §2, §5; checklist §2, §3, §6) *Done 15 Nov 2026: `app/(home)/` (homepage, `/how-it-works`, `/privacy`), `components/home/`, Quiet Paper tokens in `globals.css` on public and `/portal` pages only, `/portal` → `/`, `?way=` hint orders the story step. Tests: `home.spec.ts`, axe on every new page, `theme-contrast` and `portal-paths` unit tests. Non-English text is a draft. Guided questions uses today's flow until F.4.*
-- [ ] **F.3 Consent and safety flow.** Consent presentation with audio, no pre-selected options, "continue without analysis"; safety check first in every mode; minor-without-guardian route; emergency panel. (brief §3.3–3.4; checklist §4)
-- [ ] **F.4 Unified input layer.** Input-method choice mapped to the existing conversation engine (no second state machine); text composer; voice note with playback and transcript review; live voice kept distinct; guided questions; provenance kept; `channel` never repurposed. (brief §3.5–3.9, §4; checklist §5)
-- [ ] **F.5 Context, review and confirmation.** Optional context; one review step before closing; confirmation that shows only what the backend accepted. (brief §3.10–3.13; checklist §5)
-- [ ] **F.6 Hardening and docs.** Accessibility, languages, low-end Android, slow network, PWA privacy, voice failure paths, session expiry, quick exit, full Playwright run; then the doc updates in checklist §10.
+- [ ] ~~**F.3 Consent and safety flow.**~~ *Cancelled 16 Nov 2026.* Consent presentation with audio, no pre-selected options, "continue without analysis"; safety check first in every mode; minor-without-guardian route; emergency panel. (brief §3.3–3.4; checklist §4)
+- [ ] ~~**F.4 Unified input layer.**~~ *Cancelled 16 Nov 2026.* Input-method choice mapped to the existing conversation engine (no second state machine); text composer; voice note with playback and transcript review; live voice kept distinct; guided questions; provenance kept; `channel` never repurposed. (brief §3.5–3.9, §4; checklist §5)
+- [ ] ~~**F.5 Context, review and confirmation.**~~ *Cancelled 16 Nov 2026.* Optional context; one review step before closing; confirmation that shows only what the backend accepted. (brief §3.10–3.13; checklist §5)
+- [ ] ~~**F.6 Hardening and docs.**~~ *Cancelled 16 Nov 2026.* Accessibility, languages, low-end Android, slow network, PWA privacy, voice failure paths, session expiry, quick exit, full Playwright run; then the doc updates in checklist §10.
 
 **Done when:** every applicable item in `checklist.md` §12 is true; type-check, lint, unit and Playwright tests pass; no rule in `CLAUDE.md` is broken.
+
+**Stopped 16 Nov 2026** (`PRODUCT_VISION.md`, decisions Q1 and Q3): the product is a plug-in module with no victim website or questionnaire. F.3–F.6 are cancelled and replaced by Phase M.
+
+---
+
+## Phase M. Module contract and demo input layer
+
+**Goal:** the product is the plug-in assessment module (`docs/PRODUCT_VISION.md`). It accepts exactly two inputs (text messages and voice audio) through the integration API, never asks the person questions, and runs with any demo switched off. The demo input layer is a detachable harness that calls the same API with a demo key.
+**Depends on:** Phases 2, 4, 7 and 8 (scoring, AI text analysis, voice, integration API). **Must not change:** staff dashboards (beyond removing screener fields), CLAUDE.md rules 1–12, the deterministic scoring rules (other than removing the screener source), consent, privacy, audit and human approval.
+
+- [ ] **M.1 Docs to the module spec.** `CLAUDE.md`, `REQUIREMENTS.md`, `ARCHITECTURE.md`, `API_CONTRACTS.md`, `DATABASE.md`, `models.ts` and this plan restated for the module (PRODUCT_VISION.md §5, §11); FR-SCR, AC-SCR, the screener source, `IVR_KEYPRESS`, `/screeners`, the victim API and the victim pages removed; OV-9 restated to fire from words; the three frontend documents marked superseded; speaker separation added (FR-VOI-10, AC-VOI-08).
+- [ ] **M.2 Remove the victim website and the question flow.** Homepage, How it works, Privacy, `/portal` pages, keypad page, `components/victim` and `components/home`, the Quiet Paper theme, PWA (manifest, service worker, offline page), `/<locale>` redirects and unused message keys; `core/conversation`, `core/screeners`, `core/victim`, `/api/v1/victim`, both `/screeners` routes, `IVR_KEYPRESS`, the victim session auth mode. Shared parts move to `core/interactions` (start, consent, end, emergency options, summary) and `core/operator` (suggested questions); integration gains `POST …/consent/withdraw`. `/` redirects to `/login`. The live recorder moves to `components/audio/` for the demo. Staff e2e tests create cases through `/api/v1/integration`. (FR-CH-01/02, FR-API-05, AC-CH-07)
+- [ ] **M.3 Scoring config v3 and statement-based OV-9.** `SCREENER` source, its 0.30 weight and "denial" scores removed; remaining source weights unchanged (Appendix A). OV-9 fires from the person's own words (new `NOT_SAFE_NOW` lexicon rules in all six rule files; regional rules are drafts). `scripts/drop-screener-data.ts` cleans screener fields and `SCREENER` indicators out of existing synthetic data. (FR-IND-03, FR-RISK-02, AC-RISK-02)
+- [ ] **M.4 Evaluation without answers.** Scenarios that relied on screener or safety-check answers rewritten as conversations (operator question, person's reply) or dropped; expected bands unchanged; operator turns never scored; `npm run eval` (rules only) re-run and recorded next to the old numbers in `EVALUATION_REPORT.md`. Suicide and immediate-danger recall must stay at 100%. (AC-EVAL-01, AC-NLP-01/02, AC-RISK-01)
+- [ ] **M.5 Indicators with evidence in the result (V1).** Read endpoint or fields for indicators with evidence (exact quotes for text, time positions for voice) behind a new API scope, so each NHAA system receives only what it is authorised to. (FR-API-01, FR-IND-04)
+- [ ] **M.6 Input method and contract version (V2).** Optional `inputMethod` on `/messages` and `/audio` (`TEXT`, `LIVE_AUDIO`, `RECORDED_AUDIO`, `TRANSCRIPT`), stored beside `modality` and separate from `channel`; contract version stated in responses.
+- [ ] **M.7 Demo cases marked (V3).** Records created by a demo API key are tagged on the server (never from the request body), shown with a "demo" mark on staff screens, and filterable in analytics. They stay in the staff queues on purpose.
+- [ ] **M.8 Recorded audio into windows (V4).** A server-side step cuts a recorded file into 5 s windows and feeds them through the real `/audio` path in order. Never a prewritten transcript.
+- [ ] **M.9 Short answers read with their question (V7).** The previous `OPERATOR` turn is passed as context to the AI analysis, and question-aware lexicon rules handle yes/no after a known safety question ("No" after "Are you safe right now?" → OV-9). (FR-NLP-11, AC-NLP-08)
+- [ ] **M.10 Speaker separation in audio (replaces V8).** Label each transcript sentence `OPERATOR` or `CALLER`, score only the caller's words, take voice features from the caller's segments only. Until this is built, every assessment from two-voice audio is marked limited confidence. (FR-VOI-10, AC-VOI-08)
+- [ ] **M.11 Demo input: live text.** Chat-style page representing NHAA's chatbot; sends `/messages` one message at a time (questions as `OPERATOR` turns) with the demo key. Visibly marked synthetic / demonstration.
+- [ ] **M.12 Demo input: live microphone.** The kept recorder (`components/audio/`) sends 5 s windows to `/audio` with the demo key, the caller's voice only. One live call at a time (free tier).
+- [ ] **M.13 Demo input: generated text (V5).** An LLM writes a synthetic conversation from chosen options (category, language, length) on the free Groq quota; output labelled synthetic and sent through `/messages`. Audio is never generated.
+- [ ] **M.14 Demo input: pre-recorded audio library.** Team recordings with stable scenario IDs, cut into windows by M.8 and sent through `/audio`. Expected results are test metadata, never sent to the module.
+
+**Done when:** the items in `PRODUCT_VISION.md` §12 are true; type-check, lint, unit and Playwright tests pass with the demo switched off; no rule in `CLAUDE.md` is broken.
 
 ---
 
@@ -307,7 +334,7 @@ Update this table as work finishes.
 
 | Level | Tool | What it covers | When it runs |
 |---|---|---|---|
-| Unit | Vitest | Scoring, lexicon, recommendations, screeners, crypto, redaction, policies, audit chain | Every push (CI) |
+| Unit | Vitest | Scoring, lexicon, recommendations, crypto, redaction, policies, audit chain | Every push (CI) |
 | Contract | Vitest + Zod | Each route's request and response against its contract; victim responses contain no risk fields | Every push |
 | Service | pytest | Audio features against reference recordings; text endpoint with recorded model output | Every push to `analysis-service/` |
 | End-to-end | Playwright | One journey per role; victim flows; live alert across two sessions | Before merging to main |
@@ -351,21 +378,21 @@ A change to the lexicon, the prompt or the weights is not finished until the eva
 
 | Requirement group | Phase |
 |---|---|
-| FR-CH (channels) | 3 (portal, chat), 7 (voice, operator, IVRS), 9 (PWA) |
-| FR-CON (consent) | 3 |
-| FR-SCR (screening, safety check) | 2, 3 |
+| FR-CH (inputs) | 7 (voice, operator), 8 (integration API), M (two inputs only, sender, demo inputs) |
+| FR-CON (consent) | 3, M (consent state on integration start, withdraw) |
+| FR-SCR (screening, safety check) | Removed in M (was 2, 3) |
 | FR-NLP, FR-EMO (text) | 2 (lexicon), 4 |
-| FR-VOI, FR-EMO (voice) | 7 |
+| FR-VOI, FR-EMO (voice) | 7, M (speaker separation, recorded audio) |
 | FR-IND, FR-SVI, FR-RISK | 2, 5 (review, override) |
 | FR-REC | 2 (rules), 6 |
 | FR-LANG | 3 (en, hi), 4 (detection, translation), 8 (mr, ta, bn) |
 | FR-CASE, FR-ALR | 5 |
 | FR-DSH | 5 (counsellor), 6 (district, police, welfare), 7 (operator), 8 (state, ministry) |
-| FR-API | 8 |
+| FR-API | 8, M (only input; evidence, input method, demo tag) |
 | FR-AUD | 1, 5 |
 | NFR-PRI, NFR-SEC | 1, 8 (retention), 9 (review) |
 | NFR-ETH | 2–4 by design, 9 (fairness, review) |
 | NFR-PERF | 4, 5, 7, 9 (measurement) |
 | NFR-REL | 4 |
-| NFR-ACC | 3, 9 |
+| NFR-ACC | 9 (staff pages), M (demo pages) |
 | NFR-MNT | 0, 2 |

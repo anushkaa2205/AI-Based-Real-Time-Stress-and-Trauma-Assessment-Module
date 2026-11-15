@@ -5,9 +5,9 @@
 |---|---|
 | Problem statement | SIH26093, Ministry of Social Justice and Empowerment (MoSJE), Department of Social Justice and Empowerment |
 | Project name | *TBD* |
-| Platform | Next.js web application (responsive / PWA) with a pluggable AI assessment service |
-| Version | 0.1 (draft) |
-| Date | 14 Nov 2026 |
+| Platform | Plug-in assessment module (Next.js API and staff dashboards, Python analysis service) called by NHAA's systems through an integration API |
+| Version | 0.2 (draft): module scope, no questionnaire (PRODUCT_VISION.md) |
+| Date | 16 Nov 2026 |
 
 ---
 
@@ -33,7 +33,7 @@ Victims and complainants from Scheduled Castes and Scheduled Tribes reach NHAA (
 
 ### 1.2 Goal
 Build an **AI-enabled, real-time stress and trauma assessment module** that:
-- assesses stress, trauma, fear, anxiety and vulnerability from voice, text and structured responses,
+- assesses stress, trauma, fear, anxiety and vulnerability from what the person says or writes (voice and text only; no questionnaire),
 - calculates an explainable **Stress Vulnerability Index (SVI)** and a **risk category** (Low / Moderate / High / Critical),
 - recommends the right support, and
 - puts high-risk victims in front of the right human responder first,
@@ -41,12 +41,14 @@ Build an **AI-enabled, real-time stress and trauma assessment module** that:
 while keeping **privacy, informed consent, confidentiality and ethical AI** at the centre.
 
 ### 1.3 Scope
-The module sits **between the victim's contact channel and the human responders**. It is a plug-in layer, not a replacement for NHAA. It covers:
-- first-contact assessment on all channels (portal, chatbot, voice call, IVRS, mobile),
+The module sits **between NHAA's contact channels and the human responders**. It is a plug-in layer, not a replacement for NHAA (`PRODUCT_VISION.md`). NHAA's systems (chatbot, helpline, IVRS, mobile app, portal, operator desk) own the conversation with the person, obtain consent in their own workflow, and call the module through the **integration API**. The module covers:
+- assessment of the two inputs a person gives on any channel: **text messages and voice audio**,
 - live operator assistance during calls,
 - risk-based queues, alerts and recommendations,
-- dashboards for every stakeholder,
-- an integration API so existing NHAA systems can use the module.
+- dashboards for every stakeholder (the reference consuming system),
+- the integration API, which is the module's only input interface.
+
+The module never questions the person. If safety or wellbeing questions are asked, NHAA's chatbot asks them in the chat or the operator asks them aloud, and the answers arrive as ordinary text or speech. A detachable **demo input layer** (live text, live microphone, recorded audio, generated text) exists only to present and test the module through the same API.
 
 Long-term monitoring after the complaint is filed is covered by the sister problem **SIH26094** and is **out of scope**. This module provides a hook for it (scheduled follow-ups for High/Critical cases).
 
@@ -59,7 +61,7 @@ Long-term monitoring after the complaint is filed is covered by the sister probl
 | **SVI** | Stress Vulnerability Index: a 0–100 weighted combination of dimension scores |
 | **Risk band** | Low / Moderate / High / Critical, derived from the SVI plus safety overrides |
 | **Safety override** | A rule that forces a minimum risk band whatever the SVI (e.g. active suicidal intent → Critical) |
-| **Evidence** | The exact phrase, acoustic event or answer that triggered an indicator |
+| **Evidence** | The exact phrase, acoustic event or case-context field that triggered an indicator |
 | **Responder** | A human who acts on a case: operator, counsellor, district officer, police liaison, welfare officer |
 | **Docket number** | NHAA's existing complaint ID, linked to each assessment |
 
@@ -69,7 +71,7 @@ Long-term monitoring after the complaint is filed is covered by the sister probl
 
 | # | Stakeholder (from the problem statement) | System role | What they need from the module | Data access |
 |---|---|---|---|---|
-| 0 | **Victim / complainant** (primary user) | `victim` | A safe, gentle, multilingual way to be heard; immediate help if in danger; control over consent | Only their own interaction |
+| 0 | **Victim / complainant** (primary beneficiary) | none: reaches NHAA through NHAA's own channels | To be heard once, prioritised when at risk, and offered help in their language (through the calling system) | No direct access to the module |
 | 1 | **Department of Social Justice and Empowerment** | `ministry_admin` | National view of distress trends, response times, resource gaps; policy evidence | Aggregated, anonymised only |
 | 2 | **National Helpline Against Atrocities (14566)** | `operator`, `nhaa_supervisor` | Live risk guidance during calls/chats; a queue sorted by risk; supervisor oversight | Cases they handle; supervisors see all NHAA cases |
 | 3 | **State Governments and Union Territories** | `state_admin` | State-level monitoring of high-risk cases and service capacity | Aggregated for the state; case-level only for escalated cases |
@@ -83,28 +85,28 @@ Long-term monitoring after the complaint is filed is covered by the sister probl
 
 ## 3. Functional requirements
 
-### 3.1 Access channels and intake (FR-CH)
+### 3.1 Inputs and channels (FR-CH)
 | ID | Requirement | Priority |
 |---|---|---|
-| FR-CH-01 | The system shall provide a **web portal intake**: a conversational, step-by-step complaint and assessment flow that works alongside the grievance form. | M |
-| FR-CH-02 | The system shall provide a **chatbot interface** that accepts typed text and voice notes. | M |
-| FR-CH-03 | The system shall provide a **voice interaction mode** in the browser (microphone) to simulate a helpline call, with live analysis. | M |
+| FR-CH-01 | The module shall accept exactly **two inputs** from any NHAA channel, through the integration API: **text messages** and **voice audio**. It shall have no questionnaire, no endpoint for structured answers and no key-press input. | M |
+| FR-CH-02 | Every text message shall carry its **sender**: the person (`VICTIM`), or NHAA's chatbot or operator (`OPERATOR`, used for both). Only the person's words are scored; the questioner's turns are stored as context. | M |
+| FR-CH-03 | The module shall analyse **voice audio** sent in short windows during a call (live) or cut from a recording, with live updates. In the demo, voice comes from the browser microphone or the team's own recordings. | M |
 | FR-CH-04 | The system shall provide an **operator assist console**. While a human operator takes a call or chat, it shows the live transcript, live SVI, detected indicators and suggested next questions. | M |
-| FR-CH-05 | The system shall provide an **IVRS simulation**: a keypad-driven menu (DTMF-style) with pre-recorded or spoken prompts for low-literacy and basic-phone users. | S |
-| FR-CH-06 | The interface shall be **mobile-responsive and installable as a PWA**, so it works as the mobile app channel. | M |
+| FR-CH-05 | ~~IVRS keypad simulation~~ *Removed 16 Nov 2026 (PRODUCT_VISION.md §5).* An IVRS can still send the caller's audio through the API. | – |
+| FR-CH-06 | ~~Victim-facing PWA~~ *Removed 16 Nov 2026 (PRODUCT_VISION.md §5).* The calling system owns the victim's interface. | – |
 | FR-CH-07 | Every interaction shall be linked to a **docket number**, either supplied by NHAA or generated, and to the channel it came from. | M |
-| FR-CH-08 | The intake shall collect **case context** needed for vulnerability: offence category (as on the NHAA grievance form), victim age group, gender, whether the victim is alone or has support, whether the accused is nearby, and whether there are ongoing threats. Each field is optional. | M |
-| FR-CH-09 | The victim shall be able to **skip any question**, **pause**, or **leave instantly** with a quick-exit button that clears the screen. | M |
-| FR-CH-10 | The intake shall **never require the victim to retell the full incident** more than once. Later responders see the summary already recorded. | S |
+| FR-CH-08 | The module shall accept **case context** from NHAA's own record as metadata (`/context`): offence category (as on the NHAA grievance form), victim age group, gender, whether the victim is alone or has support, whether the accused is nearby, and whether there are ongoing threats. Each field is optional. | M |
+| FR-CH-09 | ~~Skip, pause and quick exit on victim screens~~ *Removed 16 Nov 2026 (PRODUCT_VISION.md §5).* These belong to the calling system's interface. | – |
+| FR-CH-10 | The module shall keep a **case summary** so the person never has to retell the full incident: later responders see the summary already recorded. | S |
 
 ### 3.2 Informed consent and victim controls (FR-CON)
 | ID | Requirement | Priority |
 |---|---|---|
-| FR-CON-01 | Before any analysis, the system shall show a **consent notice** in the victim's chosen language, in plain words and with audio playback. It shall explain what is analysed (voice, text), why, who sees it, how long it is kept, and that refusing does not affect the complaint. | M |
+| FR-CON-01 | The calling system shall obtain consent in its own workflow before any analysis, and send the **consent state** (notice version, language, choices) when it starts the interaction. The module shall refuse to start an interaction without it. | M |
 | FR-CON-02 | Consent shall be **granular**: (a) text analysis, (b) voice analysis, (c) sharing with counsellors, (d) follow-up contact. Each can be accepted or declined separately. | M |
-| FR-CON-03 | If consent is declined, the complaint shall still be filed through the normal path, and only the safety check (FR-SCR-01) shall be offered. | M |
-| FR-CON-04 | The victim shall be able to **withdraw consent** at any time in the session. Analysis stops immediately and already-collected raw audio is deleted. | M |
-| FR-CON-05 | For **minors**, the system shall require a guardian or support person's consent where one is present, and shall otherwise route directly to a human counsellor without automated analysis beyond the safety check. | S |
+| FR-CON-03 | If analysis consent is declined, the interaction shall still be recorded and routed, and only the rule-based **safety lexicon** shall run on what the person says (no AI analysis, no SVI). | M |
+| FR-CON-04 | The calling system shall be able to **withdraw consent** for an interaction at any time through the API. Analysis stops immediately and already-collected raw audio is deleted. | M |
+| FR-CON-05 | For **minors**, the module shall rely on a guardian or support person's consent recorded by the calling system, and shall otherwise route directly to a human counsellor without automated analysis beyond the safety lexicon. | S |
 | FR-CON-06 | Every consent decision shall be **recorded with a timestamp, language and version of the notice** shown. | M |
 
 ### 3.3 Voice and speech analytics (FR-VOI)
@@ -119,8 +121,9 @@ Long-term monitoring after the complaint is filed is covered by the sister probl
 | FR-VOI-05 | The system shall detect **paralinguistic events** where possible: crying or sobbing, voice tremor, sharp breaths, long silences after a question. | S |
 | FR-VOI-06 | The system shall output a **voice emotion estimate** (fear, sadness, anger, neutral, numb or flat) with a confidence value. | M |
 | FR-VOI-07 | Voice features shall be computed in **rolling windows** (e.g. every 5–10 seconds) so the SVI updates during the call. | M |
-| FR-VOI-08 | Voice-based signals shall be **weighted lower than explicit statements** and screener answers, and shall never by themselves move a case into Critical. Acoustic cues are supporting evidence, not proof. | M |
+| FR-VOI-08 | Voice-based signals shall be **weighted lower than explicit statements**, and shall never by themselves move a case into Critical. Acoustic cues are supporting evidence, not proof. | M |
 | FR-VOI-09 | Raw audio shall be **discarded after feature extraction and transcription** unless the victim consents to it being kept (see NFR-PRI-04). | M |
+| FR-VOI-10 | Audio that holds **two voices** (operator and caller) shall be separated by speaker: each transcript sentence is labelled `OPERATOR` or `CALLER`, only the caller's words are scored, and voice features come from the caller's segments only. Until speaker separation is built, any assessment from two-voice audio shall be marked **limited confidence**. | M |
 
 ### 3.4 Text and narrative analysis, NLP (FR-NLP)
 *Problem statement: "textual narratives… Natural Language Processing (NLP)."*
@@ -136,7 +139,8 @@ Long-term monitoring after the complaint is filed is covered by the sister probl
 | FR-NLP-07 | Every NLP detection shall return the **exact supporting phrase** (evidence span), the dimension it maps to, a score and a confidence value. | M |
 | FR-NLP-08 | The system shall handle **negation and context** correctly, e.g. "I would never hurt myself" must not count as suicidal ideation. | M |
 | FR-NLP-09 | The system shall produce a short, neutral **case summary** for responders, so the victim doesn't have to repeat the story. | S |
-| FR-NLP-10 | A **rule-based safety lexicon** shall run alongside the ML/LLM model, so critical phrases are caught even if the model fails or is unavailable. | M |
+| FR-NLP-10 | A **rule-based safety lexicon** shall run on every message the person sends, in every consent mode, alongside the ML/LLM model, so critical phrases are caught even if the model fails or is unavailable. | M |
+| FR-NLP-11 | A short answer shall be **read with the question it answers**: the preceding chatbot or operator turn is passed as context to the AI analysis and to question-aware safety rules ("No" after "Are you safe right now?" is a safety signal). | M |
 
 ### 3.5 Emotion AI (FR-EMO)
 *Problem statement: "Emotion AI to identify signs of trauma and distress… emotional indicators."*
@@ -148,13 +152,8 @@ Long-term monitoring after the complaint is filed is covered by the sister probl
 | FR-EMO-03 | The system shall track the **emotion trajectory** across the session (e.g. calm → rising fear) and show it as a timeline. | S |
 | FR-EMO-04 | Emotion outputs shall feed the dimension scores (Appendix A) and never be shown to the victim as labels. | M |
 
-### 3.6 Structured screening and safety check (FR-SCR)
-| ID | Requirement | Priority |
-|---|---|---|
-| FR-SCR-01 | Every interaction shall include a short **safety check**: "Are you safe right now?", "Is the person who harmed you nearby?", "Are you having thoughts of ending your life?" This runs even if analysis consent is declined. | M |
-| FR-SCR-02 | The system shall offer short, validated **screening items**, asked conversationally and skippable: PHQ-2 (depression), GAD-2 (anxiety), PC-PTSD-5 (trauma), and a C-SSRS-style suicide risk screen. | M |
-| FR-SCR-03 | Screening items shall be available in all supported languages, with audio for voice and IVRS channels. | M |
-| FR-SCR-04 | Screener scores shall be stored alongside AI-derived scores and shown separately to counsellors. | M |
+### 3.6 Structured screening and safety check (FR-SCR): removed
+*Removed 16 Nov 2026 (PRODUCT_VISION.md §5, decision Q1).* The module never asks questions and has no screeners (PHQ-2, GAD-2, PC-PTSD-5, C-SSRS) and no structured safety check. If NHAA's chatbot or operator asks safety or wellbeing questions, the answers arrive as ordinary text or speech and are analysed like any other words (FR-NLP-10, FR-NLP-11). The safety path that FR-SCR-01 guaranteed in every mode is kept by the safety lexicon (FR-NLP-10, CLAUDE.md rule 4). The operator console may still *suggest* scripted questions for the operator to ask aloud (FR-DSH-01).
 
 ### 3.7 Indicator detection (FR-IND)
 *Problem statement: "assess the psychological stress, trauma, fear, anxiety, and vulnerability levels" and "detect indicators of severe trauma, fear, depression, suicidal ideation, intimidation, social isolation, and extreme vulnerability."*
@@ -163,8 +162,8 @@ Long-term monitoring after the complaint is filed is covered by the sister probl
 |---|---|---|
 | FR-IND-01 | The system shall score these **eight dimensions**, each from 0 to 1, with confidence and evidence: **(1) acute stress/distress, (2) severe trauma, (3) fear/anxiety, (4) depression, (5) suicidal ideation/self-harm, (6) intimidation/threat, (7) social isolation, (8) extreme vulnerability**. | M |
 | FR-IND-02 | **Extreme vulnerability** shall combine case context: victim is a minor, elderly or disabled; sexual offence; murder of a family member; displacement; no support person; economic dependence on the accused; repeat victimisation. | M |
-| FR-IND-03 | Each dimension score shall be **fused from all available sources** (text, voice, screener, context), each with its own weight and confidence, as defined in Appendix A. | M |
-| FR-IND-04 | Each indicator shown to responders shall include **why**: the evidence phrase, acoustic event or screener answer, and its source. | M |
+| FR-IND-03 | Each dimension score shall be **fused from all available sources** (text NLP, safety lexicon, voice, case context), each with its own weight and confidence, as defined in Appendix A. | M |
+| FR-IND-04 | Each indicator shown to responders shall include **why**: the evidence phrase, acoustic event or case-context field, and its source. | M |
 | FR-IND-05 | Responders shall be able to **confirm, reject or adjust** an indicator. Their correction is stored, and the original AI value is kept for audit. | M |
 
 ### 3.8 Stress Vulnerability Index (FR-SVI)
@@ -173,7 +172,7 @@ Long-term monitoring after the complaint is filed is covered by the sister probl
 | ID | Requirement | Priority |
 |---|---|---|
 | FR-SVI-01 | The system shall calculate an **SVI on a fixed 0–100 scale** as a weighted sum of the eight dimension scores (formula and default weights in Appendix A). | M |
-| FR-SVI-02 | The SVI shall **update in real time** as new text, voice windows or screener answers arrive. | M |
+| FR-SVI-02 | The SVI shall **update in real time** as new text, voice windows or case context arrive. | M |
 | FR-SVI-03 | The system shall show an **SVI breakdown**: how much each dimension contributed, and the top three evidence items. | M |
 | FR-SVI-04 | The system shall show an **SVI confidence value** that drops when little data is available (e.g. a very short interaction or a single channel). | S |
 | FR-SVI-05 | The system shall keep the **SVI history** of each interaction (a timeline of SVI values). | M |
@@ -201,7 +200,7 @@ Long-term monitoring after the complaint is filed is covered by the sister probl
 | FR-REC-03 | Each recommendation shall state its **reason** (which indicator triggered it), its **urgency/SLA** (e.g. counsellor callback within 15 minutes for Critical) and the **responsible stakeholder**. | M |
 | FR-REC-04 | Each recommendation shall show its **legal or policy basis** where applicable, e.g. victim and witness rights under the SC/ST (PoA) Act, 1989 and its Rules. | S |
 | FR-REC-05 | Every recommendation shall need **human approval** (counsellor or supervisor) before it is sent to an external agency. Emergency support for Critical cases may be triggered immediately, but must be reviewed by a human afterwards. | M |
-| FR-REC-06 | For Critical risk, the **victim's screen** shall immediately show emergency options (112, Tele-MANAS 14416, "request a call back now") in their language. | M |
+| FR-REC-06 | For Critical risk, the module shall immediately return **emergency options** (112, Tele-MANAS 14416, NHAA 14566) in the person's language to the calling system, which shows them to the person. | M |
 | FR-REC-07 | Approved recommendations shall create **referral tasks** in the right stakeholder's queue (police liaison, welfare officer, district officer, counsellor). | M |
 | FR-REC-08 | The status of each referral shall be tracked: pending → accepted → in progress → done, or declined with a reason. | S |
 | FR-REC-09 | High and Critical cases shall get a **scheduled follow-up** (the hook for SIH26094). | S |
@@ -211,9 +210,9 @@ Long-term monitoring after the complaint is filed is covered by the sister probl
 
 | ID | Requirement | Priority |
 |---|---|---|
-| FR-LANG-01 | The UI, consent notice, safety check and screeners shall be available in **at least: English, Hindi, and three regional languages** (proposed: Marathi, Tamil, Bengali). | M |
+| FR-LANG-01 | Text the module returns for the person (emergency options) and the questions it suggests to operators shall be available in **at least: English, Hindi, and three regional languages** (proposed: Marathi, Tamil, Bengali). | M |
 | FR-LANG-02 | Analysis (NLP and STT) shall support **English, Hindi and Hinglish** at minimum, and the three regional languages through native models or translate-then-analyse. | M |
-| FR-LANG-03 | The system shall **auto-detect the language** of text and speech and let the victim switch language at any time. | M |
+| FR-LANG-03 | The system shall **auto-detect the language** of text and speech, and accept the interaction language from the calling system. | M |
 | FR-LANG-04 | The design shall allow **adding a new language through configuration** (translation files plus a model mapping) without code changes. | S |
 | FR-LANG-05 | The system shall tolerate **dialect variation and non-standard spelling** (e.g. Romanised Hindi spelled several ways). Evaluation shall include dialect samples. | S |
 | FR-LANG-06 | Responders shall see the original text **and** an English/Hindi translation, with the evidence phrase highlighted in both. | M |
@@ -223,7 +222,7 @@ Long-term monitoring after the complaint is filed is covered by the sister probl
 |---|---|---|
 | FR-CASE-01 | All assessed interactions shall appear in a **case queue sorted by risk band, then SVI, then waiting time**, not by arrival order. | M |
 | FR-CASE-02 | A case shall be **assigned** to a counsellor or responder, manually or automatically, based on language, district and workload. | S |
-| FR-CASE-03 | The case detail view shall show: the summary, SVI timeline, dimension breakdown, indicators with evidence, screener results, consent status, recommendations and referral status. | M |
+| FR-CASE-03 | The case detail view shall show: the summary, SVI timeline, dimension breakdown, indicators with evidence, consent status, recommendations and referral status. | M |
 | FR-CASE-04 | Responders shall be able to add **notes** and **override** the band or recommendations, with a mandatory reason. | M |
 | FR-CASE-05 | Case statuses shall be: New → Under review → Action taken → Follow-up scheduled → Closed. | M |
 
@@ -250,10 +249,11 @@ Long-term monitoring after the complaint is filed is covered by the sister probl
 ### 3.15 Integration API (FR-API)
 | ID | Requirement | Priority |
 |---|---|---|
-| FR-API-01 | The module shall expose a documented **REST API**: start an interaction, send a text or audio chunk, get the current SVI, band and indicators, get recommendations, close the interaction. | M |
+| FR-API-01 | The module shall expose a documented **REST API**: start an interaction (with consent state), send a text message or audio window, send case context, withdraw consent, get the current SVI, band and indicators, get recommendations, close the interaction. | M |
 | FR-API-02 | The API shall be authenticated (API key or token per integrating system) and rate-limited. | M |
 | FR-API-03 | The API shall support **streaming updates** (Server-Sent Events or WebSocket) for live SVI during calls. | S |
 | FR-API-04 | The API shall accept and return the **NHAA docket number** to link with existing records. | M |
+| FR-API-05 | The integration API shall be the module's **only input interface**. There is no victim-facing API; the module must run and be tested with the demo input layer switched off. | M |
 
 ### 3.16 Audit and accountability (FR-AUD)
 | ID | Requirement | Priority |
@@ -293,8 +293,8 @@ Long-term monitoring after the complaint is filed is covered by the sister probl
 | NFR-ETH-03 | **Explainability**: every SVI, band and recommendation can be traced to its evidence and rules (FR-IND-04, FR-SVI-03). | M |
 | NFR-ETH-04 | **Fairness**: performance shall be evaluated separately by language, gender and channel. Gaps above the threshold in AC-ETH-02 must be reported and addressed. | M |
 | NFR-ETH-05 | **Asymmetric error policy**: for suicidal ideation and immediate danger, the system prefers false alarms over misses (high recall), because a missed case costs far more. | M |
-| NFR-ETH-06 | **Trauma-informed design**: gentle, non-judgemental wording; no forced retelling; no time pressure; validation phrases ("Thank you for telling us. You are not alone."). | M |
-| NFR-ETH-07 | The system shall show a clear **AI disclosure** to victims: they are told an automated tool supports the human team. | M |
+| NFR-ETH-06 | **Trauma-informed wording** in everything the module returns for the person and in the questions it suggests to operators: gentle, non-judgemental, no forced retelling, no time pressure. | M |
+| NFR-ETH-07 | The calling system shall give the person a clear **AI disclosure** (an automated tool supports the human team); the integration guide supplies the wording. | M |
 
 ### 4.4 Performance and real-time behaviour (NFR-PERF)
 | ID | Requirement | Priority |
@@ -308,15 +308,15 @@ Long-term monitoring after the complaint is filed is covered by the sister probl
 ### 4.5 Accessibility and usability (NFR-ACC)
 | ID | Requirement | Priority |
 |---|---|---|
-| NFR-ACC-01 | Victim-facing screens shall meet **WCAG 2.1 AA** (contrast, keyboard navigation, screen-reader labels). | M |
-| NFR-ACC-02 | Victim-facing screens shall work for **low-literacy users**: icons, audio for every prompt, voice input. | M |
-| NFR-ACC-03 | The victim flow shall work on a **low-end Android phone over a 3G-speed connection** (lightweight pages, no heavy assets). | S |
-| NFR-ACC-04 | Victim-facing text shall be written at a simple reading level and reviewed by native speakers per language. | S |
+| NFR-ACC-01 | Staff screens and the demo pages shall meet **WCAG 2.1 AA** (contrast, keyboard navigation, screen-reader labels). Victim-facing screens belong to the calling system. | M |
+| NFR-ACC-02 | ~~Low-literacy victim screens~~ *Removed 16 Nov 2026: the calling system's interface.* | – |
+| NFR-ACC-03 | ~~Victim flow on a low-end phone~~ *Removed 16 Nov 2026: the calling system's interface.* | – |
+| NFR-ACC-04 | Text the module returns for the person and the operator's suggested questions shall be written at a simple reading level and reviewed by native speakers per language. | S |
 
 ### 4.6 Reliability and availability (NFR-REL)
 | ID | Requirement | Priority |
 |---|---|---|
-| NFR-REL-01 | If the AI model or external API fails, the system shall **fall back** to the rule-based lexicon and screener-only scoring, mark the SVI as "limited confidence", and still route the case. A failure must never block a complaint. | M |
+| NFR-REL-01 | If the AI model or external API fails, the system shall **fall back** to the rule-based lexicon and case-context scoring, mark the SVI as "limited confidence", and still route the case. A failure must never block an API call from the calling system. | M |
 | NFR-REL-02 | If voice analysis fails, the session shall continue in text mode without losing data. | M |
 | NFR-REL-03 | Errors shall be logged without writing victim content into the logs. | M |
 
@@ -353,7 +353,7 @@ Long-term monitoring after the complaint is filed is covered by the sister probl
 | ID | Constraint |
 |---|---|
 | C-TEC-01 | Front end and API layer built with **Next.js (App Router) and TypeScript**. |
-| C-TEC-02 | Real telephony (actual calls to 14566) is not available. Voice calls and IVRS are **simulated in the browser** (Web Audio / MediaRecorder APIs). |
+| C-TEC-02 | Real telephony (actual calls to 14566) is not available. Voice calls are **simulated in the demo input layer** (browser microphone or the team's own recordings, sent through the integration API). Audio is never generated. |
 | C-TEC-03 | AI services are limited to **free or student tiers or open-source models**: for example an LLM API for NLP, Whisper or Bhashini for STT, and a lightweight audio feature library for pitch and pauses. |
 | C-TEC-04 | Browser microphone access requires HTTPS and user permission. The app must handle denial gracefully. |
 | C-TEC-05 | Accuracy of Indian-language STT varies, especially for dialects. Scoring must account for transcript confidence. |
@@ -381,27 +381,28 @@ Long-term monitoring after the complaint is filed is covered by the sister probl
 ### 6.0 Evaluation set
 | ID | Criterion |
 |---|---|
-| AC-EVAL-01 | A synthetic evaluation set of **at least 60 scenarios** exists: at least 15 per risk band; at least 10 in Hindi, 10 in Hinglish, 10 in English and 5 per regional language; at least 15 as voice recordings; at least 10 negation or "tricky" cases (e.g. "I would never hurt myself"). Each is labelled with the expected band, expected indicators and expected recommendations, agreed by at least 2 team members. |
+| AC-EVAL-01 | A synthetic evaluation set of **at least 60 scenarios** exists, each a conversation (the operator's or chatbot's questions and the person's replies; only the person's words are scored): at least 15 per risk band; at least 10 in Hindi, 10 in Hinglish, 10 in English and 5 per regional language; at least 15 as voice recordings; at least 10 negation or "tricky" cases (e.g. "I would never hurt myself"). Each is labelled with the expected band, expected indicators and expected recommendations, agreed by at least 2 team members. |
 
 ### 6.1 Channels and intake
 | ID | Linked FR | Criterion (pass/fail) |
 |---|---|---|
-| AC-CH-01 | FR-CH-01, 02 | A user can complete a full assessment through the portal flow and the chatbot, on desktop and on a mobile browser, without errors. |
+| AC-CH-01 | FR-CH-01, 02 | A calling system can complete a full assessment through the integration API with text messages and with audio windows, and gets valid responses. |
 | AC-CH-02 | FR-CH-03, 04 | During a simulated voice call, the operator console shows a live transcript and an SVI that changes at least once per voice window. |
-| AC-CH-03 | FR-CH-05 | The IVRS simulation completes the safety check and the PHQ-2/GAD-2 items using keypad input only. |
+| AC-CH-03 | FR-CH-05 | ~~IVRS keypad~~ *Removed 16 Nov 2026.* |
 | AC-CH-04 | FR-CH-07 | Every saved interaction has a docket number and a channel value; this is verified by a database query showing no missing values. |
-| AC-CH-05 | FR-CH-09 | The quick-exit button clears the screen and navigates to a neutral page in under 1 second; any question can be skipped and the flow still completes. |
-| AC-CH-06 | FR-CH-06 | Lighthouse PWA check passes, and the app can be installed on Android Chrome. |
+| AC-CH-05 | FR-CH-09 | ~~Quick exit and skip~~ *Removed 16 Nov 2026: the calling system's interface.* |
+| AC-CH-06 | FR-CH-06 | ~~PWA install~~ *Removed 16 Nov 2026.* |
+| AC-CH-07 | FR-CH-01, 02 | Messages sent as `OPERATOR` are stored but never produce an indicator; the module has no endpoint that accepts structured answers or key presses (a request to one gets 404). |
 
 ### 6.2 Consent
 | ID | Linked FR | Criterion |
 |---|---|---|
-| AC-CON-01 | FR-CON-01 | **Given** a new session, **when** the user has not yet given consent, **then** no text or audio is sent to any analysis endpoint (verified in network logs). |
-| AC-CON-02 | FR-CON-02 | Declining voice consent but accepting text consent results in text-only analysis; voice controls are hidden. |
-| AC-CON-03 | FR-CON-03 | Declining all consent still files the complaint and runs the safety check; no SVI is calculated. |
+| AC-CON-01 | FR-CON-01 | Starting an interaction without a consent state is rejected; an interaction whose consent does not allow analysis never sends text or audio to the AI service (verified in the analysis client's calls). |
+| AC-CON-02 | FR-CON-02 | Declining voice consent but accepting text consent results in text-only analysis; audio for that interaction is not analysed. |
+| AC-CON-03 | FR-CON-03 | Declining all consent still records and routes the interaction and runs the safety lexicon on every message; no SVI is calculated. |
 | AC-CON-04 | FR-CON-04 | Withdrawing consent mid-session stops analysis within 1 second, and stored raw audio for that session is deleted (verified in storage). |
 | AC-CON-05 | FR-CON-06 | Each consent record holds a timestamp, language, notice version and all four choices. |
-| AC-CON-06 | FR-CON-01 | The consent notice is available as text and audio in every supported language (FR-LANG-01). |
+| AC-CON-06 | FR-CON-01 | ~~Consent notice text and audio~~ *Removed 16 Nov 2026: the calling system shows its own notice; the module records its version.* |
 
 ### 6.3 Voice and speech analytics
 | ID | Linked FR | Criterion |
@@ -410,9 +411,10 @@ Long-term monitoring after the complaint is filed is covered by the sister probl
 | AC-VOI-02 | FR-VOI-03 | On a synthetic tone or recorded sample of known pitch, mean pitch is within ±10% of the true value; a flat-voice sample is flagged "low variation" and an agitated sample "high variation". |
 | AC-VOI-03 | FR-VOI-04 | Speech rate on a reference recording is within ±15% of a manual count. |
 | AC-VOI-04 | FR-VOI-06 | Voice emotion output includes a label and a confidence value for every window. |
-| AC-VOI-05 | FR-VOI-08 | No scenario in the evaluation set reaches Critical from voice features alone (verified by running the set with text and screeners disabled). |
+| AC-VOI-05 | FR-VOI-08 | No scenario in the evaluation set reaches Critical from voice features alone (verified by running the set with text disabled). |
 | AC-VOI-06 | FR-VOI-09 | After a session without audio-retention consent, no raw audio file exists in storage. |
 | AC-VOI-07 | FR-VOI-01 | STT word error rate is reported per language on the evaluation recordings (no fixed threshold; reported for transparency). |
+| AC-VOI-08 | FR-VOI-10 | On a two-voice test recording, every transcript sentence is labelled `OPERATOR` or `CALLER`, no indicator comes from an operator sentence, and voice features come from caller segments only. Until then, every assessment from two-voice audio is marked limited confidence. |
 
 ### 6.4 NLP and emotion AI
 | ID | Linked FR | Criterion |
@@ -424,14 +426,11 @@ Long-term monitoring after the complaint is filed is covered by the sister probl
 | AC-NLP-05 | FR-NLP-07 | Every indicator shown in the UI has a highlighted evidence phrase that appears word-for-word in the transcript. |
 | AC-NLP-06 | FR-NLP-10, NFR-REL-01 | With the ML/LLM service switched off, the safety lexicon still flags 100% of the scenarios used in AC-NLP-01 and AC-NLP-02. |
 | AC-NLP-07 | FR-NLP-06 | Hinglish scenarios reach at least 80% of the indicator F1 score of the English scenarios. |
+| AC-NLP-08 | FR-NLP-11 | "No" sent after an operator turn "Are you safe right now?" raises the band to at least High (OV-9); the same "No" after an unrelated question does not. |
 | AC-EMO-01 | FR-EMO-01, 02 | The emotion profile includes at least the six required classes with confidence values; fused output exists for every window that has both text and voice. |
 
-### 6.5 Screening and safety check
-| ID | Linked FR | Criterion |
-|---|---|---|
-| AC-SCR-01 | FR-SCR-01 | The safety check appears in 100% of sessions, including sessions with all analysis consent declined. |
-| AC-SCR-02 | FR-SCR-02 | Screener scores match a manual calculation for 10 test answer sets (PHQ-2, GAD-2, PC-PTSD-5). |
-| AC-SCR-03 | FR-SCR-01, FR-RISK-02 | Answering "yes" to the suicidal-thoughts safety question with intent sets the band to Critical within 3 seconds. |
+### 6.5 Screening and safety check: removed
+*AC-SCR-01…03 removed 16 Nov 2026 with FR-SCR.* The safety path in every consent mode is checked by AC-CON-03; suicidal intent and "not safe now" stated in words are checked by AC-RISK-02 (OV-1, OV-9) and AC-NLP-01.
 
 ### 6.6 Indicators, SVI and risk bands
 | ID | Linked FR | Criterion |
@@ -453,13 +452,13 @@ Long-term monitoring after the complaint is filed is covered by the sister probl
 | AC-REC-01 | FR-REC-01, 02 | Across the evaluation set, **all six support types** are recommended at least once, and **≥ 85%** of expected recommendations are produced. |
 | AC-REC-02 | FR-REC-03 | Every recommendation shows its reason, its urgency or SLA, and the responsible stakeholder. |
 | AC-REC-03 | FR-REC-05 | A non-emergency recommendation cannot reach an external queue until a counsellor or supervisor approves it (verified by attempting it through the API). |
-| AC-REC-04 | FR-REC-06 | In a Critical scenario, the victim sees emergency options in their chosen language within 3 seconds of the band changing. |
+| AC-REC-04 | FR-REC-06 | In a Critical scenario, the integration response (and the `emergency.show` stream event) carries emergency options in the interaction's language within 3 seconds of the band changing. |
 | AC-REC-05 | FR-REC-07 | Approving a "police intervention" recommendation creates a task in the police liaison queue that contains **no narrative text and no SVI breakdown**. |
 
 ### 6.8 Multilingual
 | ID | Linked FR | Criterion |
 |---|---|---|
-| AC-LANG-01 | FR-LANG-01 | All victim-facing strings exist in the 5 required languages (an automated check finds no missing translation keys). |
+| AC-LANG-01 | FR-LANG-01 | The emergency options and the operator's suggested questions exist in the 5 required languages (an automated check finds no missing translation keys). |
 | AC-LANG-02 | FR-LANG-03 | Language auto-detection is correct for ≥ 90% of evaluation scenarios. |
 | AC-LANG-03 | FR-LANG-02 | Band accuracy for each language is reported; no required language falls more than 15 percentage points below English. |
 | AC-LANG-04 | FR-LANG-06 | Responders see the original text and the translation, with the evidence phrase highlighted in both. |
@@ -488,10 +487,10 @@ Long-term monitoring after the complaint is filed is covered by the sister probl
 | AC-SEC-01 | NFR-SEC-01, 04 | The app is served over HTTPS; a scan (e.g. OWASP ZAP baseline) finds no high-severity issues. |
 | AC-SEC-02 | NFR-SEC-05 | Text sent to third-party AI APIs contains no names, phone numbers or addresses (tested with 10 scenarios that contain them). |
 | AC-PRI-01 | NFR-PRI-03 | Personal identifiers and assessment data are in separate tables, linked only by a pseudonymous ID. |
-| AC-ETH-01 | NFR-ETH-02 | No victim-facing screen shows a diagnostic label (checked by reviewing all victim screens). |
+| AC-ETH-01 | NFR-ETH-02 | Nothing the module returns for the person (the emergency options) contains a score, band, indicator name or diagnostic label (checked in the integration tests). |
 | AC-ETH-02 | NFR-ETH-04 | A fairness report lists band accuracy by language, gender and channel; any gap above 15 percentage points is documented with a mitigation plan. |
-| AC-ACC-01 | NFR-ACC-01 | Lighthouse/axe accessibility score ≥ 90 on all victim-facing pages. |
-| AC-REL-01 | NFR-REL-01 | With the AI service down, a new complaint is still filed, scored in fallback mode, marked "limited confidence" and placed in the queue. |
+| AC-ACC-01 | NFR-ACC-01 | axe finds no WCAG 2.1 AA violations on the sign-in page and the staff dashboards. |
+| AC-REL-01 | NFR-REL-01 | With the AI service down, a new interaction is still accepted, scored in fallback mode, marked "limited confidence" and placed in the queue. |
 | AC-MNT-01 | NFR-MNT-03 | Unit-test coverage of the scoring module is ≥ 80%. |
 
 ---
@@ -504,18 +503,18 @@ Long-term monitoring after the complaint is filed is covered by the sister probl
 | ES-1 | Analyse voice interactions, speech patterns, pauses, pitch variation, emotional indicators, and textual narratives | FR-VOI-01…09, FR-NLP-01…09, FR-EMO-01…04, FR-CH-03, 04 | AC-VOI-01…07, AC-NLP-05, AC-EMO-01, AC-CH-02 |
 | ES-2 | Use NLP, Speech Analytics and Emotion AI to identify signs of trauma and distress | FR-NLP-*, FR-VOI-*, FR-EMO-*, FR-IND-03 | AC-NLP-01…07, AC-VOI-*, AC-EMO-01 |
 | ES-3 | Generate a Stress Vulnerability Index (SVI) on a predefined scale | FR-SVI-01…07, Appendix A | AC-SVI-01…04 |
-| ES-4 | Categorise victims into Low, Moderate, High and Critical risk | FR-RISK-01…05, Appendix B | AC-RISK-01…04, AC-SCR-03 |
-| ES-5 | Detect severe trauma, fear, depression, suicidal ideation, intimidation, social isolation and extreme vulnerability | FR-IND-01…05, FR-NLP-02…05, FR-SCR-02 | AC-IND-01, 02, AC-NLP-01…04 |
+| ES-4 | Categorise victims into Low, Moderate, High and Critical risk | FR-RISK-01…05, Appendix B | AC-RISK-01…04 |
+| ES-5 | Detect severe trauma, fear, depression, suicidal ideation, intimidation, social isolation and extreme vulnerability | FR-IND-01…05, FR-NLP-02…05, FR-NLP-11 | AC-IND-01, 02, AC-NLP-01…04, AC-NLP-08 |
 | ES-6 | Automatically recommend counselling, legal aid, medical help, police intervention, witness protection or emergency support based on risk | FR-REC-01…09, Appendix C | AC-REC-01…05 |
-| ES-7 | Support multilingual interactions, including major Indian languages and dialects | FR-LANG-01…06, FR-NLP-06, FR-SCR-03 | AC-LANG-01…04, AC-NLP-07 |
+| ES-7 | Support multilingual interactions, including major Indian languages and dialects | FR-LANG-01…06, FR-NLP-06 | AC-LANG-01…04, AC-NLP-07 |
 | ES-8 | Maintain privacy, informed consent, confidentiality and ethical AI standards | FR-CON-*, FR-AUD-*, NFR-PRI-*, NFR-SEC-*, NFR-ETH-*, C-LEG-*, C-ETH-* | AC-CON-01…06, AC-PRI-01, AC-SEC-01, 02, AC-ETH-01, 02, AC-DSH-01, 02, AC-AUD-01 |
 
 ### 7.2 Expected Outcomes → features → how it is shown
 | # | Expected Outcome | Features that deliver it | Measured by (in the demo/evaluation) |
 |---|---|---|---|
-| EO-1 | Early identification of highly distressed victims | Real-time SVI, safety check, safety overrides, Critical alerts | AC-NLP-01, 02, AC-RISK-01, AC-ALR-01; **time from first message to Critical flag** reported |
+| EO-1 | Early identification of highly distressed victims | Real-time SVI, safety lexicon on every message, safety overrides, Critical alerts | AC-NLP-01, 02, AC-RISK-01, AC-ALR-01; **time from first message to Critical flag** reported |
 | EO-2 | Prioritisation of counselling and rehabilitation services | Risk-sorted queue, counsellor assignment, recommendation engine, follow-ups | AC-CASE-01, AC-REC-01; comparison of **risk-sorted vs. first-come queue** on the evaluation set (average wait for Critical cases) |
-| EO-3 | Improved victim-centric grievance redressal | Consent controls, trauma-informed flow, no retelling, multilingual, quick exit, emergency options | AC-CON-*, AC-CH-05, AC-LANG-01, AC-REC-04; short usability test with 5+ participants, using a post-session comfort rating |
+| EO-3 | Improved victim-centric grievance redressal | Consent state per interaction, no retelling (case summary), multilingual, emergency options returned to the calling system | AC-CON-*, AC-LANG-01, AC-REC-04; short usability test with 5+ participants, using a post-session comfort rating |
 | EO-4 | Better allocation of support resources | District dashboard, demand-vs-capacity analytics, referral routing by type and district | AC-DSH-02, 03, AC-REC-05; dashboard shows referrals by type and district |
 | EO-5 | Enhanced responsiveness of the helpline and portal ecosystem | Operator assist console, live alerts, escalation, SLAs, integration API | AC-ALR-01, 02, AC-API-01, NFR-PERF-*; **alert-to-acknowledgement time** reported |
 
@@ -541,11 +540,13 @@ Long-term monitoring after the complaint is filed is covered by the sister probl
 - Long-term monitoring after the complaint (SIH26094); only a follow-up hook is provided.
 - Training large models from scratch; existing models and APIs are used and adapted.
 - Facial or video emotion analysis (not asked for in the problem statement, and it adds privacy risk).
+- **Victim-facing screens** (portal, chatbot interface, IVRS menus, mobile app): NHAA's systems own them. The module provides the integration API, plus a detachable demo input layer for presentation only (PRODUCT_VISION.md §6).
+- **Questionnaires and structured screening** (PHQ-2, GAD-2, PC-PTSD-5, C-SSRS, keypad answers): removed 16 Nov 2026 (PRODUCT_VISION.md §5).
 
 ### 8.2 Assumptions
 - NHAA would provide a docket number and basic case context through an API in a real deployment.
 - Counsellors and responders are available to act on alerts; the system supports their work and does not replace it.
-- Victims may use shared or low-end phones, so the system must not rely on stored sessions or heavy downloads.
+- NHAA's systems obtain consent, show the AI disclosure and the emergency options, and send the person's words and audio through the integration API.
 - Synthetic scenarios are a reasonable proxy for testing, but real-world validation with professionals would be needed before deployment.
 - The default weights and thresholds in the appendices are starting values to be tuned on the evaluation set and reviewed by a mental-health professional if possible.
 
@@ -555,7 +556,7 @@ Long-term monitoring after the complaint is filed is covered by the sister probl
 
 ### Appendix A: SVI formula (default)
 
-**Step 1, dimension fusion.** For each dimension *d*, combine the available sources *s* (text NLP, voice, screener, context):
+**Step 1, dimension fusion.** For each dimension *d*, combine the available sources *s* (text NLP, safety lexicon, voice, case context):
 
 ```
 dimension_score(d) = Σ_s ( w_s · c_s · x_s,d ) / Σ_s ( w_s · c_s )
@@ -564,10 +565,12 @@ where `x` is the source's 0–1 score for that dimension, `c` its confidence (0�
 
 | Source | Default weight `w_s` |
 |---|---|
-| Explicit statements (text NLP) | 0.40 |
-| Screener / safety-check answers | 0.30 |
+| Explicit statements: text NLP (AI) | 0.40 |
+| Explicit statements: safety lexicon (rules) | 0.40 |
 | Case context | 0.15 |
 | Voice / acoustic features | 0.15 |
+
+The weights are relative: the formula divides by the weights of the sources actually present, so it is defined for any subset of sources. The screener source (0.30) was removed in scoring config v3 (16 Nov 2026); the other weights are unchanged. A dimension counts as fully covered when the sources present weigh at least 0.70 together (for example text NLP plus the safety lexicon); with less, its confidence is reduced proportionally.
 
 **Step 2, SVI.**
 ```
@@ -587,20 +590,20 @@ SVI = round( 100 · Σ_d ( W_d · dimension_score(d) ) )      with Σ_d W_d = 1
 
 **Step 3, band.** 0–29 Low · 30–54 Moderate · 55–74 High · 75–100 Critical, then apply the safety overrides in Appendix B.
 
-**"No" answers (denials).** A "No" to a safety-check or suicide-screen question counts as a screener score of 0 for that dimension, so it can lower the SVI. It can never lower the band: the band is at least what the other evidence gives without the denials, and overrides from other sources still apply (NFR-ETH-05).
+**No structured answers.** Config v3 has no screener source and no "denial" scores. A spoken or written "no" is analysed like any other words (FR-NLP-11).
 
 ### Appendix B: Safety overrides (default)
 | # | Condition | Minimum band |
 |---|---|---|
 | OV-1 | Suicidal ideation with stated intent, plan or means | Critical |
-| OV-2 | Accused present or nearby **now**, or the victim is confined | Critical |
+| OV-2 | Accused present or nearby **now** (said, or `accusedNearby` in case details), or the victim is confined | Critical |
 | OV-3 | Current serious injury needing urgent medical care | Critical |
 | OV-4 | Explicit threat to life of the victim or family | High |
 | OV-5 | Sexual offence and the victim is a minor | High |
 | OV-6 | Passive suicidal ideation (wishing to be dead, without a plan) | High |
 | OV-7 | Pressure or threats to withdraw the complaint or turn hostile as a witness | High |
 | OV-8 | Displaced or homeless as a result of the atrocity | Moderate |
-| OV-9 | Says they are **not safe right now** (safety check) | High |
+| OV-9 | Says they are **not safe right now**, in their own words ("I am not safe here"), or answers "no" to the chatbot's or operator's "Are you safe right now?" (FR-NLP-11) | High |
 
 ### Appendix C: Recommendation mapping (default)
 | Trigger (indicator or band) | Recommendation | Responsible | Default urgency |
@@ -615,12 +618,5 @@ SVI = round( 100 · Σ_d ( W_d · dimension_score(d) ) )      with Σ_d W_d = 1
 | Social isolation ≥ 0.5, or OV-8 | Rehabilitation and relief referral, plus counselling | Welfare officer | ≤ 72 h |
 | Band = Low | Information on rights, the self-help line, and an optional follow-up | Automatic (no approval needed) | Not applicable |
 
-### Appendix D: Glossary of screeners
-| Screener | What it screens | Items |
-|---|---|---|
-| PHQ-2 | Depression | 2 |
-| GAD-2 | Anxiety | 2 |
-| PC-PTSD-5 | Post-traumatic stress | 5 |
-| C-SSRS screener (adapted) | Suicide risk | Up to 6 |
-
-> These are screening aids, not diagnostic tools. The wording must be validated in each language before any real-world use.
+### Appendix D: Glossary of screeners (removed)
+*Removed 16 Nov 2026 with FR-SCR.* The module uses no screening instruments. Operators may still be shown scripted, pre-translated questions to ask aloud (FR-DSH-01); the answers are analysed as speech.

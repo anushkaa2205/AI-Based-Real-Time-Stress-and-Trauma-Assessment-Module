@@ -9,7 +9,7 @@
 ## Contents
 1. [Conventions](#1-conventions)
 2. [Shared types](#2-shared-types)
-3. [Victim API](#3-victim-api)
+3. [Victim API (removed)](#3-victim-api-removed)
 4. [Authorisation matrix](#4-authorisation-matrix)
 5. [Staff API](#5-staff-api)
 6. [Integration API](#6-integration-api)
@@ -24,21 +24,21 @@
 
 | Topic | Rule |
 |---|---|
-| Base URL | `https://<host>/api/v1`. Three surfaces: `/victim/*`, `/staff/*`, `/integration/*`; plus `/realtime/auth`. |
+| Base URL | `https://<host>/api/v1`. Two surfaces: `/integration/*` (the module's only input, API keys) and `/staff/*` (dashboards); plus `/realtime/auth`. |
 | Format | JSON (`application/json; charset=utf-8`), except audio upload (`multipart/form-data`). Field names in camelCase. |
 | IDs | MongoDB ObjectId as a 24-character hex string. Docket numbers are separate strings. |
 | Time | ISO 8601 in UTC (`2026-11-14T11:33:12Z`). Durations in milliseconds (`…Ms`) or seconds (`…Sec`). |
 | Languages | BCP-47: `en`, `hi`, `hi-Latn` (Romanised Hindi / Hinglish), `mr`, `ta`, `bn`. |
-| Victim auth | `POST /victim/interactions` sets cookie `nhaa_vs` (HttpOnly, Secure, SameSite=Strict, 2 h sliding). Non-browser channels (IVRS simulator) send `X-Victim-Session: <token>`. A token is bound to **one interaction**. |
 | Staff auth | Auth.js session cookie. TOTP required for `NHAA_SUPERVISOR`, `STATE_ADMIN`, `MINISTRY_ADMIN`, `SYS_ADMIN`, `AUDITOR`. 15-minute idle timeout. |
 | Integration auth | `Authorization: ApiKey <prefix>.<secret>` with scopes (§6). |
-| Idempotency | Every victim `POST` that creates data takes `Idempotency-Key: <uuid>`. A repeated key returns the **original response** (status `200`, header `Idempotent-Replay: true`). Needed for retries on slow networks. |
+| Idempotency | Integration `POST /messages` and `/audio` take `Idempotency-Key: <uuid>`. A repeated key returns the **original response** (status `200`, header `Idempotent-Replay: true`). Needed for retries on slow networks. |
 | Pagination | Cursor-based: `?limit=50&cursor=<opaque>` → `{ items, nextCursor }`. Max `limit` 100. |
-| Rate limits | Victim: 30 requests/min per session, 10 sessions/hour per IP. Staff: 300/min per user. Integration: per key (`rateLimitPerMin`). Headers: `RateLimit-Limit`, `RateLimit-Remaining`, `RateLimit-Reset`. Over the limit → `429`. |
+| Rate limits | Staff: 300/min per user. Integration: per key (`rateLimitPerMin`). Headers: `RateLimit-Limit`, `RateLimit-Remaining`, `RateLimit-Reset`. Over the limit → `429`. |
 | Errors | `application/problem+json` (RFC 9457) with a stable `code` (§9). |
 | Versioning | Breaking changes get `/api/v2`; additive fields don't. Clients must ignore unknown fields. |
 | Field filtering | Responses for staff are **shaped by role on the server** (§4). The same endpoint can return fewer fields to a less-privileged role, and never more. |
-| Victim safety rule | **No victim-facing response ever contains an SVI, a band, indicator names or scores** (NFR-ETH-02). The only risk-related field the victim API returns is `showEmergencyPanel`. |
+| Victim safety rule | The integration `/messages`, `/audio` and `/context` responses are what a calling system may show the person: they carry **no SVI, band, indicator names or scores** (NFR-ETH-02), only `showEmergencyPanel` and the `emergency` text. Scores are read separately (`GET …/assessment`, scope `assessments:read`) for authorised reviewers. |
+| Inputs | Exactly two: **text messages** and **voice audio** (FR-CH-01). No endpoint accepts structured answers or key presses. |
 
 ---
 
@@ -56,7 +56,7 @@ type RiskBand = "LOW" | "MODERATE" | "HIGH" | "CRITICAL";
 type Dimension =
   | "ACUTE_STRESS" | "SEVERE_TRAUMA" | "FEAR_ANXIETY" | "DEPRESSION"
   | "SUICIDAL_IDEATION" | "INTIMIDATION" | "SOCIAL_ISOLATION" | "EXTREME_VULNERABILITY";
-type SignalSource = "TEXT_NLP" | "SAFETY_LEXICON" | "VOICE" | "SCREENER" | "CONTEXT";
+type SignalSource = "TEXT_NLP" | "SAFETY_LEXICON" | "VOICE" | "CONTEXT";   // SCREENER removed (config v3)
 type SupportType =
   | "COUNSELLING" | "LEGAL_AID" | "MEDICAL_ASSISTANCE" | "POLICE_INTERVENTION"
   | "WITNESS_PROTECTION" | "EMERGENCY_SUPPORT" | "REHABILITATION_RELIEF" | "INFORMATION";
@@ -65,20 +65,9 @@ type Role =
   | "OPERATOR" | "NHAA_SUPERVISOR" | "COUNSELLOR" | "DISTRICT_OFFICER" | "POLICE_LIAISON"
   | "WELFARE_OFFICER" | "STATE_ADMIN" | "MINISTRY_ADMIN" | "SYS_ADMIN" | "AUDITOR";
 
-/** Scripted prompt the victim UI renders (ADR-3: never free LLM text) */
-interface Prompt {
-  key: string;                         // i18n key, e.g. "flow.safety.accusedNearby"
-  text: string;                        // already in the victim's language
-  audioUrl?: string;                   // pre-recorded audio (low literacy, IVRS)
-  input: "FREE_TEXT" | "YES_NO" | "SCALE_0_3" | "CHOICE" | "NONE";
-  choices?: { value: string; label: string }[];
-  skippable: boolean;                  // FR-CH-09
-  screener?: { instrument: "SAFETY_CHECK" | "PHQ2" | "GAD2" | "PCPTSD5" | "CSSRS_SCREEN"; itemCode: string };
-}
-
-interface EmergencyPanel {             // FR-REC-06
+/** Returned to the calling system to show the person (FR-REC-06). Scripted, pre-translated (ADR-3). */
+interface EmergencyPanel {
   numbers: { label: string; number: string }[];  // 112, Tele-MANAS 14416, NHAA 14566
-  callbackAvailable: boolean;
   message: string;                     // localised, calm wording
 }
 
@@ -87,7 +76,7 @@ interface AssessmentDto {
   id: ObjectId;
   interactionId: ObjectId;
   seq: number;
-  trigger: "TEXT_MESSAGE" | "VOICE_WINDOW" | "SCREENER" | "CONTEXT_UPDATE" | "INDICATOR_REVIEW" | "CONFIG_RESCORE";
+  trigger: "TEXT_MESSAGE" | "VOICE_WINDOW" | "CONTEXT_UPDATE" | "INDICATOR_REVIEW" | "CONFIG_RESCORE";
   svi: number;                          // 0–100
   computedBand: RiskBand;
   band: RiskBand;
@@ -115,7 +104,6 @@ interface IndicatorDto {
   evidence:
     | { type: "TEXT_SPAN"; messageId: ObjectId; spanStart: number; spanEnd: number; quote: string; quoteTranslated?: string }
     | { type: "ACOUSTIC_EVENT"; voiceWindowId: ObjectId; eventType: string; atMs: number }
-    | { type: "SCREENER_ANSWER"; itemCode: string; value: number }
     | { type: "CONTEXT_FIELD"; field: string };
   review?: { score?: number; reason: string; by: { id: ObjectId; name: string }; at: Iso };
   createdAt: Iso;
@@ -155,156 +143,9 @@ interface Page<T> { items: T[]; nextCursor: string | null }
 
 ---
 
-## 3. Victim API
+## 3. Victim API (removed)
 
-Base: `/api/v1/victim`. Public, rate-limited, victim session token. All text in responses is already in the victim's language.
-
-### 3.1 `POST /interactions`: start a session
-Creates the subject, the case (or attaches to an existing docket) and the interaction. Analysis is **off** until consent.
-
-**Request**
-```json
-{
-  "channel": "CHATBOT",
-  "language": "hi",
-  "docketNumber": null,
-  "districtCode": "MH-517"
-}
-```
-**201 Created** (sets cookie `nhaa_vs`)
-```json
-{
-  "interactionId": "6735a1f0c2a4b1e0f0a1in01",
-  "docketNumber": "NHAA-2026-MH-004512",
-  "sessionToken": "only-returned-for-IVRS-and-API-channels",
-  "consentNotice": {
-    "version": "2026-11-v1",
-    "language": "hi",
-    "title": "…",
-    "body": "…",
-    "audioUrl": "/audio/consent/2026-11-v1/hi.mp3",
-    "options": ["textAnalysis", "voiceAnalysis", "shareWithCounsellor", "followUpContact", "audioRetention"]
-  },
-  "aiDisclosure": "…",
-  "quickExitUrl": "https://www.google.com"
-}
-```
-Requirements: FR-CH-01/07, FR-CON-01, NFR-ETH-07.
-
-### 3.2 `GET /consent-notices/{version}?lang=hi`
-Returns the same `consentNotice` object, for a language switch. **200**.
-
-### 3.3 `POST /interactions/{id}/consent`: grant or update consent
-**Request**
-```json
-{
-  "noticeVersion": "2026-11-v1",
-  "language": "hi",
-  "textAnalysis": true,
-  "voiceAnalysis": true,
-  "shareWithCounsellor": true,
-  "followUpContact": false,
-  "audioRetention": false,
-  "guardianConsent": null
-}
-```
-**200**
-```json
-{ "mode": "FULL", "next": { "key": "flow.safety.intro", "text": "…", "input": "NONE", "skippable": false } }
-```
-If every analysis option is `false` → `"mode": "SAFETY_ONLY"`; the flow continues with the safety check and complaint filing (FR-CON-03). For minors without a guardian: `"mode": "SAFETY_ONLY"` and `"next"` offers a human counsellor (FR-CON-05).
-
-### 3.4 `POST /interactions/{id}/consent/withdraw`
-**Request** `{ "reason": null }` → **200** `{ "mode": "SAFETY_ONLY", "audioDeleted": true }`.
-Analysis stops immediately; stored audio is deleted (FR-CON-04, AC-CON-04).
-
-### 3.5 `GET /interactions/{id}/next`
-Returns the current prompt (for page reloads and resume after a pause). **200** `{ "prompt": Prompt, "showEmergencyPanel": false, "emergency": null }`.
-
-### 3.6 `POST /interactions/{id}/messages`: send text (chat / portal)
-Headers: `Idempotency-Key`.
-**Request**
-```json
-{ "text": "वो लोग घर के बाहर खड़े हैं, कह रहे हैं केस वापस लो", "promptKey": "flow.narrative.open" }
-```
-**200**
-```json
-{
-  "messageId": "6735a1f0c2a4b1e0f0a1ms09",
-  "reply": {
-    "key": "flow.safety.immediate",
-    "text": "आप अभी सुरक्षित जगह पर हैं? हम आपकी मदद के लिए यहाँ हैं।",
-    "input": "YES_NO",
-    "skippable": true
-  },
-  "showEmergencyPanel": true,
-  "emergency": {
-    "numbers": [
-      { "label": "Police / Emergency", "number": "112" },
-      { "label": "Tele-MANAS", "number": "14416" },
-      { "label": "NHAA", "number": "14566" }
-    ],
-    "callbackAvailable": true,
-    "message": "…"
-  }
-}
-```
-- Returns within **3 s** (NFR-PERF-01). Analysis happens before the reply, so `showEmergencyPanel` reflects this message.
-- Text limit 2,000 characters. If mode is `SAFETY_ONLY`, the text is stored for the complaint but not analysed (only the safety lexicon runs, for life-safety).
-- Requirements: FR-CH-02, FR-NLP-*, FR-REC-06, NFR-ETH-02.
-
-### 3.7 `POST /interactions/{id}/audio`: send a voice chunk
-`multipart/form-data`, headers: `Idempotency-Key`.
-
-| Part | Type | Notes |
-|---|---|---|
-| `audio` | file | `audio/webm;codecs=opus` or `audio/ogg`, ≤ 6 s, ≤ 200 KB |
-| `windowIndex` | int | 0, 1, 2… (order and de-duplication) |
-| `startMs` | int | Offset from call start |
-
-**202 Accepted**
-```json
-{ "windowIndex": 7, "transcript": "…", "showEmergencyPanel": false, "emergency": null }
-```
-- Needs `voiceAnalysis` consent; otherwise **409** `CONSENT_REQUIRED`.
-- The raw audio is never written to disk unless `audioRetention` is true (FR-VOI-09).
-- Assessment updates reach staff over real time within **5 s** (NFR-PERF-02).
-
-### 3.8 `POST /interactions/{id}/screeners`: answer a screener or safety item
-**Request**
-```json
-{ "instrument": "SAFETY_CHECK", "itemCode": "SAFETY_ACCUSED_NEARBY", "value": 1, "skipped": false }
-```
-**200** `{ "next": Prompt, "showEmergencyPanel": true, "emergency": EmergencyPanel }`
-Values: `YES_NO` → 0/1, `SCALE_0_3` → 0–3. The safety check works in every mode (FR-SCR-01).
-
-### 3.9 `PUT /interactions/{id}/context`: optional vulnerability facts
-**Request** (every field optional; unknown → omit)
-```json
-{
-  "offenceCategory": "THREAT_INTIMIDATION",
-  "ageGroup": "18_59",
-  "gender": "F",
-  "hasDisability": false,
-  "supportPersonPresent": false,
-  "accusedNearby": true,
-  "ongoingThreats": true,
-  "pressureToWithdraw": true,
-  "displaced": false
-}
-```
-**200** `{ "next": Prompt, "showEmergencyPanel": true, "emergency": EmergencyPanel }` (FR-CH-08).
-
-### 3.10 `POST /interactions/{id}/language`
-`{ "language": "mr" }` → **200** `{ "next": Prompt }`, with the current prompt re-sent in the new language (FR-LANG-03).
-
-### 3.11 `POST /interactions/{id}/callback-request`
-`{ "phone": "+9198xxxxxxx", "preferredLanguage": "hi" }` → **201** `{ "requested": true, "message": "…" }`.
-The phone number is stored **only** in the PII vault. A Critical alert is raised (or an open one is updated) for immediate callback (FR-REC-06).
-
-### 3.12 `POST /interactions/{id}/end`
-`{ "reason": "COMPLETED" | "QUICK_EXIT" | "TIMEOUT" }` → **200** `{ "docketNumber": "…", "closingMessage": "…", "trackUrl": "…" }`.
-`QUICK_EXIT` clears the session cookie; the UI has already navigated away (FR-CH-09).
+*Removed 16 Nov 2026 (`PRODUCT_VISION.md` §5, decisions Q1 and Q3).* The module has no victim-facing API, no session token, no question flow (`/next`), no `/screeners`, no language switch and no callback request. NHAA's systems own the person's interface and send what the person said or wrote through the **integration API (§6)**, which is the module's only input. The request bodies the integration API reuses (consent, audio window, case context) are defined in §6.
 
 ---
 
@@ -396,14 +237,13 @@ Sorted by **band ↓, SVI ↓, waiting time ↑** (FR-CASE-01).
   "context": { "accusedNearby": true, "ongoingThreats": true, "supportPersonPresent": false },
   "interactions": [{ "id": "…", "channel": "CHATBOT", "startedAt": "…", "endedAt": null, "status": "ACTIVE" }],
   "latestAssessment": "AssessmentDto",
-  "screenerScores": [{ "instrument": "PHQ2", "total": 5, "maxTotal": 6, "isPositive": true }],
   "recommendations": ["RecommendationDto"],
   "openAlerts": [{ "id": "…", "level": "CRITICAL", "createdAt": "…" }],
   "bandOverrides": [],
   "assignedTo": { "id": "…", "name": "…" }
 }
 ```
-For `DISTRICT_OFFICER` / `STATE_ADMIN` the response omits `summary`, `summaryTranslated`, `context`, `screenerScores` and the assessment `dimensions`/`topEvidence` (🔒).
+For `DISTRICT_OFFICER` / `STATE_ADMIN` the response omits `summary`, `summaryTranslated`, `context` and the assessment `dimensions`/`topEvidence` (🔒).
 
 #### `PATCH /cases/{id}`
 `{ "status"?: CaseStatus, "assignedCounsellorId"?: ObjectId | null }` → `200 CaseDetailDto`. Closing a High/Critical case without a follow-up or a reason → `422 FOLLOW_UP_REQUIRED`.
@@ -427,8 +267,8 @@ For `DISTRICT_OFFICER` / `STATE_ADMIN` the response omits `summary`, `summaryTra
 | `GET` | `/interactions/{id}/indicators?dimension=&status=` | `{ items: IndicatorDto[] }` |
 | `GET` | `/interactions/{id}/voice?fromWindow=` | `{ items: [{ windowIndex, startMs, endMs, pauses, pitch, speechRateWpm, energy, events, emotion }] }` |
 | `GET` | `/interactions/{id}/emotions` | `{ items: [{ atMs, text: {label, confidence}, voice: {label, confidence}, fused: {label, confidence} }] }` (FR-EMO-03) |
-| `POST` | `/interactions/{id}/operator-message` | Operator types what the caller said during a live call: `{ text }` → same pipeline as §3.6; `201 { messageId }` |
-| `GET` | `/interactions/{id}/suggested-questions` | `{ items: [{ key, text, reason }] }` (operator console, FR-CH-04) |
+| `POST` | `/interactions/{id}/operator-message` | Operator types what the caller said during a live call: `{ text }` → same pipeline as integration `/messages` with `sender: "VICTIM"`; `201 { messageId }` |
+| `GET` | `/interactions/{id}/suggested-questions` | `{ items: [{ key, text, textEn, reason }] }` (operator console, FR-CH-04): scripted, pre-translated questions for the operator to ask **aloud**; safety questions first, then what the evidence points at. The module never asks them itself, and the answers arrive as speech. |
 
 ### 5.4 Indicator review (FR-IND-05)
 #### `PATCH /indicators/{id}`
@@ -510,21 +350,21 @@ All analytics endpoints take `scope=national|state|district`, `stateId`, `distri
 
 ## 6. Integration API
 
-Base: `/api/v1/integration`. For existing NHAA systems (portal, IVRS platform, call-centre software). `Authorization: ApiKey <prefix>.<secret>`.
+Base: `/api/v1/integration`. **The module's only input interface** (FR-API-05), for NHAA's systems (chatbot, helpline / call-centre software, IVRS platform, mobile app, portal, operator desk) and the demo input layer. `Authorization: ApiKey <prefix>.<secret>`.
 
 | Scope | Allows |
 |---|---|
-| `interactions:write` | Start interactions, send text/audio/screener/context, end |
+| `interactions:write` | Start interactions, send text and audio, send case context, withdraw consent, end |
 | `assessments:read` | Read current assessment and recommendations for interactions this client created |
 | `stream:read` | Subscribe to the live stream of an interaction this client created |
 
 | Method | Path | Request → Response |
 |---|---|---|
 | `POST` | `/interactions` | `{ channel, language, docketNumber, districtCode?, externalRef?, consent: ConsentRequest }` → `201 { interactionId, mode }`. **The integrating system must have collected consent** and passes the exact notice version it showed. |
-| `POST` | `/interactions/{id}/messages` | `{ text, sender: "VICTIM" \| "OPERATOR" }` → `201 { messageId }` |
-| `POST` | `/interactions/{id}/audio` | Same as §3.7 → `202` |
-| `POST` | `/interactions/{id}/screeners` | Same as §3.8 → `201` |
-| `PUT` | `/interactions/{id}/context` | Same as §3.9 → `200` |
+| `POST` | `/interactions/{id}/messages` | `{ text, sender: "VICTIM" \| "OPERATOR" }` → `201 { messageId, showEmergencyPanel, emergency }` (§6.2) |
+| `POST` | `/interactions/{id}/audio` | Audio window (§6.3) → `202` |
+| `PUT` | `/interactions/{id}/context` | Case context from NHAA's record (§6.4) → `200 { showEmergencyPanel, emergency }` |
+| `POST` | `/interactions/{id}/consent/withdraw` | `{ reason?: string }` → `200 { mode: "SAFETY_ONLY" }` (§6.1) |
 | `GET` | `/interactions/{id}/assessment` | `200 { svi, band, confidence, limitedConfidence, explanation, overridesFired, topDimensions: [{dimension, score}], updatedAt }` |
 | `GET` | `/interactions/{id}/recommendations` | `200 { items: RecommendationDto[] }` |
 | `GET` | `/interactions/{id}/stream` | **Server-Sent Events**: `event: assessment.updated` / `event: emergency.show` / `event: recommendation.created`, with the payloads in §7 (FR-API-03) |
@@ -539,6 +379,73 @@ data: {"interactionId":"6735a1f0c2a4b1e0f0a1in01","svi":81,"band":"CRITICAL","se
 
 Errors specific to integration: `401 INVALID_API_KEY`, `403 SCOPE_MISSING`, `404` for interactions created by another client, `429 RATE_LIMITED`.
 
+### 6.1 Consent
+The calling system obtains consent in its own workflow and sends it on start as `consent: ConsentRequest`:
+```json
+{
+  "noticeVersion": "2026-11-v1",
+  "language": "hi",
+  "textAnalysis": true,
+  "voiceAnalysis": true,
+  "shareWithCounsellor": true,
+  "followUpContact": false,
+  "audioRetention": false,
+  "guardianConsent": null
+}
+```
+If every analysis option is `false` → `mode: "SAFETY_ONLY"`: the interaction is recorded and routed, and only the safety lexicon runs (FR-CON-03). For minors without a guardian: `SAFETY_ONLY` (FR-CON-05). `POST /interactions/{id}/consent/withdraw` stops analysis at once, sets `SAFETY_ONLY` and deletes any stored audio (FR-CON-04, AC-CON-04).
+
+### 6.2 Text messages
+Headers: `Idempotency-Key`. `sender` is `"VICTIM"` (the person, default) or `"OPERATOR"` (NHAA's chatbot or operator, for example the question "Are you safe right now?"). Operator turns are stored as context and never scored (FR-CH-02, AC-CH-07); from Phase M they are passed with the next reply so short answers are read with their question (FR-NLP-11).
+
+**201** (person's message):
+```json
+{
+  "messageId": "6735a1f0c2a4b1e0f0a1ms09",
+  "showEmergencyPanel": true,
+  "emergency": {
+    "numbers": [
+      { "label": "Police / Emergency", "number": "112" },
+      { "label": "Tele-MANAS", "number": "14416" },
+      { "label": "NHAA", "number": "14566" }
+    ],
+    "message": "…"
+  }
+}
+```
+- Returns within **3 s** (NFR-PERF-01); analysis happens before the response, so `showEmergencyPanel` reflects this message. `emergency` is in the interaction's language, for the calling system to show the person.
+- Text limit 2,000 characters. In `SAFETY_ONLY` mode the text is stored but only the safety lexicon runs.
+
+### 6.3 Audio windows
+`multipart/form-data`, headers: `Idempotency-Key`.
+
+| Part | Type | Notes |
+|---|---|---|
+| `audio` | file | `audio/webm;codecs=opus` or `audio/ogg`, ≤ 6 s, ≤ 200 KB |
+| `windowIndex` | int | 0, 1, 2… (order and de-duplication) |
+| `startMs` | int | Offset from call start |
+
+**202 Accepted** `{ "windowIndex": 7, "transcript": "…", "analysed": true, "showEmergencyPanel": false, "emergency": null }`
+- Needs `voiceAnalysis` consent; otherwise **409** `CONSENT_REQUIRED`.
+- Send the **caller's channel** only where possible. Two-voice audio needs speaker separation (FR-VOI-10, Phase M); until it exists, its assessments are marked limited confidence.
+- The raw audio is never written to disk unless `audioRetention` is true (FR-VOI-09). A recorded file is cut into windows before sending (gap V4, Phase M).
+
+### 6.4 Case context
+Metadata from NHAA's own record, not something the person is asked (FR-CH-08). Every field optional; unknown → omit:
+```json
+{
+  "offenceCategory": "THREAT_INTIMIDATION",
+  "ageGroup": "18_59",
+  "gender": "F",
+  "hasDisability": false,
+  "supportPersonPresent": false,
+  "accusedNearby": true,
+  "ongoingThreats": true,
+  "pressureToWithdraw": true,
+  "displaced": false
+}
+```
+
 ---
 
 ## 7. Real-time events
@@ -547,7 +454,7 @@ Transport: Pusher private channels (SSE fallback in local dev). Channel subscrip
 
 | Channel | Subscribers |
 |---|---|
-| `private-interaction-{interactionId}` | Operator/counsellor on that interaction, supervisors, and the victim session (receives only `emergency.show`) |
+| `private-interaction-{interactionId}` | Operator/counsellor on that interaction, supervisors |
 | `private-queue-{districtId}` / `private-queue-national` | Counsellors, operators, supervisors in scope |
 | `private-oncall` | On-duty counsellors |
 | `private-supervisors` | NHAA supervisors |
@@ -562,7 +469,7 @@ Transport: Pusher private channels (SSE fallback in local dev). Channel subscrip
 |---|---|---|
 | `transcript.appended` | interaction | `{ interactionId, messageId, seq, sender, text, language }` (staff only) |
 | `assessment.updated` | interaction, queue | interaction channel: `{ interactionId, assessmentId, seq, svi, band, previousBand, overridesFired, topEvidence, confidence, limitedConfidence }` · queue channel: `{ caseId, band, svi }` only |
-| `emergency.show` | interaction (victim) | `{ emergency: EmergencyPanel }`: the only event a victim session receives |
+| `emergency.show` | interaction; integration SSE stream | `{ emergency: EmergencyPanel }`: for the calling system to show the person |
 | `case.created` / `case.updated` | queue | `{ caseId, docketNumber, band, svi, status, assignedToId, waitingSince }` |
 | `alert.created` | oncall, queue | `{ alertId, caseId, docketNumber, level, reason, createdAt }` |
 | `alert.acknowledged` | oncall, supervisors | `{ alertId, acknowledgedBy: { id, name }, acknowledgedAt }` |
@@ -593,7 +500,7 @@ Python FastAPI, reachable only from the web app and worker. **Not public.**
   "requestId": "6735a1f0c2a4b1e0f0a1ms09",
   "text": "वो लोग घर के बाहर खड़े हैं, कह रहे हैं केस वापस लो",
   "languageHint": "hi",
-  "conversation": [{ "role": "SYSTEM", "promptKey": "flow.narrative.open" }],
+  "conversation": [{ "role": "OPERATOR", "text": "Are you safe right now?" }],   // previous turn (FR-NLP-11, Phase M)
   "context": { "isSexualOffence": false, "isMinor": false },
   "tasks": ["language", "translation", "indicators", "emotion"]
 }
@@ -676,17 +583,17 @@ Every error uses `application/problem+json`:
   "status": 409,
   "code": "CONSENT_REQUIRED",
   "detail": "Voice analysis consent has not been given for this interaction.",
-  "instance": "/api/v1/victim/interactions/6735…/audio",
+  "instance": "/api/v1/integration/interactions/6735…/audio",
   "requestId": "req_01J…"
 }
 ```
-For victims, `title` and `detail` are localised and calm, and never mention internal terms.
+Error responses never contain message text or other victim content.
 
 | HTTP | `code` | When |
 |---|---|---|
 | 400 | `VALIDATION_FAILED` | Zod validation failed (`errors[]` lists the fields) |
 | 400 | `BAD_AUDIO` | Audio could not be decoded |
-| 401 | `UNAUTHENTICATED` / `SESSION_EXPIRED` / `INVALID_API_KEY` / `TOTP_REQUIRED` | Missing or invalid credentials |
+| 401 | `UNAUTHENTICATED` / `INVALID_API_KEY` / `TOTP_REQUIRED` | Missing or invalid credentials |
 | 403 | `FORBIDDEN` / `SCOPE_MISSING` / `CONSENT_NOT_GIVEN_FOR_SHARING` | Role, scope or consent does not allow it |
 | 404 | `NOT_FOUND` | Unknown ID, or not visible to this caller (never reveals existence) |
 | 409 | `CONSENT_REQUIRED` | Analysis endpoint called without the matching consent |
@@ -695,7 +602,7 @@ For victims, `title` and `detail` are localised and calm, and never mention inte
 | 413 | `PAYLOAD_TOO_LARGE` | Text > 2,000 characters or audio chunk > 200 KB |
 | 422 | `REASON_REQUIRED` / `FOLLOW_UP_REQUIRED` / `INVALID_CONFIG` / `REFERRAL_TOO_DETAILED` | Business rule failed |
 | 429 | `RATE_LIMITED` | Too many requests (`Retry-After` header) |
-| 503 | `ANALYSIS_DEGRADED` | Only for staff/integration diagnostics; **victim endpoints never fail because of the AI**, they continue in fallback mode |
+| 503 | `ANALYSIS_DEGRADED` | Only for diagnostics; **integration input endpoints never fail because of the AI**, they continue in fallback mode |
 
 ---
 
@@ -703,27 +610,24 @@ For victims, `title` and `detail` are localised and calm, and never mention inte
 
 | Requirement | Endpoints / events |
 |---|---|
-| FR-CH-01/02/06 | `POST /victim/interactions`, `/messages`, `/next` |
-| FR-CH-03/04 | `/victim/…/audio`, `/staff/interactions/{id}/transcript`, `/suggested-questions`, `/operator-message`, `transcript.appended` |
-| FR-CH-05 (IVRS) | Victim API with `X-Victim-Session`, `/screeners` with keypad values |
+| FR-CH-01/02 | integration `POST /interactions`, `/messages` (`sender`), `/audio` |
+| FR-CH-03/04 | integration `/audio`, `/staff/interactions/{id}/transcript`, `/suggested-questions`, `/operator-message`, `transcript.appended` |
 | FR-CH-07 | `docketNumber` on interaction and case; integration `POST /interactions` |
-| FR-CH-08 | `PUT /victim/…/context` |
-| FR-CH-09 | `/end {QUICK_EXIT}`, `skippable` prompts |
-| FR-CON-01…06 | `/consent`, `/consent/withdraw`, `/consent-notices`, `CONSENT_REQUIRED` |
-| FR-VOI-01…09 | `/victim/…/audio`, `/v1/analyze/audio`, `/staff/interactions/{id}/voice` |
+| FR-CH-08 | integration `PUT /…/context` |
+| FR-CON-01…06 | `consent` on integration start, integration `/consent/withdraw`, `CONSENT_REQUIRED` |
+| FR-VOI-01…10 | integration `/audio`, `/v1/analyze/audio`, `/staff/interactions/{id}/voice` |
 | FR-NLP-01…10, FR-EMO-* | `/v1/analyze/text`, `/v1/summarize`, `/staff/interactions/{id}/indicators`, `/emotions` |
-| FR-SCR-01…04 | `/victim/…/screeners`, `screenerScores` in case detail |
 | FR-IND-01…05 | `IndicatorDto`, `PATCH /indicators/{id}` |
 | FR-SVI-01…07 | `AssessmentDto`, `/assessments`, `/assessments/current`, `/admin/scoring-configs*` |
 | FR-RISK-01…05 | `band`, `overridesFired`, `explanation`, `/band-override` |
 | FR-REC-01…09 | `/recommendations*`, `/referrals*`, `/follow-ups*`, `emergency.show` |
-| FR-LANG-01…06 | `language` fields, `/victim/…/language`, `translation` in transcript and evidence |
+| FR-LANG-01…06 | `language` fields, localised `emergency` and suggested questions, `translation` in transcript and evidence |
 | FR-CASE-01…05 | `GET /cases` (sorted), `PATCH /cases/{id}`, `/notes` |
 | FR-ALR-01…04 | `/alerts*`, `alert.created`, `alert.escalated`, `alert.acknowledged` |
 | FR-DSH-01…08 | Staff API per role (§4), `/analytics/*` |
-| FR-API-01…04 | `/integration/*`, SSE `/stream`, API keys and scopes |
+| FR-API-01…05 | `/integration/*`, SSE `/stream`, API keys and scopes |
 | FR-AUD-01…03 | Audit entries on reads/writes, `/admin/audit`, `/admin/audit/verify` |
-| NFR-ETH-02 | Victim responses limited to `reply`, `showEmergencyPanel`, `emergency` |
+| NFR-ETH-02 | Integration input responses limited to `messageId`, `showEmergencyPanel`, `emergency` (and `transcript` for audio) |
 | NFR-PRI-02, C-ETH-02 | §4 matrix, `ReferralDto`, `REFERRAL_TOO_DETAILED` |
 | NFR-SEC-05 | §8 redacted input |
-| NFR-REL-01 | Victim endpoints never return `503`; `limitedConfidence` |
+| NFR-REL-01 | Integration input endpoints never return `503`; `limitedConfidence` |

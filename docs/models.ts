@@ -41,8 +41,8 @@ export const INTERACTION_STATUSES = ["ACTIVE", "ENDED", "ABANDONED"] as const;
 export const ASSESSMENT_MODES = ["SAFETY_ONLY", "TEXT_ONLY", "VOICE_ONLY", "FULL"] as const;
 export const CONSENT_ACTIONS = ["GRANTED", "UPDATED", "WITHDRAWN"] as const;
 export const MESSAGE_SENDERS = ["VICTIM", "SYSTEM", "OPERATOR"] as const;
-export const MESSAGE_MODALITIES = ["TEXT", "VOICE_TRANSCRIPT", "IVR_KEYPRESS"] as const;
-export const INSTRUMENTS = ["SAFETY_CHECK", "PHQ2", "GAD2", "PCPTSD5", "CSSRS_SCREEN"] as const;
+/** VICTIM is scored; OPERATOR (chatbot or operator turns) is context only; SYSTEM is legacy (no longer written). */
+export const MESSAGE_MODALITIES = ["TEXT", "VOICE_TRANSCRIPT"] as const; // IVR_KEYPRESS removed 16 Nov 2026
 
 /** The eight risk dimensions (FR-IND-01) */
 export const DIMENSIONS = [
@@ -57,8 +57,8 @@ export const DIMENSIONS = [
 ] as const;
 export type Dimension = (typeof DIMENSIONS)[number];
 
-export const SIGNAL_SOURCES = ["TEXT_NLP", "SAFETY_LEXICON", "VOICE", "SCREENER", "CONTEXT"] as const;
-export const EVIDENCE_TYPES = ["TEXT_SPAN", "ACOUSTIC_EVENT", "SCREENER_ANSWER", "CONTEXT_FIELD"] as const;
+export const SIGNAL_SOURCES = ["TEXT_NLP", "SAFETY_LEXICON", "VOICE", "CONTEXT"] as const; // SCREENER removed (config v3)
+export const EVIDENCE_TYPES = ["TEXT_SPAN", "ACOUSTIC_EVENT", "CONTEXT_FIELD"] as const;
 export const INDICATOR_STATUSES = ["ACTIVE", "CONFIRMED", "REJECTED", "ADJUSTED"] as const;
 export const RISK_BANDS = ["LOW", "MODERATE", "HIGH", "CRITICAL"] as const;
 export type RiskBand = (typeof RISK_BANDS)[number];
@@ -66,7 +66,6 @@ export const BAND_RANK: Record<RiskBand, number> = { LOW: 1, MODERATE: 2, HIGH: 
 export const ASSESSMENT_TRIGGERS = [
   "TEXT_MESSAGE",
   "VOICE_WINDOW",
-  "SCREENER",
   "CONTEXT_UPDATE",
   "INDICATOR_REVIEW",
   "CONFIG_RESCORE",
@@ -230,7 +229,7 @@ CaseSchema.index({ assignedCounsellorId: 1, status: 1 });
 
 // ============================================================================
 // 5. Interaction (= one contact session)
-//    Small, bounded data is embedded: context, consents, screeners, flow state
+//    Small, bounded data is embedded: context, consents
 // ============================================================================
 
 /** Optional context for EXTREME_VULNERABILITY (FR-CH-08, FR-IND-02).
@@ -273,29 +272,6 @@ const ConsentEntrySchema = new Schema(
   { _id: true },
 );
 
-const ScreenerResponseSchema = new Schema(
-  {
-    instrument: { type: String, enum: INSTRUMENTS, required: true },
-    itemCode: { type: String, required: true }, // "PHQ2_1", "SAFETY_ACCUSED_NEARBY"
-    value: { type: Number, default: null }, // null when skipped
-    skipped: { type: Boolean, default: false },
-    at: { type: Date, default: Date.now },
-  },
-  { _id: false },
-);
-
-const ScreenerScoreSchema = new Schema(
-  {
-    instrument: { type: String, enum: INSTRUMENTS, required: true },
-    total: { type: Number, required: true },
-    maxTotal: { type: Number, required: true },
-    isPositive: { type: Boolean, required: true }, // above the screening cut-off
-    itemsAnswered: { type: Number, required: true },
-    computedAt: { type: Date, default: Date.now },
-  },
-  { _id: false },
-);
-
 /** Copy of the latest assessment's headline values, for fast reads */
 const AssessmentHeadSchema = new Schema(
   {
@@ -321,21 +297,14 @@ const InteractionSchema = new Schema(
     operatorId: { type: ObjectId, ref: "User" },
     apiClientId: { type: ObjectId, ref: "ApiClient" },
 
-    // Victim session (FR-CH-09): only the SHA-256 of the token is stored
-    sessionTokenHash: { type: String, select: false },
-    sessionExpiresAt: Date,
-
     // Counters for ordered child documents (incremented atomically with $inc)
     messageSeq: { type: Number, default: 0 },
     assessmentSeq: { type: Number, default: 0 },
 
-    flowState: { type: Schema.Types.Mixed }, // conversation engine state
     voiceBaseline: { type: Schema.Types.Mixed }, // speaker baseline (FR-VOI-03)
 
     context: { type: CaseContextSchema, default: () => ({}) },
     consents: { type: [ConsentEntrySchema], default: [] },
-    screenerResponses: { type: [ScreenerResponseSchema], default: [] },
-    screenerScores: { type: [ScreenerScoreSchema], default: [] },
     current: { type: AssessmentHeadSchema },
 
     startedAt: { type: Date, default: Date.now },
@@ -344,7 +313,6 @@ const InteractionSchema = new Schema(
   },
   base,
 );
-InteractionSchema.index({ sessionTokenHash: 1 }, { unique: true, partialFilterExpression: { sessionTokenHash: { $type: "string" } } });
 InteractionSchema.index({ status: 1, startedAt: -1 });
 
 // ============================================================================
@@ -361,7 +329,6 @@ const MessageSchema = new Schema(
     translationEnc: String, // EN/HI for responders (FR-LANG-06)
     language: String,
     sttConfidence: Number,
-    promptKey: String, // SYSTEM messages: i18n key of the scripted prompt
     idempotencyKey: String,
     purgeAt: Date, // TTL: automatic deletion after retention period
   },
@@ -450,7 +417,6 @@ const IndicatorSchema = new Schema(
       quoteEnc: String, // exact substring, verified (AC-NLP-05)
       voiceWindowId: { type: ObjectId, ref: "VoiceWindow" }, // ACOUSTIC_EVENT
       eventType: String,
-      itemCode: String, // SCREENER_ANSWER
       contextField: String, // CONTEXT_FIELD
     },
     negated: { type: Boolean, default: false }, // FR-NLP-08: kept for audit, not scored
