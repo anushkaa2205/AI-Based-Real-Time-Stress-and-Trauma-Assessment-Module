@@ -1,0 +1,50 @@
+{
+  "id": "C02",
+  "title": "Pressured every day to withdraw the case",
+  "channel": "VOICE_CALL",
+  "language": "hi",
+  "districtCode": "MH-PUN",
+  "proves": "Intimidation to withdraw the complaint is recognised, and long pauses and a strained voice support the reading.",
+  "summary": "A caller says people come to the house every day telling her to take the case back. She speaks slowly with long pauses and has not slept properly for weeks.",
+  "consent": {
+    "textAnalysis": true,
+    "voiceAnalysis": true,
+    "shareWithCounsellor": true,
+    "followUpContact": false
+  },
+  "steps": [
+    {
+      "kind": "speech",
+      "text": "वो लोग रोज़ घर आते हैं। कहते हैं केस वापस ले लो, नहीं तो अच्छा नहीं होगा।",
+      "gloss": "Those people come to the house every day. They say take the case back, or it will not go well.",
+      "audio": {
+        "file": "audio/c02-1.ogg",
+        "source": "PLACEHOLDER"
+      }
+    },
+    {
+      "kind": "speech",
+      "text": "कई हफ़्तों से मुझे रात को नींद नहीं आती। हर आहट पर लगता है कि वही लोग हैं।",
+      "gloss": "For several weeks I have not been able to sleep at night. At every sound I feel it is them.",
+      "audio": {
+        "file": "audio/c02-2.ogg",
+        "source": "PLACEHOLDER"
+      },
+      "pauseBeforeMs": 3000
+    },
+    {
+      "kind": "speech",
+      "text": "मुझे समझ नहीं आता कि मैं क्या करूँ।",
+      "gloss": "I do not understand what I should do.",
+      "audio": {
+        "file": "audio/c02-3.ogg",
+        "source": "PLACEHOLDER"
+      },
+      "pauseBeforeMs": 3500
+    }
+  ],
+  "expected": {
+    "band": "HIGH"
+  },
+  "reviewedBy": []
+}

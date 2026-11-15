@@ -1,0 +1,36 @@
+{
+  "id": "C09",
+  "title": "Voice note and a typed follow-up",
+  "channel": "MOBILE_APP",
+  "language": "hi",
+  "districtCode": "MH-PUN",
+  "proves": "Voice and text are combined in one case: a voice note about threats to a family member and a typed message about the family's fear.",
+  "summary": "Through the mobile app, a person sends a voice note saying her brother is being warned not to give a statement, then types that the whole family is frightened and the children have not left the house for a week.",
+  "consent": {
+    "textAnalysis": true,
+    "voiceAnalysis": true,
+    "shareWithCounsellor": true,
+    "followUpContact": false
+  },
+  "steps": [
+    {
+      "kind": "speech",
+      "text": "वो लोग मेरे भाई को धमका रहे हैं कि अगर हमने बयान दिया तो अंजाम अच्छा नहीं होगा।",
+      "gloss": "They are threatening my brother that if we give a statement, the consequences will not be good.",
+      "audio": {
+        "file": "audio/c09-1.ogg",
+        "source": "PLACEHOLDER"
+      }
+    },
+    {
+      "kind": "message",
+      "text": "हम सब बहुत डरे हुए हैं। पिछले एक हफ़्ते से बच्चे घर से बाहर नहीं निकले।",
+      "gloss": "We are all very frightened. For the past week the children have not stepped out of the house.",
+      "pauseBeforeMs": 5000
+    }
+  ],
+  "expected": {
+    "band": "HIGH"
+  },
+  "reviewedBy": []
+}

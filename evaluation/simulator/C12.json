@@ -1,0 +1,36 @@
+{
+  "id": "C12",
+  "title": "Written complaint from a bereaved family member",
+  "channel": "PORTAL",
+  "language": "bn",
+  "districtCode": "WB-KOL",
+  "proves": "A written complaint in Bengali from the family of a deceased victim is read as extreme vulnerability, with grief and no means of support.",
+  "summary": "A written complaint in Bengali from a woman whose husband was lost in the incident last year. The case is still going on. She now looks after three children and her elderly mother-in-law alone, has no income, and feels everything has become too heavy. She asks for financial help and legal aid.",
+  "consent": {
+    "textAnalysis": true,
+    "voiceAnalysis": false,
+    "shareWithCounsellor": true,
+    "followUpContact": false
+  },
+  "steps": [
+    {
+      "kind": "document",
+      "paragraphs": [
+        "গত বছর সেই ঘটনায় আমরা আমার স্বামীকে হারিয়েছি। সেই মামলা এখনও চলছে।",
+        "এখন আমি একা তিন সন্তান আর বৃদ্ধ শাশুড়িকে দেখাশোনা করি। আমাদের কোনো আয় নেই।",
+        "রাতে ঘুম আসে না, সারাদিন মন ভারী হয়ে থাকে। মনে হয় সবকিছু খুব ভারী হয়ে গেছে।",
+        "আমাদের আর্থিক সাহায্য আর আইনি সহায়তা দরকার।"
+      ],
+      "gloss": [
+        "Last year we lost my husband in that incident. That case is still going on.",
+        "Now I alone look after three children and my elderly mother-in-law. We have no income.",
+        "I cannot sleep at night and my heart stays heavy all day. It feels as if everything has become too heavy.",
+        "We need financial help and legal aid."
+      ]
+    }
+  ],
+  "expected": {
+    "band": "HIGH"
+  },
+  "reviewedBy": []
+}

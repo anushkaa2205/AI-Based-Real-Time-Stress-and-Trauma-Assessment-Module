@@ -1,0 +1,39 @@
+{
+  "id": "C06",
+  "title": "Keypad answer: not safe right now",
+  "channel": "IVRS",
+  "language": "mr",
+  "districtCode": "MH-PUN",
+  "proves": "A single key press saying 'not safe right now' raises the case to at least High through the safety override.",
+  "summary": "A caller using the Marathi keypad menu presses 2 for 'no' when asked whether they are safe right now, then answers the rest of the safety check.",
+  "consent": {
+    "textAnalysis": true,
+    "voiceAnalysis": false,
+    "shareWithCounsellor": true,
+    "followUpContact": false
+  },
+  "steps": [
+    {
+      "kind": "key",
+      "itemCode": "SAFETY_SAFE_NOW",
+      "digit": "2",
+      "pauseBeforeMs": 1500
+    },
+    {
+      "kind": "key",
+      "itemCode": "SAFETY_ACCUSED_NEARBY",
+      "digit": "2",
+      "pauseBeforeMs": 1500
+    },
+    {
+      "kind": "key",
+      "itemCode": "SAFETY_SUICIDAL_THOUGHTS",
+      "digit": "2",
+      "pauseBeforeMs": 1500
+    }
+  ],
+  "expected": {
+    "band": "HIGH"
+  },
+  "reviewedBy": []
+}

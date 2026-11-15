@@ -1,0 +1,32 @@
+{
+  "id": "C08",
+  "title": "Clear 'no' to self-harm, asks for protection",
+  "channel": "CHATBOT",
+  "language": "hi",
+  "districtCode": "MH-PUN",
+  "proves": "The module understands 'no': a clear denial of self-harm is not read as a risk, and only the need for protection is flagged.",
+  "summary": "A witness writes that her hearing is next month and she is afraid of travelling to court. She says plainly that she has no thoughts of harming herself and asks only for protection.",
+  "consent": {
+    "textAnalysis": true,
+    "voiceAnalysis": false,
+    "shareWithCounsellor": true,
+    "followUpContact": false
+  },
+  "steps": [
+    {
+      "kind": "message",
+      "text": "मेरी गवाही अगले महीने है। मुझे अदालत तक आने-जाने में डर लगता है।",
+      "gloss": "My testimony is next month. I am afraid of travelling to and from the court."
+    },
+    {
+      "kind": "message",
+      "text": "नहीं, मेरे मन में ख़ुद को नुकसान पहुँचाने का कोई ख़याल नहीं है। मुझे बस सुरक्षा चाहिए।",
+      "gloss": "No, I have no thoughts of harming myself. I only need protection.",
+      "pauseBeforeMs": 4000
+    }
+  ],
+  "expected": {
+    "band": "MODERATE"
+  },
+  "reviewedBy": []
+}
