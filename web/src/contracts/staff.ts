@@ -355,3 +355,39 @@ export const AnalyticsQuery = z.object({
   interval: z.enum(["day", "week"]).default("day"),
 });
 export type AnalyticsQuery = z.infer<typeof AnalyticsQuery>;
+
+// --- Phase 8: administration (API_CONTRACTS §5.9) ------------------------------------------
+
+export const AdminUserCreate = z.object({
+  email: z.email().max(200),
+  name: z.string().trim().min(2).max(100),
+  role: Role,
+  districtId: ObjectIdStr.nullable().optional(),
+  languages: z.array(z.string().max(10)).max(6).optional(),
+});
+
+export const AdminUserPatch = z.object({
+  name: z.string().trim().min(2).max(100).optional(),
+  role: Role.optional(),
+  districtId: ObjectIdStr.nullable().optional(),
+  isActive: z.boolean().optional(),
+  /** Issue a new temporary password (shown once) */
+  resetPassword: z.boolean().optional(),
+});
+
+export const ApiClientCreate = z.object({
+  name: z.string().trim().min(2).max(100),
+  scopes: z.array(z.enum(["interactions:write", "assessments:read", "stream:read"])).min(1),
+  rateLimitPerMin: z.number().int().min(1).max(10_000).default(120),
+});
+
+export const AuditQuery = z.object({
+  entityType: z.string().max(40).optional(),
+  entityId: z.string().max(40).optional(),
+  actorId: z.string().max(40).optional(),
+  action: z.string().max(60).optional(),
+  from: z.iso.date().optional(),
+  to: z.iso.date().optional(),
+  limit: z.coerce.number().int().min(1).max(200).default(100),
+  cursor: z.string().max(40).optional(),
+});
