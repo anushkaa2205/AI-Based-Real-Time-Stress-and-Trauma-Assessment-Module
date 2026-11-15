@@ -25,7 +25,7 @@ Raw outputs: `evaluation/reports/` (`with-ai.md/json`, `rules-only-baseline.md/j
 | Expected recommendations produced (AC-REC-01) | ≥ 85% | **96%** (88/92) | 90% | ✓ |
 | All six support types recommended (AC-REC-01) | all | all six (+ information) | — | ✓ |
 | Text: SVI within 3 s, p95 of 50 runs (AC-SVI-02) | ≤ 3.0 s | p50 **1.79 s**, p95 **3.43 s**, max 4.11 s | — | ✗ 0.43 s over — see §5 |
-| Voice: SVI within 5 s per window (AC-SVI-02) | ≤ 5 s | **2.3–4.5 s** (every window in 3 runs) | — | ✓ |
+| Voice: SVI within 5 s per window (AC-SVI-02) | ≤ 5 s | **2.3–4.5 s** at normal latency; first window of a call 5.2–5.6 s on a slow-network day | — | ◐ |
 
 ## 2. Data set (E.3)
 
@@ -80,7 +80,7 @@ Each can be tried on the evaluation set with **Admin → Scoring versions → Ne
 ## 5. Latency (AC-SVI-02, NFR-PERF-01/02)
 
 - **Text** (50 synthetic messages, full pipeline incl. AI, production build, Atlas 37 ms away): p50 1.79 s, **p95 3.43 s** (target 3.0 s), max 4.11 s, 0 failures. The AI call is capped at a 2.3 s turn budget; the database transaction adds ~0.6 s. On Vercel in Mumbai (same region as Atlas) the database part should shrink; **re-measure after deployment (task 9.9)**. If still over, lowering the AI budget to ~2.0 s trades some AI coverage (more turns scored by rules first and re-scored seconds later) for speed.
-- **Voice** (5-second windows, production build): 2.3–4.5 s per window across three full runs; the transcript's AI analysis follows straight after (deferred re-score).
+- **Voice** (5-second windows, production build): 2.3–4.5 s per window across three full runs at normal network latency (Atlas 37 ms). On a slower day (Atlas 100 ms) windows took 3.5–5.4 s and **the first window of each call went over 5 s** (its pipeline does the first assessment, recommendations and alert work: ~3 s); one 16 s outlier. Found and fixed on that day: the transcript's deferred AI re-score collided with the next window's transaction; re-scores are now debounced until the caller pauses. Remaining work: fewer database round trips on a call's first window.
 - **Lexicon** (NFR-PERF-04, < 50 ms per message with six rule sets): met (unit test).
 - **Fixed during measurement:** the analysis service opened a new HTTP connection per request (~1 s each on Windows); now one shared client, which also speeds up text analysis.
 
@@ -161,7 +161,7 @@ Band accuracy by group, with AI. No identity feature is used for scoring (CLAUDE
 | AC-SCR-01…03 | ✓ | Phase 2–3 tests |
 | AC-IND-01, 02 | ✓ | Phase 2/5 tests |
 | AC-SVI-01, 03, 04 | ✓ | unit tests |
-| AC-SVI-02 latency | ◐ | voice ✓; text p95 3.43 s vs 3.0 s (§5) |
+| AC-SVI-02 latency | ◐ | voice ✓ at normal latency (first window over 5 s on a slow day); text p95 3.43 s vs 3.0 s (§5) |
 | AC-RISK-01 band accuracy ≥ 80%, no Critical below High | ◐ | 79% (§4); no Critical below High ✓ |
 | AC-RISK-02, 03, 04 | ✓ | unit + `staff.spec.ts` |
 | AC-REC-01…05 | ✓ | §1, `stakeholders.spec.ts`, `victim.spec.ts` |
