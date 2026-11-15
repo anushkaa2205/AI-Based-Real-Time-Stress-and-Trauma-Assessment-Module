@@ -18,8 +18,8 @@ Update this table as work finishes.
 | 6. Recommendations, referrals, stakeholder views | M3 Responder loop | Done (6.1–6.8; AC-REC-03/05, AC-DSH-01/03 pass in Playwright. AC-REC-01/02 covered by the Phase 2 engine tests and the eval set. AC-ALR-01's 5 s check failed on the last run only because Atlas round trips were ~200 ms instead of ~37 ms; re-run on a normal network) |
 | 7. Voice, operator console, IVRS | M4 Voice | Done except 7.9 (C, needs storage not in the free list) and crying detection in 7.6 (S). Spike (D4) on the team laptop: ~2 s per 5 s window in the service, ~2 GB RAM with all models; windows scored and pushed in 3.2–3.7 s on a prod build. AC-CH-02/03, AC-VOI-01…06, AC-EMO-01 tested |
 | 8. Languages, analytics, integration API, admin | M5 Feature complete | Done (8.1–8.7). AC-LANG-01, AC-DSH-02, AC-API-01/02 pass; AC-LANG-03 reported (rules-only, 2 scenarios per regional language). Open: native-speaker review (8.1), AC-LANG-02 language-detection rate needs an AI-mode evaluation run, AC-LANG-04 partly met (translation shown, evidence highlighted in the original only) |
-| 9. Evaluation, hardening, deployment, demo | M6 Demo-ready | Not started |
-| E. Evaluation set (runs alongside phases 2–9) | all | In progress: E.1–E.2 done (20 draft scenarios need a second reviewer) |
+| 9. Evaluation, hardening, deployment, demo | M6 Demo-ready | In progress: 9.1–9.7 done (see docs/EVALUATION_REPORT.md; band accuracy 79% and text p95 3.43 s just miss targets); 9.8 needs volunteers; 9.9–9.11 deferred until the project is finished |
+| E. Evaluation set (runs alongside phases 2–9) | all | In progress: 62 draft scenarios (E.3 needs a second reviewer); E.4 voice recordings by the team not done |
 
 ---
 
@@ -142,7 +142,7 @@ Update this table as work finishes.
 
 - [x] **E.1 Format.** `evaluation/scenarios/<id>.json`: language, channel, context, ordered messages or screener answers, expected band, expected indicators, expected recommendations, tags (`negation`, `dialect`, `voice`). Zod schema plus a validator script.
 - [x] **E.2 First 20 text scenarios** (5 per band; Hindi, Hinglish, English), ready by the end of Phase 2 so the lexicon can be tuned against them.
-- [ ] **E.3 Grow to 60+**: at least 15 per band; 10+ each in Hindi, Hinglish and English; 5 per regional language; 10+ negation or tricky cases. Two people agree on each label.
+- [ ] **E.3 Grow to 60+**: at least 15 per band; 10+ each in Hindi, Hinglish and English; 5 per regional language; 10+ negation or tricky cases. Two people agree on each label. *62 scenarios drafted (15+ per band, 5 per regional language, 11 tricky); second reviewer still needed.*
 - [ ] **E.4 Voice recordings**: 15+ scripted recordings by team members (calm, hesitant with long pauses, agitated), plus reference files for pause and pitch checks (AC-VOI-01/02).
 - [ ] **E.5 Runner.** `evaluation/run_eval.ts`: runs every scenario through the pipeline and reports band accuracy, confusion matrix, recall and precision per dimension, results per language, gender and channel, and latency. Output as Markdown and JSON.
 
@@ -268,17 +268,17 @@ Update this table as work finishes.
 **Goal:** prove it works, make it safe to show, and prepare the presentation.
 **Effort:** 6–8 days. **Depends on:** everything above.
 
-- [ ] **9.1 Full evaluation run** on 60+ scenarios; `docs/EVALUATION_REPORT.md` with band accuracy, confusion matrix, recall and precision per dimension, speech-to-text error rate per language, latency percentiles. Targets: band accuracy ≥ 80%; no Critical scenario below High; 100% recall for suicidal ideation and immediate danger. (AC-RISK-01, AC-NLP-01/02)
-- [ ] **9.2 Fairness report** by language, gender and channel; any gap above 15 points documented with a mitigation. (AC-ETH-02, AC-LANG-03)
-- [ ] **9.3 Outcome measurements** for the five Expected Outcomes: time from first message to Critical flag; average wait of Critical cases in risk order against first-come order on the same scenarios; alert-to-acknowledgement time; referrals by type and district.
-- [ ] **9.4 Accessibility.** Lighthouse and axe on every victim page, score ≥ 90; keyboard and screen-reader pass; check on a low-end Android phone with a throttled connection. (AC-ACC-01)
-- [ ] **9.5 Security review.** OWASP ZAP baseline scan; confirm no secrets in the client bundle; confirm redaction with 10 scenarios containing names and phone numbers; review of every route against the permission matrix. (AC-SEC-01/02)
-- [ ] **9.6 Privacy review.** Walk through every rule in `CLAUDE.md` and tick each with evidence; check that no victim screen shows a diagnostic label. (AC-ETH-01)
-- [ ] **9.7 PWA.** Manifest, icons, service worker for the app shell only (never cache conversation content); install test on Android Chrome. (AC-CH-06)
-- [ ] **9.8 Usability test** with 5 or more volunteers playing scripted roles; short comfort rating afterwards; fix the top issues.
-- [ ] **9.9 Deployment.** Vercel Hobby (web), Atlas Free, Pusher Sandbox; analysis service on the team laptop exposed with `cloudflared tunnel --url http://localhost:8000` and that URL set as `ANALYSIS_URL` on Vercel; indexes synced; demo data seeded; health check green. Write a pre-demo checklist (start service, start tunnel, update the URL, warm-up message).
-- [ ] **9.10 Documentation.** README with set-up steps, architecture diagram, API docs link, evaluation report, known limitations and ethical statement. (C-PRJ-03)
-- [ ] **9.11 Demo script and rehearsal** (see §4), with a recorded backup video in case the network fails on the day.
+- [x] **9.1 Full evaluation run** on 60+ scenarios; `docs/EVALUATION_REPORT.md` with band accuracy, confusion matrix, recall and precision per dimension, speech-to-text error rate per language, latency percentiles. Targets: band accuracy ≥ 80%; no Critical scenario below High; 100% recall for suicidal ideation and immediate danger. (AC-RISK-01, AC-NLP-01/02) *Done: docs/EVALUATION_REPORT.md. 62 scenarios; with AI 79% band accuracy (target 80%: Moderate under-scored, §4 needs a scoring decision), 0 Critical below High, 100% suicide and danger recall; text p95 3.43 s (target 3 s, re-measure after deployment); STT error rate for English only.*
+- [x] **9.2 Fairness report** by language, gender and channel; any gap above 15 points documented with a mitigation. (AC-ETH-02, AC-LANG-03) *Done: report §7. Gaps over 15 points (voice call, gender other) come from tiny groups and the Moderate issue; mitigation documented.*
+- [x] **9.3 Outcome measurements** for the five Expected Outcomes: time from first message to Critical flag; average wait of Critical cases in risk order against first-come order on the same scenarios; alert-to-acknowledgement time; referrals by type and district. *Done: report §8. Critical cases wait 39 min in risk order vs 231 min first-come.*
+- [x] **9.4 Accessibility.** Lighthouse and axe on every victim page, score ≥ 90; keyboard and screen-reader pass; check on a low-end Android phone with a throttled connection. (AC-ACC-01) *Done except people/devices: axe WCAG 2.1 AA 0 violations on every victim page (desktop and phone), keyboard pass, one fix. Lighthouse score, screen reader and a low-end phone still to do.*
+- [x] **9.5 Security review.** OWASP ZAP baseline scan; confirm no secrets in the client bundle; confirm redaction with 10 scenarios containing names and phone numbers; review of every route against the permission matrix. (AC-SEC-01/02) *Done except ZAP: route-guard test, client-bundle secret scan, headers, 10-scenario redaction (name gap fixed). OWASP ZAP needs Docker/Java; with deployment.*
+- [x] **9.6 Privacy review.** Walk through every rule in `CLAUDE.md` and tick each with evidence; check that no victim screen shows a diagnostic label. (AC-ETH-01) *Done: docs/PRIVACY_REVIEW.md.*
+- [x] **9.7 PWA.** Manifest, icons, service worker for the app shell only (never cache conversation content); install test on Android Chrome. (AC-CH-06) *Done except the Android install test (needs a phone).*
+- [ ] **9.8 Usability test** with 5 or more volunteers playing scripted roles; short comfort rating afterwards; fix the top issues. *Not done: needs 5+ volunteers.*
+- [ ] **9.9 Deployment.** Vercel Hobby (web), Atlas Free, Pusher Sandbox; analysis service on the team laptop exposed with `cloudflared tunnel --url http://localhost:8000` and that URL set as `ANALYSIS_URL` on Vercel; indexes synced; demo data seeded; health check green. Write a pre-demo checklist (start service, start tunnel, update the URL, warm-up message). *Deferred by the team until the project is finished.*
+- [ ] **9.10 Documentation.** README with set-up steps, architecture diagram, API docs link, evaluation report, known limitations and ethical statement. (C-PRJ-03) *Deferred by the team until the project is finished.*
+- [ ] **9.11 Demo script and rehearsal** (see §4), with a recorded backup video in case the network fails on the day. *Deferred by the team until the project is finished.*
 
 **Done when:** every Must-priority acceptance criterion in `REQUIREMENTS.md` §6 is ticked in a checklist appended to the evaluation report. **Milestone M6.**
 
