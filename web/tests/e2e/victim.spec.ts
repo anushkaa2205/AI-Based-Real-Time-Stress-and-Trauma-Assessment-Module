@@ -129,6 +129,17 @@ test("all consent declined: complaint still filed, safety check runs, no screene
   expect(leaks).toEqual([]);
 });
 
+test("consent does not offer keeping voice recordings while audio storage is not built (audit G2)", async ({ page }) => {
+  await start(page, "en");
+  await expect(page.getByRole("checkbox")).toHaveCount(4);
+  await expect(page.getByLabel(/recording/i)).toHaveCount(0);
+  const sent = page.waitForRequest((r) => r.method() === "POST" && r.url().endsWith("/consent"));
+  for (const box of await page.getByRole("checkbox").all()) await box.check(); // even with every choice ticked
+  await page.getByRole("button", { name: "Continue" }).click();
+  expect((await sent).postDataJSON().audioRetention).toBe(false);
+  await waitForPrompt(page, "flow.screener.SAFETY_SAFE_NOW");
+});
+
 test("withdrawing consent stops analysis at once (AC-CON-04)", async ({ page }) => {
   const id = await start(page, "en");
   await consent(page, ["Look at what I type"], "Continue");

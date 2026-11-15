@@ -11,7 +11,11 @@ import { NOTICE_VERSION, api } from "./api";
 import { ListenButton } from "./listen-button";
 import { portalPath } from "@/lib/portal";
 
-const OPTIONS = ["textAnalysis", "voiceAnalysis", "shareWithCounsellor", "followUpContact", "audioRetention"] as const;
+/**
+ * "Keep my voice recordings" (audioRetention) is not offered: audio storage (task 7.9) is not built,
+ * so the choice would do nothing. It is always sent as false (audit G2, CLAUDE.md rule 9).
+ */
+const OPTIONS = ["textAnalysis", "voiceAnalysis", "shareWithCounsellor", "followUpContact"] as const;
 const PARAGRAPHS = ["what", "why", "who", "howLong", "refuse", "withdraw"] as const;
 
 export function ConsentScreen() {
@@ -30,7 +34,7 @@ export function ConsentScreen() {
     setBusy(true);
     setError(false);
     try {
-      await api("POST", `/interactions/${id}/consent`, { noticeVersion: NOTICE_VERSION, language: locale, ...choice });
+      await api("POST", `/interactions/${id}/consent`, { noticeVersion: NOTICE_VERSION, language: locale, ...choice, audioRetention: false });
       router.replace(portalPath(locale, `/chat?i=${id}`));
     } catch {
       setError(true);
