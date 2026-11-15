@@ -4,12 +4,13 @@
  *   request id → CSRF origin check → authenticate → rate limit →
  *   authorise (core/policies) → validate (Zod contract) → handler → problem+json on error
  * Logs carry the request id, route and error code only, never bodies (NFR-REL-03).
- * Victim sessions (task 3.2) are bound to the interaction in the URL; API-key
- * authentication is added in task 8.4.
+ * Victim sessions (task 3.2) are bound to the interaction in the URL; integrating systems
+ * use `Authorization: ApiKey …` with scopes and a per-key rate limit (task 8.4).
  */
 import { randomBytes } from "node:crypto";
 import type { NextRequest } from "next/server";
 import { z } from "zod";
+import { parseAuthorization, secretMatches, type Scope } from "@/core/integration/apikey";
 import { access, type Access, type Action, type PolicyResource } from "@/core/policies/rbac";
 import { ForbiddenError } from "@/core/policies/serializers";
 import { db } from "@/lib/db";
@@ -17,10 +18,17 @@ import { ApiError, problemResponse } from "@/lib/problem";
 import { LIMITS, checkRateLimit, mongoRateLimitStore, rateKey, rateLimitHeaders, type Limit } from "@/lib/ratelimit";
 import { currentStaff, type StaffUser } from "@/lib/staff-session";
 import { loadVictimSession, type VictimSession } from "@/lib/victim-session";
+import { ApiClient } from "@/models";
 
 export type { StaffUser };
 
-type AuthMode = "staff" | "public" | "victim";
+type AuthMode = "staff" | "public" | "victim" | "api";
+
+export interface ApiCaller {
+  id: string;
+  name: string;
+  scopes: string[];
+}
 type Params = Record<string, string | string[] | undefined>;
 
 export interface RouteContext<A extends AuthMode, B extends z.ZodType, Q extends z.ZodType> {
@@ -32,6 +40,8 @@ export interface RouteContext<A extends AuthMode, B extends z.ZodType, Q extends
   user: A extends "staff" ? StaffUser : null;
   /** Victim session bound to the interaction in the URL (auth: "victim") */
   victim: A extends "victim" ? VictimSession : null;
+  /** Integrating system (auth: "api") */
+  client: A extends "api" ? ApiCaller : null;
   /** Resource-level check; throws 403 when not allowed. Returns the access level. */
   authorize(action: Action, resource?: PolicyResource): Access;
 }
@@ -40,6 +50,8 @@ export interface RouteOptions<A extends AuthMode, B extends z.ZodType, Q extends
   auth: A;
   /** Permission needed to call this endpoint at all (list-level check). */
   action?: Action;
+  /** API scope needed (auth: "api"). */
+  scope?: Scope;
   body?: B;
   query?: Q;
   /** Overrides the default limit (staff: 300/min per user). */
@@ -70,6 +82,16 @@ function checkOrigin(req: NextRequest) {
     throw new ApiError("FORBIDDEN", "Cross-site request blocked");
   }
   if (!host || originHost !== host) throw new ApiError("FORBIDDEN", "Cross-site request blocked");
+}
+
+/** FR-API-02: key → client; unknown, inactive or wrong secret → 401 INVALID_API_KEY. */
+async function loadApiClient(req: NextRequest): Promise<ApiCaller & { rateLimitPerMin: number }> {
+  const parts = parseAuthorization(req.headers.get("authorization"));
+  if (!parts) throw new ApiError("INVALID_API_KEY");
+  await db();
+  const c = await ApiClient.findOne({ keyPrefix: parts.prefix, isActive: true }).select("+keyHash name scopes rateLimitPerMin").lean();
+  if (!c || !secretMatches(parts.secret, c.keyHash)) throw new ApiError("INVALID_API_KEY");
+  return { id: String(c._id), name: c.name, scopes: c.scopes ?? [], rateLimitPerMin: c.rateLimitPerMin ?? 120 };
 }
 
 async function loadStaffUser(): Promise<StaffUser> {
@@ -125,6 +147,14 @@ export function route<A extends AuthMode, B extends z.ZodType = z.ZodUndefined, 
 
       const params = (await segment?.params) ?? {};
       const user = opts.auth === "staff" ? await loadStaffUser() : null;
+      const client = opts.auth === "api" ? await loadApiClient(req) : null;
+      if (client) {
+        // Per-key limit (FR-API-02, AC-API-02), then the scope (403 SCOPE_MISSING).
+        const result = await checkRateLimit(mongoRateLimitStore, rateKey("route", `api:${client.id}`), { limit: client.rateLimitPerMin, windowMs: 60_000 }, Date.now());
+        headers = rateLimitHeaders(result);
+        if (!result.allowed) throw new ApiError("RATE_LIMITED", undefined, { headers });
+        if (opts.scope && !client.scopes.includes(opts.scope)) throw new ApiError("SCOPE_MISSING", `This key needs the ${opts.scope} scope`);
+      }
 
       // Victim routes: the session check and the per-session counter are independent, so they
       // run in parallel (one database round trip instead of two). The counter is keyed by the
@@ -164,6 +194,7 @@ export function route<A extends AuthMode, B extends z.ZodType = z.ZodUndefined, 
         query,
         user,
         victim,
+        client: client ? { id: client.id, name: client.name, scopes: client.scopes } : null,
         authorize(action: Action, resource?: PolicyResource): Access {
           const level = user ? access(user, action, resource) : null;
           if (!level) throw new ApiError("FORBIDDEN");

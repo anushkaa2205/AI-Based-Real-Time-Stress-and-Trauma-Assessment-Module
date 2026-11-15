@@ -92,6 +92,8 @@ const InteractionSchema = new Schema(
     caseFacts: { type: [String], default: [] },
     districtId: { type: ObjectId, ref: "District" },
     operatorId: { type: ObjectId, ref: "User" },
+    // Added in task 8.4 (not yet in DATABASE.md): the integrating system's own reference
+    externalRef: String,
     apiClientId: { type: ObjectId, ref: "ApiClient" },
 
     // Victim session (FR-CH-09): only the SHA-256 of the token is stored

@@ -38,11 +38,16 @@ export function consentNotice(lang: VictimLang) {
 
 // --- start --------------------------------------------------------------------------
 
+/** Who is acting: the victim's own session, or an integrating system (task 8.4). */
+export type ServiceActor = { type: "VICTIM_SESSION" } | { type: "API_CLIENT"; id: string };
+
 export async function startInteraction(input: {
   channel: Channel;
   language: VictimLang;
   docketNumber?: string | null;
   districtCode?: string | null;
+  apiClientId?: string;
+  externalRef?: string;
 }): Promise<{ interactionId: string; docketNumber: string; token: string }> {
   await db();
   const district = input.districtCode ? await District.findOne({ code: input.districtCode }).lean() : null;
@@ -78,10 +83,11 @@ export async function startInteraction(input: {
     mode: "SAFETY_ONLY", // analysis is off until consent (AC-CON-01)
     sessionTokenHash: hashSessionToken(token),
     sessionExpiresAt: new Date(Date.now() + SESSION_TTL_MS),
+    ...(input.apiClientId ? { apiClientId: input.apiClientId, externalRef: input.externalRef } : {}),
   });
   await record({
-    actorType: "VICTIM_SESSION",
-    actorId: String(interaction._id),
+    actorType: input.apiClientId ? "API_CLIENT" : "VICTIM_SESSION",
+    actorId: input.apiClientId ?? String(interaction._id),
     action: "interaction.start",
     entityType: "interaction",
     entityId: String(interaction._id),
@@ -127,7 +133,7 @@ export async function requireActive(id: string) {
 
 // --- consent (FR-CON-01…06) ----------------------------------------------------------------
 
-export async function giveConsent(id: string, c: ConsentRequest) {
+export async function giveConsent(id: string, c: ConsentRequest, actor: ServiceActor = { type: "VICTIM_SESSION" }) {
   const interaction = await requireActive(id);
   if (c.noticeVersion !== NOTICE_VERSION) throw new ApiError("VALIDATION_FAILED", "Unknown consent notice version");
   const entry = {
@@ -147,8 +153,8 @@ export async function giveConsent(id: string, c: ConsentRequest) {
   interaction.mode = resolveMode(currentConsent([entry]), { isMinor: isMinor(ctx) });
   await interaction.save();
   await record({
-    actorType: "VICTIM_SESSION",
-    actorId: id,
+    actorType: actor.type,
+    actorId: actor.type === "API_CLIENT" ? actor.id : id,
     action: `consent.${entry.action.toLowerCase()}`,
     entityType: "interaction",
     entityId: id,
