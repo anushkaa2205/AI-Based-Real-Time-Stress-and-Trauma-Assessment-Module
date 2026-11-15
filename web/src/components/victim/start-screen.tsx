@@ -10,6 +10,7 @@ import { ListenButton } from "./listen-button";
 export function StartScreen() {
   const t = useTranslations("start");
   const tc = useTranslations("common");
+  const ti = useTranslations("ivrs");
   const locale = useLocale();
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -42,6 +43,9 @@ export function StartScreen() {
       >
         {busy ? tc("loading") : t("start")}
       </button>
+      <a href={`/${locale}/ivrs`} className="min-h-12 rounded-lg border border-border px-4 py-3 text-center text-lg" data-testid="ivrs-link">
+        {ti("title")}
+      </a>
       {error && (
         <p role="alert" className="text-destructive">
           {tc("errorRetry")}

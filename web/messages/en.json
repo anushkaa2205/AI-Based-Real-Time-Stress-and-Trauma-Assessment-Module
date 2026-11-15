@@ -136,5 +136,36 @@
     "keep": "Keep this number to follow up on your complaint.",
     "closing": "Your complaint is registered. You are not alone, and help is available.",
     "track": "You can follow up by calling 14566 and quoting your reference number."
+  },
+  "voice": {
+    "speak": "Speak instead",
+    "recording": "Recording. We are listening.",
+    "muted": "Muted. We cannot hear you.",
+    "mute": "Mute",
+    "unmute": "Unmute",
+    "stop": "I have finished speaking",
+    "heard": "What we heard:",
+    "micRefused": "We could not use your microphone. You can type instead.",
+    "unavailable": "Voice is not working right now. Please type instead.",
+    "needsConsent": "Listening to your voice needs your permission. You can type instead.",
+    "sending": "Sending what you said…"
+  },
+  "suggest": {
+    "safePlace": "Is there a safe place you can go to right now?",
+    "threatDetails": "Has anyone threatened you or your family since the complaint?",
+    "whoCanHelp": "Is there someone you trust who can be with you?",
+    "injury": "Are you hurt, or do you need a doctor?"
+  },
+  "ivrs": {
+    "title": "Phone menu (keypad)",
+    "welcome": "Welcome to the National Helpline Against Atrocities. For English, press 1. Hindi ke liye 2 dabaiye.",
+    "consent": "We will ask a few short questions. Press 1 if we may use your answers to understand how you are feeling and to get you help. Press 2 to answer only the safety questions.",
+    "yesNo": "Press 1 for yes. Press 2 for no. Press star to skip.",
+    "scale": "Press 0 for not at all. 1 for several days. 2 for more than half the days. 3 for nearly every day. Press star to skip.",
+    "repeat": "Press 9 to hear this again.",
+    "done": "Thank you. Please note your docket number.",
+    "keypad": "Keypad",
+    "pressed": "You pressed",
+    "invalid": "That key is not an option. Please try again."
   }
 }

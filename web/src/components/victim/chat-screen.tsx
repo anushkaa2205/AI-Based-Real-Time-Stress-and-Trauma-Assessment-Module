@@ -13,6 +13,7 @@ import { api, VictimApiError, type Turn } from "./api";
 import { ContextForm } from "./context-form";
 import { EmergencyPanel } from "./emergency-panel";
 import { ListenButton } from "./listen-button";
+import { VoiceRecorder } from "./voice-recorder";
 
 type View = { kind: "loading" } | { kind: "turn"; turn: Turn } | { kind: "done"; docket: string; closing: string } | { kind: "ended" };
 
@@ -27,6 +28,7 @@ export function ChatScreen() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
   const [withdrawn, setWithdrawn] = useState(false);
+  const [voiceNote, setVoiceNote] = useState<"micRefused" | "unavailable" | "needsConsent" | null>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
 
   const fail = useCallback((e: unknown) => {
@@ -104,6 +106,18 @@ export function ChatScreen() {
       );
       return { next: r.reply, showEmergencyPanel: r.showEmergencyPanel, emergency: r.emergency };
     });
+
+  /** Spoken answer finished: its windows were analysed as they arrived; move to the next question. */
+  const voiceDone = () =>
+    step(async () => {
+      const r = await api<{ reply: Prompt; showEmergencyPanel: boolean; emergency: Turn["emergency"] }>("POST", `/interactions/${id}/messages`, {
+        voiceDone: true,
+      });
+      return { next: r.reply, showEmergencyPanel: r.showEmergencyPanel, emergency: r.emergency };
+    });
+
+  const showEmergency = (panel: NonNullable<Turn["emergency"]>) =>
+    setView((v) => (v.kind === "turn" ? { kind: "turn", turn: { ...v.turn, showEmergencyPanel: true, emergency: panel } } : v));
 
   const sendContext = (ctx: Record<string, unknown>) => step(() => api<Turn>("PUT", `/interactions/${id}/context`, ctx));
 
@@ -210,6 +224,15 @@ export function ChatScreen() {
             </button>
           ))}
         </div>
+      )}
+
+      {p.input === "FREE_TEXT" && !voiceNote && (
+        <VoiceRecorder interactionId={id} onEmergency={showEmergency} onFinished={voiceDone} onFallback={setVoiceNote} />
+      )}
+      {p.input === "FREE_TEXT" && voiceNote && (
+        <p role="status" className="text-base" data-testid="voice-fallback">
+          {t(`voice.${voiceNote}`)}
+        </p>
       )}
 
       {p.input === "FREE_TEXT" && (
