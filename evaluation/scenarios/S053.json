@@ -1,0 +1,33 @@
+{
+  "id": "S053",
+  "language": "en",
+  "channel": "IVRS",
+  "gender": "M",
+  "summary": "Keypad only: accused nearby now",
+  "context": {},
+  "screeners": [
+    {
+      "itemCode": "SAFETY_SAFE_NOW",
+      "value": 0
+    },
+    {
+      "itemCode": "SAFETY_ACCUSED_NEARBY",
+      "value": 1
+    }
+  ],
+  "messages": [],
+  "expected": {
+    "band": "CRITICAL",
+    "indicators": [
+      "INTIMIDATION"
+    ],
+    "recommendations": [
+      "EMERGENCY_SUPPORT",
+      "POLICE_INTERVENTION"
+    ]
+  },
+  "tags": [
+    "screener-only"
+  ],
+  "reviewedBy": []
+}

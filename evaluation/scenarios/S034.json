@@ -1,0 +1,29 @@
+{
+  "id": "S034",
+  "language": "hi",
+  "channel": "VOICE_CALL",
+  "gender": "M",
+  "summary": "Current head injury, bleeding",
+  "context": {},
+  "screeners": [
+    {
+      "itemCode": "SAFETY_SAFE_NOW",
+      "value": 1
+    }
+  ],
+  "messages": [
+    "अभी सिर पर चोट लगी है और खून बह रहा है।"
+  ],
+  "expected": {
+    "band": "CRITICAL",
+    "indicators": [
+      "SEVERE_TRAUMA"
+    ],
+    "recommendations": [
+      "EMERGENCY_SUPPORT",
+      "MEDICAL_ASSISTANCE"
+    ]
+  },
+  "tags": [],
+  "reviewedBy": []
+}

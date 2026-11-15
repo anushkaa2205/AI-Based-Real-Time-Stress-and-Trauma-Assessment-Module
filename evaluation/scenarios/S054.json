@@ -1,0 +1,28 @@
+{
+  "id": "S054",
+  "language": "mr",
+  "channel": "CHATBOT",
+  "gender": "F",
+  "summary": "Village boycott, nobody talks to them",
+  "context": {},
+  "screeners": [
+    {
+      "itemCode": "SAFETY_SAFE_NOW",
+      "value": 1
+    }
+  ],
+  "messages": [
+    "गावाने बहिष्कार टाकला आहे, आमच्याशी कोणी बोलत नाही."
+  ],
+  "expected": {
+    "band": "MODERATE",
+    "indicators": [
+      "SOCIAL_ISOLATION"
+    ],
+    "recommendations": [
+      "REHABILITATION_RELIEF"
+    ]
+  },
+  "tags": [],
+  "reviewedBy": []
+}

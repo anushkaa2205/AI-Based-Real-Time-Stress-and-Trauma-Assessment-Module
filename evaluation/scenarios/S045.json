@@ -1,0 +1,26 @@
+{
+  "id": "S045",
+  "language": "en",
+  "channel": "PORTAL",
+  "gender": "UNDISCLOSED",
+  "summary": "How to get a copy of a statement",
+  "context": {},
+  "screeners": [
+    {
+      "itemCode": "SAFETY_SAFE_NOW",
+      "value": 1
+    }
+  ],
+  "messages": [
+    "How do I get a copy of my statement?"
+  ],
+  "expected": {
+    "band": "LOW",
+    "indicators": [],
+    "recommendations": [
+      "INFORMATION"
+    ]
+  },
+  "tags": [],
+  "reviewedBy": []
+}

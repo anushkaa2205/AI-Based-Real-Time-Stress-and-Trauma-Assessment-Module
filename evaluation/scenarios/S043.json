@@ -1,0 +1,28 @@
+{
+  "id": "S043",
+  "language": "en",
+  "channel": "CHATBOT",
+  "gender": "F",
+  "summary": "Quoted question; denies any threats since",
+  "context": {},
+  "screeners": [
+    {
+      "itemCode": "SAFETY_SAFE_NOW",
+      "value": 1
+    }
+  ],
+  "messages": [
+    "The police asked me 'are they threatening you?' and I said no, nobody has threatened me since."
+  ],
+  "expected": {
+    "band": "LOW",
+    "indicators": [],
+    "recommendations": [
+      "INFORMATION"
+    ]
+  },
+  "tags": [
+    "negation"
+  ],
+  "reviewedBy": []
+}

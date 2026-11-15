@@ -1,0 +1,29 @@
+{
+  "id": "S042",
+  "language": "hi-Latn",
+  "channel": "CHATBOT",
+  "gender": "F",
+  "summary": "States intent to take poison tonight",
+  "context": {},
+  "screeners": [
+    {
+      "itemCode": "SAFETY_SAFE_NOW",
+      "value": 1
+    }
+  ],
+  "messages": [
+    "aaj raat zeher kha lungi, ab aur nahi sah sakti"
+  ],
+  "expected": {
+    "band": "CRITICAL",
+    "indicators": [
+      "SUICIDAL_IDEATION"
+    ],
+    "recommendations": [
+      "EMERGENCY_SUPPORT",
+      "COUNSELLING"
+    ]
+  },
+  "tags": [],
+  "reviewedBy": []
+}

@@ -1,0 +1,28 @@
+{
+  "id": "S044",
+  "language": "en",
+  "channel": "PORTAL",
+  "gender": "M",
+  "summary": "Past trouble, now settled and fine",
+  "context": {},
+  "screeners": [
+    {
+      "itemCode": "SAFETY_SAFE_NOW",
+      "value": 1
+    }
+  ],
+  "messages": [
+    "Two years ago there was trouble, but the case was settled in court and we are fine now."
+  ],
+  "expected": {
+    "band": "LOW",
+    "indicators": [],
+    "recommendations": [
+      "INFORMATION"
+    ]
+  },
+  "tags": [
+    "negation"
+  ],
+  "reviewedBy": []
+}

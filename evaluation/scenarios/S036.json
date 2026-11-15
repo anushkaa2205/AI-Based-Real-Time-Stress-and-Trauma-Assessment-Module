@@ -1,0 +1,26 @@
+{
+  "id": "S036",
+  "language": "hi-Latn",
+  "channel": "PORTAL",
+  "gender": "F",
+  "summary": "Calm; asks about compensation",
+  "context": {},
+  "screeners": [
+    {
+      "itemCode": "SAFETY_SAFE_NOW",
+      "value": 1
+    }
+  ],
+  "messages": [
+    "sab theek hai abhi, sirf compensation ka status puchna tha"
+  ],
+  "expected": {
+    "band": "LOW",
+    "indicators": [],
+    "recommendations": [
+      "INFORMATION"
+    ]
+  },
+  "tags": [],
+  "reviewedBy": []
+}

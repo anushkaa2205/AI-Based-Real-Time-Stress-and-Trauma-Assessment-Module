@@ -1,0 +1,29 @@
+{
+  "id": "S057",
+  "language": "ta",
+  "channel": "CHATBOT",
+  "gender": "F",
+  "summary": "Locked in a room, not allowed out",
+  "context": {},
+  "screeners": [
+    {
+      "itemCode": "SAFETY_SAFE_NOW",
+      "value": 1
+    }
+  ],
+  "messages": [
+    "என்னை அறையில் பூட்டி வைத்திருக்கிறார்கள், வெளியே போக விடவில்லை."
+  ],
+  "expected": {
+    "band": "CRITICAL",
+    "indicators": [
+      "INTIMIDATION"
+    ],
+    "recommendations": [
+      "EMERGENCY_SUPPORT",
+      "POLICE_INTERVENTION"
+    ]
+  },
+  "tags": [],
+  "reviewedBy": []
+}

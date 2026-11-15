@@ -1,0 +1,29 @@
+{
+  "id": "S033",
+  "language": "hi",
+  "channel": "CHATBOT",
+  "gender": "F",
+  "summary": "Locked in a room, not allowed out",
+  "context": {},
+  "screeners": [
+    {
+      "itemCode": "SAFETY_SAFE_NOW",
+      "value": 1
+    }
+  ],
+  "messages": [
+    "उन्होंने मुझे कमरे में बंद करके रखा है, बाहर जाने नहीं दे रहे।"
+  ],
+  "expected": {
+    "band": "CRITICAL",
+    "indicators": [
+      "INTIMIDATION"
+    ],
+    "recommendations": [
+      "EMERGENCY_SUPPORT",
+      "POLICE_INTERVENTION"
+    ]
+  },
+  "tags": [],
+  "reviewedBy": []
+}

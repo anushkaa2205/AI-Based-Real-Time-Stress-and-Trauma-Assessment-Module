@@ -1,0 +1,29 @@
+{
+  "id": "S062",
+  "language": "bn",
+  "channel": "VOICE_CALL",
+  "gender": "F",
+  "summary": "Current head injury, bleeding",
+  "context": {},
+  "screeners": [
+    {
+      "itemCode": "SAFETY_SAFE_NOW",
+      "value": 1
+    }
+  ],
+  "messages": [
+    "এখনই মাথায় আঘাত লেগেছে, রক্ত পড়ছে।"
+  ],
+  "expected": {
+    "band": "CRITICAL",
+    "indicators": [
+      "SEVERE_TRAUMA"
+    ],
+    "recommendations": [
+      "EMERGENCY_SUPPORT",
+      "MEDICAL_ASSISTANCE"
+    ]
+  },
+  "tags": [],
+  "reviewedBy": []
+}

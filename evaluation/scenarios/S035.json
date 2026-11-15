@@ -1,0 +1,28 @@
+{
+  "id": "S035",
+  "language": "hi-Latn",
+  "channel": "CHATBOT",
+  "gender": "M",
+  "summary": "No threats; wants FIR copy",
+  "context": {},
+  "screeners": [
+    {
+      "itemCode": "SAFETY_SAFE_NOW",
+      "value": 1
+    }
+  ],
+  "messages": [
+    "mujhe koi dhamki nahi mili, bas FIR ki copy chahiye"
+  ],
+  "expected": {
+    "band": "LOW",
+    "indicators": [],
+    "recommendations": [
+      "INFORMATION"
+    ]
+  },
+  "tags": [
+    "negation"
+  ],
+  "reviewedBy": []
+}

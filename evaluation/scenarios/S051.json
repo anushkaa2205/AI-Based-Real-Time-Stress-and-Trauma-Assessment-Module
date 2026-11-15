@@ -1,0 +1,30 @@
+{
+  "id": "S051",
+  "language": "en",
+  "channel": "CHATBOT",
+  "gender": "OTHER",
+  "summary": "Does not want to wake up tomorrow",
+  "context": {},
+  "screeners": [
+    {
+      "itemCode": "SAFETY_SAFE_NOW",
+      "value": 1
+    }
+  ],
+  "messages": [
+    "I don't want to wake up tomorrow."
+  ],
+  "expected": {
+    "band": "HIGH",
+    "indicators": [
+      "SUICIDAL_IDEATION"
+    ],
+    "recommendations": [
+      "COUNSELLING"
+    ]
+  },
+  "tags": [
+    "indirect"
+  ],
+  "reviewedBy": []
+}

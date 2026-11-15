@@ -1,0 +1,38 @@
+{
+  "id": "S038",
+  "language": "hi-Latn",
+  "channel": "CHATBOT",
+  "gender": "OTHER",
+  "summary": "Constant tension, cannot sleep; screeners positive",
+  "context": {},
+  "screeners": [
+    {
+      "itemCode": "SAFETY_SAFE_NOW",
+      "value": 1
+    },
+    {
+      "itemCode": "GAD2_1",
+      "value": 2
+    },
+    {
+      "itemCode": "GAD2_2",
+      "value": 2
+    }
+  ],
+  "messages": [
+    "bahut tension rehti hai, neend nahi aati, bachchon ki fikar hai"
+  ],
+  "expected": {
+    "band": "MODERATE",
+    "indicators": [
+      "FEAR_ANXIETY"
+    ],
+    "recommendations": [
+      "COUNSELLING"
+    ]
+  },
+  "tags": [
+    "dialect"
+  ],
+  "reviewedBy": []
+}

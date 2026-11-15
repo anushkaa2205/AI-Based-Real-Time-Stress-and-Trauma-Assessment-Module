@@ -1,0 +1,29 @@
+{
+  "id": "S052",
+  "language": "en",
+  "channel": "CHATBOT",
+  "gender": "F",
+  "summary": "Pills ready, will take them tonight",
+  "context": {},
+  "screeners": [
+    {
+      "itemCode": "SAFETY_SAFE_NOW",
+      "value": 1
+    }
+  ],
+  "messages": [
+    "I have the pills ready and I will take them tonight."
+  ],
+  "expected": {
+    "band": "CRITICAL",
+    "indicators": [
+      "SUICIDAL_IDEATION"
+    ],
+    "recommendations": [
+      "EMERGENCY_SUPPORT",
+      "COUNSELLING"
+    ]
+  },
+  "tags": [],
+  "reviewedBy": []
+}

@@ -1,0 +1,26 @@
+{
+  "id": "S061",
+  "language": "bn",
+  "channel": "PORTAL",
+  "gender": "F",
+  "summary": "Calm; asks about compensation",
+  "context": {},
+  "screeners": [
+    {
+      "itemCode": "SAFETY_SAFE_NOW",
+      "value": 1
+    }
+  ],
+  "messages": [
+    "এখন সব শান্ত, শুধু ক্ষতিপূরণের খবর জানতে চাই।"
+  ],
+  "expected": {
+    "band": "LOW",
+    "indicators": [],
+    "recommendations": [
+      "INFORMATION"
+    ]
+  },
+  "tags": [],
+  "reviewedBy": []
+}

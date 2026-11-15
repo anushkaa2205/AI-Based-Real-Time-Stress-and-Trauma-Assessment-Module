@@ -1,0 +1,30 @@
+{
+  "id": "S037",
+  "language": "hi-Latn",
+  "channel": "CHATBOT",
+  "gender": "F",
+  "summary": "Had to leave home, staying with relatives",
+  "context": {},
+  "screeners": [
+    {
+      "itemCode": "SAFETY_SAFE_NOW",
+      "value": 1
+    }
+  ],
+  "messages": [
+    "ghar chhodna pada, ab rishtedaar ke yahan reh rahe hain"
+  ],
+  "expected": {
+    "band": "MODERATE",
+    "indicators": [
+      "SOCIAL_ISOLATION"
+    ],
+    "recommendations": [
+      "REHABILITATION_RELIEF"
+    ]
+  },
+  "tags": [
+    "dialect"
+  ],
+  "reviewedBy": []
+}

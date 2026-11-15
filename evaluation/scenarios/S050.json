@@ -1,0 +1,32 @@
+{
+  "id": "S050",
+  "language": "en",
+  "channel": "PORTAL",
+  "gender": "F",
+  "summary": "Minor, sexual offence, scared to go to school",
+  "context": {
+    "ageGroup": "UNDER_18",
+    "offenceCategory": "SEXUAL_VIOLENCE"
+  },
+  "screeners": [
+    {
+      "itemCode": "SAFETY_SAFE_NOW",
+      "value": 1
+    }
+  ],
+  "messages": [
+    "I am scared to go to school."
+  ],
+  "expected": {
+    "band": "HIGH",
+    "indicators": [
+      "FEAR_ANXIETY"
+    ],
+    "recommendations": [
+      "MEDICAL_ASSISTANCE",
+      "COUNSELLING"
+    ]
+  },
+  "tags": [],
+  "reviewedBy": []
+}

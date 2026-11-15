@@ -1,0 +1,28 @@
+{
+  "id": "S027",
+  "language": "hi",
+  "channel": "CHATBOT",
+  "gender": "F",
+  "summary": "Denies any intent; only wants the hearing date",
+  "context": {},
+  "screeners": [
+    {
+      "itemCode": "SAFETY_SAFE_NOW",
+      "value": 1
+    }
+  ],
+  "messages": [
+    "मरने का कोई इरादा नहीं है, बस केस की अगली तारीख जाननी है।"
+  ],
+  "expected": {
+    "band": "LOW",
+    "indicators": [],
+    "recommendations": [
+      "INFORMATION"
+    ]
+  },
+  "tags": [
+    "negation"
+  ],
+  "reviewedBy": []
+}

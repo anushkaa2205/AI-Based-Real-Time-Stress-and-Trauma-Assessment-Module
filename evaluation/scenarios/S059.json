@@ -1,0 +1,26 @@
+{
+  "id": "S059",
+  "language": "ta",
+  "channel": "PORTAL",
+  "gender": "UNDISCLOSED",
+  "summary": "Asks about complaint status",
+  "context": {},
+  "screeners": [
+    {
+      "itemCode": "SAFETY_SAFE_NOW",
+      "value": 1
+    }
+  ],
+  "messages": [
+    "என் புகாரின் நிலை என்ன என்று தெரிந்துகொள்ள வேண்டும்."
+  ],
+  "expected": {
+    "band": "LOW",
+    "indicators": [],
+    "recommendations": [
+      "INFORMATION"
+    ]
+  },
+  "tags": [],
+  "reviewedBy": []
+}

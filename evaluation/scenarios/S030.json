@@ -1,0 +1,44 @@
+{
+  "id": "S030",
+  "language": "hi",
+  "channel": "VOICE_CALL",
+  "gender": "F",
+  "summary": "Poor sleep and constant fear; screeners positive",
+  "context": {},
+  "screeners": [
+    {
+      "itemCode": "SAFETY_SAFE_NOW",
+      "value": 1
+    },
+    {
+      "itemCode": "GAD2_1",
+      "value": 2
+    },
+    {
+      "itemCode": "GAD2_2",
+      "value": 2
+    },
+    {
+      "itemCode": "PHQ2_1",
+      "value": 1
+    },
+    {
+      "itemCode": "PHQ2_2",
+      "value": 1
+    }
+  ],
+  "messages": [
+    "रात को नींद नहीं आती, हर समय डर लगता है।"
+  ],
+  "expected": {
+    "band": "MODERATE",
+    "indicators": [
+      "FEAR_ANXIETY"
+    ],
+    "recommendations": [
+      "COUNSELLING"
+    ]
+  },
+  "tags": [],
+  "reviewedBy": []
+}

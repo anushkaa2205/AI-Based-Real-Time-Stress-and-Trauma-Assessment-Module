@@ -1,0 +1,30 @@
+{
+  "id": "S040",
+  "language": "hi-Latn",
+  "channel": "CHATBOT",
+  "gender": "F",
+  "summary": "Passive wish to die",
+  "context": {},
+  "screeners": [
+    {
+      "itemCode": "SAFETY_SAFE_NOW",
+      "value": 1
+    }
+  ],
+  "messages": [
+    "kabhi kabhi lagta hai mar jaun toh accha"
+  ],
+  "expected": {
+    "band": "HIGH",
+    "indicators": [
+      "SUICIDAL_IDEATION"
+    ],
+    "recommendations": [
+      "COUNSELLING"
+    ]
+  },
+  "tags": [
+    "indirect"
+  ],
+  "reviewedBy": []
+}

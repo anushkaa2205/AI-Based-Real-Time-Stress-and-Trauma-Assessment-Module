@@ -1,0 +1,28 @@
+{
+  "id": "S029",
+  "language": "hi",
+  "channel": "CHATBOT",
+  "gender": "F",
+  "summary": "Boycott and loneliness",
+  "context": {},
+  "screeners": [
+    {
+      "itemCode": "SAFETY_SAFE_NOW",
+      "value": 1
+    }
+  ],
+  "messages": [
+    "गाँव वाले हमसे बात नहीं करते, दुकान वाले सामान नहीं देते। बहुत अकेलापन लगता है।"
+  ],
+  "expected": {
+    "band": "MODERATE",
+    "indicators": [
+      "SOCIAL_ISOLATION"
+    ],
+    "recommendations": [
+      "REHABILITATION_RELIEF"
+    ]
+  },
+  "tags": [],
+  "reviewedBy": []
+}

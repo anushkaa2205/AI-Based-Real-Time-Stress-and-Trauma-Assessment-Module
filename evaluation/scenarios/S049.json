@@ -1,0 +1,28 @@
+{
+  "id": "S049",
+  "language": "en",
+  "channel": "CHATBOT",
+  "gender": "M",
+  "summary": "Threat to a family member's life if they go to court",
+  "context": {},
+  "screeners": [
+    {
+      "itemCode": "SAFETY_SAFE_NOW",
+      "value": 1
+    }
+  ],
+  "messages": [
+    "They told my brother he will not live long if we go to court."
+  ],
+  "expected": {
+    "band": "HIGH",
+    "indicators": [
+      "INTIMIDATION"
+    ],
+    "recommendations": [
+      "POLICE_INTERVENTION"
+    ]
+  },
+  "tags": [],
+  "reviewedBy": []
+}

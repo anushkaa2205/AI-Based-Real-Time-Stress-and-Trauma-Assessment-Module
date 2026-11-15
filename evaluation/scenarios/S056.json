@@ -1,0 +1,28 @@
+{
+  "id": "S056",
+  "language": "mr",
+  "channel": "PORTAL",
+  "gender": "F",
+  "summary": "No more threats; all fine",
+  "context": {},
+  "screeners": [
+    {
+      "itemCode": "SAFETY_SAFE_NOW",
+      "value": 1
+    }
+  ],
+  "messages": [
+    "आता कोणी धमकी देत नाही, सगळे ठीक आहे."
+  ],
+  "expected": {
+    "band": "LOW",
+    "indicators": [],
+    "recommendations": [
+      "INFORMATION"
+    ]
+  },
+  "tags": [
+    "negation"
+  ],
+  "reviewedBy": []
+}

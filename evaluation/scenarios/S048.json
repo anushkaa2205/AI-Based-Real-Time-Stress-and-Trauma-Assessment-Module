@@ -1,0 +1,28 @@
+{
+  "id": "S048",
+  "language": "en",
+  "channel": "CHATBOT",
+  "gender": "F",
+  "summary": "Barred from the common well",
+  "context": {},
+  "screeners": [
+    {
+      "itemCode": "SAFETY_SAFE_NOW",
+      "value": 1
+    }
+  ],
+  "messages": [
+    "We are not allowed to take water from the common well anymore."
+  ],
+  "expected": {
+    "band": "MODERATE",
+    "indicators": [
+      "SOCIAL_ISOLATION"
+    ],
+    "recommendations": [
+      "REHABILITATION_RELIEF"
+    ]
+  },
+  "tags": [],
+  "reviewedBy": []
+}

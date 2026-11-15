@@ -1,0 +1,29 @@
+{
+  "id": "S041",
+  "language": "hi-Latn",
+  "channel": "CHATBOT",
+  "gender": "F",
+  "summary": "Accused outside the house now, banging the door",
+  "context": {},
+  "screeners": [
+    {
+      "itemCode": "SAFETY_SAFE_NOW",
+      "value": 1
+    }
+  ],
+  "messages": [
+    "woh abhi ghar ke bahar khade hain, darwaza peet rahe hain"
+  ],
+  "expected": {
+    "band": "CRITICAL",
+    "indicators": [
+      "INTIMIDATION"
+    ],
+    "recommendations": [
+      "EMERGENCY_SUPPORT",
+      "POLICE_INTERVENTION"
+    ]
+  },
+  "tags": [],
+  "reviewedBy": []
+}

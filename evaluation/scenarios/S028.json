@@ -1,0 +1,28 @@
+{
+  "id": "S028",
+  "language": "hi",
+  "channel": "PORTAL",
+  "gender": "M",
+  "summary": "Says threats have stopped; village calm",
+  "context": {},
+  "screeners": [
+    {
+      "itemCode": "SAFETY_SAFE_NOW",
+      "value": 1
+    }
+  ],
+  "messages": [
+    "अब कोई धमकी नहीं देता, गाँव में सब शांत है।"
+  ],
+  "expected": {
+    "band": "LOW",
+    "indicators": [],
+    "recommendations": [
+      "INFORMATION"
+    ]
+  },
+  "tags": [
+    "negation"
+  ],
+  "reviewedBy": []
+}

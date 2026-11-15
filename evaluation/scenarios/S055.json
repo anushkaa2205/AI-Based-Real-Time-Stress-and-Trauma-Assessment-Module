@@ -1,0 +1,29 @@
+{
+  "id": "S055",
+  "language": "mr",
+  "channel": "CHATBOT",
+  "gender": "M",
+  "summary": "Told to withdraw the complaint or face consequences",
+  "context": {},
+  "screeners": [
+    {
+      "itemCode": "SAFETY_SAFE_NOW",
+      "value": 1
+    }
+  ],
+  "messages": [
+    "तक्रार मागे घे नाहीतर बघून घेऊ असे म्हणतात."
+  ],
+  "expected": {
+    "band": "HIGH",
+    "indicators": [
+      "INTIMIDATION"
+    ],
+    "recommendations": [
+      "WITNESS_PROTECTION",
+      "POLICE_INTERVENTION"
+    ]
+  },
+  "tags": [],
+  "reviewedBy": []
+}

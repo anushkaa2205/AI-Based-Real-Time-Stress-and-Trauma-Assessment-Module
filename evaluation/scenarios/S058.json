@@ -1,0 +1,36 @@
+{
+  "id": "S058",
+  "language": "ta",
+  "channel": "VOICE_CALL",
+  "gender": "M",
+  "summary": "Always afraid, cannot sleep; screeners positive",
+  "context": {},
+  "screeners": [
+    {
+      "itemCode": "SAFETY_SAFE_NOW",
+      "value": 1
+    },
+    {
+      "itemCode": "GAD2_1",
+      "value": 2
+    },
+    {
+      "itemCode": "GAD2_2",
+      "value": 2
+    }
+  ],
+  "messages": [
+    "எப்போதும் பயமாக இருக்கிறது, தூக்கம் வரவில்லை."
+  ],
+  "expected": {
+    "band": "MODERATE",
+    "indicators": [
+      "FEAR_ANXIETY"
+    ],
+    "recommendations": [
+      "COUNSELLING"
+    ]
+  },
+  "tags": [],
+  "reviewedBy": []
+}

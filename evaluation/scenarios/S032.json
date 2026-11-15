@@ -1,0 +1,32 @@
+{
+  "id": "S032",
+  "language": "hi",
+  "channel": "IVRS",
+  "gender": "F",
+  "summary": "Not safe at home; fears they will return at night",
+  "context": {},
+  "screeners": [
+    {
+      "itemCode": "SAFETY_SAFE_NOW",
+      "value": 0
+    },
+    {
+      "itemCode": "SAFETY_ACCUSED_NEARBY",
+      "value": 0
+    }
+  ],
+  "messages": [
+    "रात को डर लगता है कि वे फिर आएँगे।"
+  ],
+  "expected": {
+    "band": "HIGH",
+    "indicators": [
+      "FEAR_ANXIETY"
+    ],
+    "recommendations": [
+      "COUNSELLING"
+    ]
+  },
+  "tags": [],
+  "reviewedBy": []
+}

@@ -1,0 +1,48 @@
+{
+  "id": "S047",
+  "language": "en",
+  "channel": "VOICE_CALL",
+  "gender": "M",
+  "summary": "Nightmares and startle after the attack",
+  "context": {},
+  "screeners": [
+    {
+      "itemCode": "SAFETY_SAFE_NOW",
+      "value": 1
+    },
+    {
+      "itemCode": "PCPTSD5_1",
+      "value": 1
+    },
+    {
+      "itemCode": "PCPTSD5_2",
+      "value": 1
+    },
+    {
+      "itemCode": "PCPTSD5_3",
+      "value": 1
+    },
+    {
+      "itemCode": "PCPTSD5_4",
+      "value": 0
+    },
+    {
+      "itemCode": "PCPTSD5_5",
+      "value": 0
+    }
+  ],
+  "messages": [
+    "Since the attack I keep having bad dreams and I jump at every sound."
+  ],
+  "expected": {
+    "band": "MODERATE",
+    "indicators": [
+      "SEVERE_TRAUMA"
+    ],
+    "recommendations": [
+      "COUNSELLING"
+    ]
+  },
+  "tags": [],
+  "reviewedBy": []
+}

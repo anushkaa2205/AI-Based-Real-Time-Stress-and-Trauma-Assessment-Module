@@ -1,0 +1,29 @@
+{
+  "id": "S060",
+  "language": "bn",
+  "channel": "CHATBOT",
+  "gender": "M",
+  "summary": "Threat to life if he testifies",
+  "context": {},
+  "screeners": [
+    {
+      "itemCode": "SAFETY_SAFE_NOW",
+      "value": 1
+    }
+  ],
+  "messages": [
+    "সাক্ষ্য দিলে ওরা মেরে ফেলার হুমকি দিয়েছে।"
+  ],
+  "expected": {
+    "band": "HIGH",
+    "indicators": [
+      "INTIMIDATION"
+    ],
+    "recommendations": [
+      "POLICE_INTERVENTION",
+      "WITNESS_PROTECTION"
+    ]
+  },
+  "tags": [],
+  "reviewedBy": []
+}

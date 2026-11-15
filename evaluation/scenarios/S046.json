@@ -1,0 +1,37 @@
+{
+  "id": "S046",
+  "language": "en",
+  "channel": "CHATBOT",
+  "gender": "F",
+  "summary": "Complaint not registered, unsure of rights, anxious",
+  "context": {},
+  "screeners": [
+    {
+      "itemCode": "SAFETY_SAFE_NOW",
+      "value": 1
+    },
+    {
+      "itemCode": "GAD2_1",
+      "value": 1
+    },
+    {
+      "itemCode": "GAD2_2",
+      "value": 2
+    }
+  ],
+  "messages": [
+    "The police have not registered my complaint and I don't know what my rights are. I feel anxious all the time."
+  ],
+  "expected": {
+    "band": "MODERATE",
+    "indicators": [
+      "FEAR_ANXIETY"
+    ],
+    "recommendations": [
+      "LEGAL_AID",
+      "COUNSELLING"
+    ]
+  },
+  "tags": [],
+  "reviewedBy": []
+}
