@@ -17,6 +17,12 @@ const DailyStatSchema = new Schema(
     medianFirstResponseSec: Number,
     referralsCreated: { type: Map, of: Number }, // by support type
     referralsDone: { type: Map, of: Number },
+    // Added in task 8.2 (not yet in DATABASE.md): counts behind the medians (to combine
+    // groups and suppress small ones), SLA breaches, and top-evidence dimensions for trends.
+    ackCount: { type: Number, default: 0 },
+    firstResponseCount: { type: Number, default: 0 },
+    slaBreaches: { type: Number, default: 0 },
+    topDimensions: { type: Map, of: Number },
   },
   { versionKey: false },
 );

@@ -11,6 +11,7 @@ import { analyzeText, defaultDeps } from "@/core/analysis-client/client";
 import { checkAnalysis } from "@/core/analysis-client/guardrails";
 import { record } from "@/core/audit/record";
 import { allowsTextAnalysis } from "@/core/consent/mode";
+import { runRollup } from "@/core/analytics/rollup";
 import { remindFollowUp } from "@/core/followups/service";
 import { scoreInteraction } from "@/core/pipeline/score";
 import { decrypt, encrypt } from "@/core/privacy/crypto";
@@ -166,7 +167,7 @@ export async function runDue(limit = 5, now: Date = new Date()): Promise<{ ran: 
   for (let i = 0; i < limit; i++) {
     const job = await Job.findOneAndUpdate(
       {
-        type: { $in: ["alert.escalate", "rescore", "followup.remind"] }, // retention.purge and stats.rollup arrive in Phases 8–9
+        type: { $in: ["alert.escalate", "rescore", "followup.remind", "stats.rollup"] }, // retention.purge: task 8.7
         doneAt: null,
         runAt: { $lte: now },
         $or: [{ lockedUntil: null }, { lockedUntil: { $lt: now } }],
@@ -183,7 +184,9 @@ export async function runDue(limit = 5, now: Date = new Date()): Promise<{ ran: 
           ? await escalate(payload as { alertId?: string; level?: number }, now)
           : job.type === "followup.remind"
             ? await remindFollowUp(payload as { followUpId?: string; stage?: "due" | "miss" }, now)
-            : await rescore(ID(job._id), payload as { interactionId?: string; messageId?: string }, job.attempts, now);
+            : job.type === "stats.rollup"
+              ? await runRollup(now).then(() => ({ done: true as const }))
+              : await rescore(ID(job._id), payload as { interactionId?: string; messageId?: string }, job.attempts, now);
     } catch (err) {
       const name = (err as Error)?.name ?? "Error";
       outcome = job.attempts >= MAX_ATTEMPTS ? { done: true } : { done: false, retryAt: backoff(job.attempts, now.getTime()), error: name };

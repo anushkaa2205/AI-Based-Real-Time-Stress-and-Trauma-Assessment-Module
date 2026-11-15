@@ -339,3 +339,19 @@ export const FollowUpItem = z.object({
   outcomeNote: z.string().optional(),
 });
 export type FollowUpItem = z.infer<typeof FollowUpItem>;
+
+// --- Phase 8: analytics (API_CONTRACTS §5.8) -----------------------------------------------
+
+export const AnalyticsQuery = z.object({
+  scope: z.enum(["national", "state", "district"]).default("national"),
+  stateId: ObjectIdStr.optional(),
+  districtId: ObjectIdStr.optional(),
+  from: z.iso.date().optional(),
+  to: z.iso.date().optional(),
+  channel: Channel.optional(),
+  language: z.string().max(10).optional(),
+  /** FR-DSH-07 band filter (additive) */
+  band: RiskBand.optional(),
+  interval: z.enum(["day", "week"]).default("day"),
+});
+export type AnalyticsQuery = z.infer<typeof AnalyticsQuery>;
