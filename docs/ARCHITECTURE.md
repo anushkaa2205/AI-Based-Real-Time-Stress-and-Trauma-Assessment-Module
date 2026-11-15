@@ -21,6 +21,7 @@
 12. [Tech stack](#12-tech-stack)
 13. [Repository structure](#13-repository-structure)
 14. [Requirements coverage](#14-requirements-coverage)
+15. [Simulator (front door for demonstrations)](#15-simulator-front-door-for-demonstrations)
 
 ---
 
@@ -601,6 +602,7 @@ flowchart LR
 │   └── requirements.txt
 ├── evaluation/                         # synthetic scenario set + scripts (AC-EVAL-01)
 │   ├── scenarios/*.json
+│   ├── simulator/                  # the twelve simulator cases C01–C12 + audio (FR-SIM-02)
 │   ├── audio/
 │   └── run_eval.ts                     # band accuracy, recall, fairness report
 ├── docs/                               # REQUIREMENTS, ARCHITECTURE, DATABASE, API_CONTRACTS, TOOLS_AND_COSTS, IMPLEMENTATION_PLAN
@@ -623,6 +625,7 @@ flowchart LR
 | FR-LANG | `next-intl` messages, lexicon rules per language, LID/MT in the analysis service |
 | FR-CASE, FR-ALR, FR-DSH | `cases`, `alerts`, staff pages, Pusher channels, in-request job runner |
 | FR-API | `/api/v1/integration/*`, `api_clients` |
+| FR-SIM | §15: simulator pages, `/api/v1/sim/*`, `evaluation/simulator/`, `simulation` tag on cases and interactions |
 | FR-AUD | `audit` module, `audit_logs` |
 | NFR-PRI, NFR-SEC | §9 |
 | NFR-ETH | ADR-3, ADR-4, §8 rules, victim response contract |
@@ -630,3 +633,57 @@ flowchart LR
 | NFR-REL | §10.3 |
 | NFR-MNT | ADR-2, ADR-4, repository structure, tests |
 | NFR-ACC | Victim UI: WCAG 2.1 AA components (shadcn/Radix), audio for every scripted prompt (`Prompt.audioUrl`), voice input, icon-first layout, text-first pages under ~150 KB so they work on low-end phones over 3G; checked with Lighthouse/axe in CI |
+
+---
+
+## 15. Simulator (front door for demonstrations)
+
+The module has no screen of its own. The **NHAA Simulator** plays the part of NHAA: it sends synthetic cases to the module through the integration API and shows what the module made of them and what each office sees. Design and theme: `SIMULATOR_PLAN.md`. Requirements: FR-SIM-01…11.
+
+### 15.1 The simulator is an API client
+
+```mermaid
+flowchart LR
+    B[Presenter's browser<br/>simulator pages] -- "play step n<br/>(staff session)" --> P[Simulator play routes<br/>/api/v1/sim/*]
+    P -- "ApiKey SIMULATOR_API_KEY<br/>HTTP" --> I[/api/v1/integration/*]
+    I --> PL[Normal pipeline:<br/>lexicon → AI → scoring → recommendations]
+    PL --> DB[(MongoDB)]
+    B -- "poll report<br/>(no sign-in)" --> R[GET /api/v1/sim/reports/:id]
+    R -- "simulation-tagged only" --> DB
+    B -- "desks<br/>(sign-in as that role)" --> S[/api/v1/staff/*<br/>same policies]
+    S --> DB
+```
+
+- **Playback runs on the server.** The browser never holds the API key and never sends case content. It asks the play route to send *step n of case C*; the route reads that step from the case file in `evaluation/simulator/` and calls the module's own `/api/v1/integration/*` endpoints over HTTP with the simulator's API key (`SIMULATOR_API_KEY`). The module cannot tell the simulator from any other NHAA system.
+- **Real time is kept by the browser.** It asks for the next step on the case's timetable: one 5 s audio window every 5 s, chat messages one at a time, key presses with their pauses.
+- **Tagging is done by the server.** The simulator's row in `api_clients` has `isSimulator: true`; every interaction and case created by that client gets `simulation: true`. No request body can set the tag. The case id and take go in the existing `externalRef` (`SIM:C04:calm`).
+- **Nothing is computed in the simulator.** Reports read the stored assessments, indicators, voice windows and recommendations of the played interaction; the case file holds only the script and the *expected* band.
+
+### 15.2 Routes
+
+| Route | Access | What it is |
+|---|---|---|
+| `/` | Public | Simulator home: no case data (FR-SIM-01) |
+| `/sim/inbound/[channel]` | Public list; Play needs staff sign-in | Case list for one channel (`call`, `ivrs`, `chatbot`, `app`, `portal`) and the player |
+| `/sim/report/[interactionId]` | Public, simulator cases only | Analysis report, live while the case plays (FR-SIM-04, 05) |
+| `/sim/desk/[desk]` | Sign-in as the desk's role | Counsellor, police, welfare, district, ministry desks built from the staff components (FR-SIM-06) |
+| `/portal/[locale]/…` | Victim session | The victim start, consent and chat pages, moved from `/[locale]/…`; old URLs redirect |
+| `/login`, staff pages | Unchanged | |
+
+| API | Access | Notes |
+|---|---|---|
+| `POST /api/v1/sim/plays` | Staff session | Starts a played case: creates the interaction through the integration API |
+| `POST /api/v1/sim/plays/{interactionId}/steps/{n}` | Staff session that started the play | Sends step *n* of the case through the integration API |
+| `GET /api/v1/sim/reports/{interactionId}` | Public | Read-only report; 404 unless `simulation: true` |
+| `GET /api/v1/sim/status` | Public | AI service reachable or not (no case data) |
+| `POST /api/v1/sim/reset` | Staff session | Deletes simulator-tagged records only (FR-SIM-08), audited |
+
+### 15.3 Desks and sign-in
+
+The top bar has a **Sign in** button that opens the normal staff sign-in (password, and TOTP for the roles that need it). A desk renders only for the matching role; for any other role it shows "Sign in as Police to see this desk". Desk data comes from the existing `/api/v1/staff/*` endpoints with the same policies and serialisers, filtered to simulator cases (`simulation=only`). To show another desk, the presenter signs out and signs in as that role. There is no auto-login or shared demo session.
+
+### 15.4 Isolation from real data
+
+- `stats.rollup` skips `simulation: true`, so real analytics never count simulator cases (FR-SIM-07). The Ministry desk shows the ordinary analytics view, so it shows real (non-simulator) counts with the usual small-count suppression.
+- Reset demo deletes, for tagged cases only: cases, interactions, messages, voice windows, indicators, assessments, recommendations, referrals, alerts and follow-ups, in one transaction, then writes one audit entry with the counts.
+- Public reports are safe to open because only simulator-tagged cases are served, and those are synthetic by construction (C-DAT-01).

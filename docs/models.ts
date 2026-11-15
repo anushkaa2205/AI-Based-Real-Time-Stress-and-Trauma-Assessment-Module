@@ -152,6 +152,7 @@ const ApiClientSchema = new Schema(
     scopes: { type: [String], default: [] }, // "interactions:write", "assessments:read", …
     rateLimitPerMin: { type: Number, default: 120 },
     isActive: { type: Boolean, default: true },
+    isSimulator: { type: Boolean, default: false }, // FR-SIM-07: interactions it creates are tagged
   },
   base,
 );
@@ -220,6 +221,7 @@ const CaseSchema = new Schema(
     firstContactAt: { type: Date, default: Date.now },
     lastActivityAt: { type: Date, default: Date.now },
     closedAt: Date,
+    simulation: { type: Boolean, default: false }, // FR-SIM-07: created by the simulator's API client
   },
   base,
 );
@@ -320,6 +322,8 @@ const InteractionSchema = new Schema(
     districtId: { type: ObjectId, ref: "District" },
     operatorId: { type: ObjectId, ref: "User" },
     apiClientId: { type: ObjectId, ref: "ApiClient" },
+    externalRef: String, // integration API reference; the simulator writes SIM:<caseId>[:<take>]
+    simulation: { type: Boolean, default: false }, // FR-SIM-07, from the API client, never the request
 
     // Victim session (FR-CH-09): only the SHA-256 of the token is stored
     sessionTokenHash: { type: String, select: false },

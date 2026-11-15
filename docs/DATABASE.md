@@ -117,6 +117,7 @@ Legend: **🔒** = encrypted field, **TTL** = auto-deleted by MongoDB, **U** = u
 | `summaryEnc` 🔒, `summaryTranslatedEnc` 🔒 | string | Neutral summary (FR-NLP-09) |
 | `bandOverrides[]` | embedded | `{fromBand, toBand, reason (≥ 5 chars), byUserId, at}` |
 | `firstContactAt`, `lastActivityAt`, `closedAt` | Date | |
+| `simulation` | bool | `true` only for cases created by the simulator's API client (FR-SIM-07); never set from a request body |
 
 **Indexes:** `{status:1, bandRank:-1, currentSvi:-1, waitingSince:1}` (queue) · `{districtId:1, status:1, bandRank:-1}` · `{assignedCounsellorId:1, status:1}` · `docketNumber` U · `subjectId`.
 
@@ -129,6 +130,8 @@ Legend: **🔒** = encrypted field, **TTL** = auto-deleted by MongoDB, **U** = u
 | `mode` | enum | SAFETY_ONLY · TEXT_ONLY · VOICE_ONLY · FULL, derived from consent; default SAFETY_ONLY |
 | `uiLanguage`, `detectedLanguages[]` | string | BCP-47 codes |
 | `operatorId`, `apiClientId`, `districtId` | ObjectId | |
+| `externalRef` | string | The integrating system's own reference (integration API). The simulator writes `SIM:<caseId>[:<take>]` |
+| `simulation` | bool | Copied from the creating API client's `isSimulator` (FR-SIM-07) |
 | `sessionTokenHash` | string, partial **U**, not selected by default | SHA-256 of the victim session token |
 | `sessionExpiresAt` | Date | 2 h sliding expiry |
 | `messageSeq`, `assessmentSeq` | number | Counters, incremented with `$inc` to number child documents |
@@ -207,7 +210,7 @@ Legend: **🔒** = encrypted field, **TTL** = auto-deleted by MongoDB, **U** = u
 | Collection | Key fields | Indexes |
 |---|---|---|
 | `users` | `email` U, `passwordHash` (hidden), `role`, `stateId`, `districtId`, `languages[]`, `totpSecretEnc` 🔒 (hidden), `isActive`, `isOnDuty`, `openCaseCount` | `{role, districtId, isOnDuty}` |
-| `api_clients` | `keyPrefix` U, `keyHash` (hidden), `scopes[]`, `rateLimitPerMin`, `isActive` | |
+| `api_clients` | `keyPrefix` U, `keyHash` (hidden), `scopes[]`, `rateLimitPerMin`, `isActive`, `isSimulator` (the simulator's client; its interactions are tagged, FR-SIM-07) | |
 | `subjects` | `_id`, `createdAt` only | |
 | `subject_identities` (PII DB) | `_id` = subject id, `fullNameEnc` 🔒, `phoneEnc` 🔒, `phoneHash` (HMAC, for de-duplication), `addressEnc` 🔒 | `phoneHash` |
 | `case_notes` | `caseId`, `authorId`, `bodyEnc` 🔒 | `{caseId, createdAt:-1}` |
@@ -389,7 +392,7 @@ DailyStat.aggregate([
   { $project: { _id: 0, district: { $first: "$d.name" }, band: "$_id.band", count: 1 } },
 ]);
 ```
-`daily_stats` is filled hourly by the `stats.rollup` job, using an aggregation over `interactions`, `alerts` and `referrals` that ends in `$merge`. Analytics roles never query case collections directly.
+`daily_stats` is filled hourly by the `stats.rollup` job, using an aggregation over `interactions`, `alerts` and `referrals` that ends in `$merge`. Analytics roles never query case collections directly. The rollup skips interactions with `simulation: true`, so simulator cases never reach `daily_stats` (FR-SIM-07).
 
 ---
 
