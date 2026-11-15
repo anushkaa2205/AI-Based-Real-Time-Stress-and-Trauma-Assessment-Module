@@ -9,7 +9,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { NOTICE_VERSION, api } from "./api";
 import { ListenButton } from "./listen-button";
-import { portalPath } from "@/lib/portal";
+import { parseWay, portalPath, withWay } from "@/lib/portal";
 
 /**
  * "Keep my voice recordings" (audioRetention) is not offered: audio storage (task 7.9) is not built,
@@ -23,7 +23,9 @@ export function ConsentScreen() {
   const tc = useTranslations("common");
   const locale = useLocale();
   const router = useRouter();
-  const id = useSearchParams().get("i") ?? "";
+  const params = useSearchParams();
+  const id = params.get("i") ?? "";
+  const way = parseWay(params.get("way")); // homepage choice (F.2), passed on to the chat
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
 
@@ -35,7 +37,7 @@ export function ConsentScreen() {
     setError(false);
     try {
       await api("POST", `/interactions/${id}/consent`, { noticeVersion: NOTICE_VERSION, language: locale, ...choice, audioRetention: false });
-      router.replace(portalPath(locale, `/chat?i=${id}`));
+      router.replace(withWay(portalPath(locale, `/chat?i=${id}`), way));
     } catch {
       setError(true);
       setBusy(false);

@@ -15,7 +15,7 @@ import { ContextForm } from "./context-form";
 import { EmergencyPanel } from "./emergency-panel";
 import { ListenButton } from "./listen-button";
 import { VoiceRecorder } from "./voice-recorder";
-import { portalPath } from "@/lib/portal";
+import { parseWay, portalPath, withWay } from "@/lib/portal";
 
 type View = { kind: "loading" } | { kind: "turn"; turn: Turn } | { kind: "done"; docket: string; closing: string } | { kind: "ended" };
 
@@ -25,7 +25,9 @@ export function ChatScreen() {
   const t = useTranslations();
   const locale = useLocale();
   const router = useRouter();
-  const id = useSearchParams().get("i") ?? "";
+  const params = useSearchParams();
+  const id = params.get("i") ?? "";
+  const way = parseWay(params.get("way")); // homepage choice (F.2), a hint only
   const [view, setView] = useState<View>({ kind: "loading" });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
@@ -44,14 +46,14 @@ export function ChatScreen() {
   const show = useCallback(
     (turn: Turn) => {
       if (turn.next.key === "consent.title") {
-        router.replace(portalPath(locale, `/consent?i=${id}`));
+        router.replace(withWay(portalPath(locale, `/consent?i=${id}`), way));
         return;
       }
       setView({ kind: "turn", turn });
       setError(false);
       requestAnimationFrame(() => headingRef.current?.focus());
     },
-    [id, locale, router],
+    [id, locale, router, way],
   );
 
   useEffect(() => {
@@ -138,7 +140,7 @@ export function ChatScreen() {
   async function switchLanguage(lang: string) {
     try {
       await api("POST", `/interactions/${id}/language`, { language: lang });
-      router.replace(portalPath(lang, `/chat?i=${id}`));
+      router.replace(withWay(portalPath(lang, `/chat?i=${id}`), way));
     } catch (e) {
       fail(e);
     }
@@ -190,6 +192,25 @@ export function ChatScreen() {
   const p = turn.next;
   const spoken = [p.intro, p.text].filter(Boolean).join(" ");
 
+  const textForm = (
+    <form onSubmit={(e) => sendText(e, p)} className="flex flex-col gap-3">
+      <label className="sr-only" htmlFor="text">
+        {t("common.typeHere")}
+      </label>
+      <textarea
+        id="text"
+        name="text"
+        rows={5}
+        maxLength={2000}
+        placeholder={t("common.typeHere")}
+        className="field p-3 text-lg leading-relaxed"
+      />
+      <button type="submit" disabled={busy} className={`${bigButton} btn-primary`}>
+        {busy ? t("common.loading") : t("common.send")}
+      </button>
+    </form>
+  );
+
   return (
     <section className="flex flex-col gap-5">
       <div className="flex flex-wrap justify-end gap-1.5 text-sm">
@@ -226,6 +247,9 @@ export function ChatScreen() {
         </div>
       )}
 
+      {/* Homepage choice (F.2): "write" puts the text box first; otherwise the voice button comes first.
+          Recording never starts on its own. Both stay available. */}
+      {p.input === "FREE_TEXT" && way === "write" && textForm}
       {p.input === "FREE_TEXT" && !voiceNote && (
         <VoiceRecorder interactionId={id} onEmergency={showEmergency} onFinished={voiceDone} onFallback={setVoiceNote} />
       )}
@@ -235,24 +259,7 @@ export function ChatScreen() {
         </p>
       )}
 
-      {p.input === "FREE_TEXT" && (
-        <form onSubmit={(e) => sendText(e, p)} className="flex flex-col gap-3">
-          <label className="sr-only" htmlFor="text">
-            {t("common.typeHere")}
-          </label>
-          <textarea
-            id="text"
-            name="text"
-            rows={5}
-            maxLength={2000}
-            placeholder={t("common.typeHere")}
-            className="field p-3 text-lg leading-relaxed"
-          />
-          <button type="submit" disabled={busy} className={`${bigButton} btn-primary`}>
-            {busy ? t("common.loading") : t("common.send")}
-          </button>
-        </form>
-      )}
+      {p.input === "FREE_TEXT" && way !== "write" && textForm}
 
       {p.input === "CONTEXT_FORM" && <ContextForm onSubmit={sendContext} busy={busy} />}
 

@@ -7,7 +7,7 @@ import { useState } from "react";
 import { api } from "./api";
 import { ListenButton } from "./listen-button";
 import { VictimChannel } from "@/contracts/victim";
-import { portalPath } from "@/lib/portal";
+import { parseWay, portalPath, withWay } from "@/lib/portal";
 
 export function StartScreen() {
   const t = useTranslations("start");
@@ -21,10 +21,12 @@ export function StartScreen() {
   async function start() {
     setBusy(true);
     setError(false);
+    // The homepage choice (F.2) is a hint only. Read at click time so this page stays static.
+    const way = parseWay(new URLSearchParams(window.location.search).get("way"));
     try {
       // The browser portal is its own channel (audit G1); the keypad menu sends IVRS from ivrs-screen.
       const r = await api<{ interactionId: string }>("POST", "/interactions", { channel: VictimChannel.enum.PORTAL, language: locale });
-      router.replace(portalPath(locale, `/consent?i=${r.interactionId}`));
+      router.replace(withWay(portalPath(locale, `/consent?i=${r.interactionId}`), way));
     } catch {
       setError(true);
       setBusy(false);
