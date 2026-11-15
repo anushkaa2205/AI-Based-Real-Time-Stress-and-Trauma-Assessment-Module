@@ -12,7 +12,7 @@ export default async function Page() {
   return (
     <section className="flex flex-col gap-4">
       <div>
-        <h1 className="text-2xl font-semibold">Action requests</h1>
+        <h1 className="text-[1.375rem] font-bold leading-tight text-ink">Action requests</h1>
         <p className="text-sm text-muted-foreground">Requests approved by NHAA staff for your district. Contact the complainant only through the route shown.</p>
       </div>
       <ReferralQueue channels={channels} canUpdate emptyText="No action requests for your district." />

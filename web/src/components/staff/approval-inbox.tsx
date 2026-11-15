@@ -28,7 +28,7 @@ function List({ items, caseHref, onDone }: { items: Item[]; caseHref: string | n
   return (
     <ul className="flex flex-col gap-2">
       {items.map((r) => (
-        <li key={r.id} data-testid="approval-row" data-type={r.type} className="flex flex-col gap-1 rounded-md border border-border p-3 text-sm">
+        <li key={r.id} data-testid="approval-row" data-type={r.type} className="card flex flex-col gap-1 p-3 text-sm">
           <div className="flex flex-wrap items-center gap-2">
             {caseHref ? (
               <Link href={`${caseHref}/${r.caseId}`} className="font-mono underline underline-offset-4">
@@ -103,12 +103,12 @@ export function ApprovalInbox({ caseHref, showReviews = true }: { caseHref: stri
       )}
       {showReviews && reviews.length > 0 && (
         <section className="flex flex-col gap-2">
-          <h2 className="font-semibold">Emergency support to review ({reviews.length})</h2>
+          <h2 className="section-title">Emergency support to review ({reviews.length})</h2>
           <List items={reviews} caseHref={caseHref} onDone={done} />
         </section>
       )}
       <section className="flex flex-col gap-2">
-        <h2 className="font-semibold">Waiting for approval{proposed ? ` (${proposed.length})` : ""}</h2>
+        <h2 className="section-title">Waiting for approval{proposed ? ` (${proposed.length})` : ""}</h2>
         {proposed === null ? (
           <p className="text-muted-foreground">Loading…</p>
         ) : proposed.length === 0 ? (
@@ -117,7 +117,7 @@ export function ApprovalInbox({ caseHref, showReviews = true }: { caseHref: stri
           <List items={proposed} caseHref={caseHref} onDone={done} />
         )}
         {hasMore && (
-          <button type="button" onClick={() => setPages((n) => n + 1)} className="self-start text-sm underline underline-offset-4" data-testid="inbox-more">
+          <button type="button" onClick={() => setPages((n) => n + 1)} className="link self-start text-sm" data-testid="inbox-more">
             Load more
           </button>
         )}

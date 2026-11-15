@@ -82,7 +82,7 @@ export function ReferralQueue({
 
   return (
     <section className="flex flex-col gap-2">
-      {title && <h2 className="text-lg font-semibold">{title}</h2>}
+      {title && <h2 className="text-base font-bold text-ink">{title}</h2>}
       {msg && (
         <p role="status" className="text-sm" data-testid="referral-message">
           {msg}
@@ -98,14 +98,14 @@ export function ReferralQueue({
             const overdue = !!r.dueAt && OPEN.has(r.status) && new Date(r.dueAt).getTime() < now;
             const next = NEXT[r.status];
             return (
-              <li key={r.id} data-testid="referral-row" data-status={r.status} className="flex flex-col gap-1 rounded-md border border-border p-3 text-sm">
+              <li key={r.id} data-testid="referral-row" data-status={r.status} className="card flex flex-col gap-1 p-3 text-sm">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-mono">{r.docketNumber}</span>
-                  <span className="rounded bg-muted px-2 text-xs">{lower(r.type)}</span>
-                  <span className={`rounded px-2 text-xs ${r.urgency === "IMMEDIATE" || r.urgency === "WITHIN_15_MIN" ? "bg-red-700 text-white" : "bg-muted"}`}>{lower(r.urgency)}</span>
+                  <span className="tag">{lower(r.type)}</span>
+                  <span className={`tag ${r.urgency === "IMMEDIATE" || r.urgency === "WITHIN_15_MIN" ? "bg-danger text-white" : ""}`}>{lower(r.urgency)}</span>
                   <span className="text-xs">Status: {lower(r.status)}</span>
                   {r.dueAt && (
-                    <span className={`text-xs ${overdue ? "font-semibold text-red-700" : "text-muted-foreground"}`}>
+                    <span className={`text-xs ${overdue ? "font-semibold text-danger" : "text-muted-foreground"}`}>
                       {overdue ? "Overdue since " : "Due "}
                       {new Date(r.dueAt).toLocaleString()}
                     </span>
@@ -126,7 +126,7 @@ export function ReferralQueue({
                 {canUpdate && OPEN.has(r.status) && (
                   <div className="flex flex-wrap items-center gap-2">
                     {next && (
-                      <button type="button" className="rounded bg-primary px-2 py-1 text-xs text-primary-foreground" onClick={() => update(r.id, { status: next.to })}>
+                      <button type="button" className="btn btn-primary btn-sm" onClick={() => update(r.id, { status: next.to })}>
                         {next.label}
                       </button>
                     )}
@@ -138,13 +138,13 @@ export function ReferralQueue({
                           void update(r.id, { status: "DECLINED", declinedReason: String(new FormData(e.currentTarget).get("reason") ?? "") });
                         }}
                       >
-                        <input name="reason" placeholder="Reason for declining" className="rounded border border-border p-1 text-xs" />
-                        <button type="submit" className="rounded border border-border px-2 text-xs">
+                        <input name="reason" placeholder="Reason for declining" className="field text-xs" />
+                        <button type="submit" className="btn btn-secondary btn-sm">
                           Decline
                         </button>
                       </form>
                     ) : (
-                      <button type="button" className="rounded border border-border px-2 py-1 text-xs" onClick={() => setDeclining(r.id)}>
+                      <button type="button" className="btn btn-secondary btn-sm" onClick={() => setDeclining(r.id)}>
                         Decline…
                       </button>
                     )}

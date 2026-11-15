@@ -96,7 +96,7 @@ async function get<T>(path: string): Promise<T | null> {
 
 function Tile({ label, value, hint, testId }: { label: string; value: string; hint?: string; testId?: string }) {
   return (
-    <div className="flex flex-col gap-1 rounded-md border border-border p-3" data-testid={testId}>
+    <div className="card flex flex-col gap-1 p-3" data-testid={testId}>
       <span className="text-xs text-[var(--ink-2)]">{label}</span>
       <span className="text-2xl font-semibold tabular-nums text-[var(--ink-1)]">{value}</span>
       {hint && <span className="text-xs text-[var(--ink-muted)]">{hint}</span>}
@@ -178,7 +178,7 @@ function TrendChart({ items }: { items: Trend[] }) {
               return <span key={b} className={top ? "rounded-t" : ""} style={{ height: `${(v / max) * h}px`, background: `var(--band-${b})` }} />;
             })}
             {hover === i && (
-              <div role="tooltip" className="absolute bottom-full left-1/2 z-10 mb-1 w-40 -translate-x-1/2 rounded-md border border-border bg-[var(--surface-1)] p-2 text-xs shadow">
+              <div role="tooltip" className="absolute bottom-full left-1/2 z-10 mb-1 w-40 -translate-x-1/2 rounded-[3px] border border-border bg-[var(--surface-1)] p-2 text-xs shadow">
                 <p className="font-semibold text-[var(--ink-1)]">{t.period}</p>
                 {BANDS.map((b) => (
                   <p key={b} className="flex justify-between text-[var(--ink-2)]">
@@ -274,7 +274,7 @@ export function AnalyticsDashboard({ fixedDistrict }: { fixedDistrict: boolean }
         : "–";
   const heatMax = Math.max(0, ...heat.map((x) => x.criticalPer1000 ?? 0));
 
-  const input = "rounded border border-border bg-background p-1 text-sm";
+  const input = "field w-auto min-w-28";
   return (
     <div className="viz-root flex flex-col gap-6">
       <style>{VIZ_STYLE}</style>
@@ -336,7 +336,7 @@ export function AnalyticsDashboard({ fixedDistrict }: { fixedDistrict: boolean }
             <option value="week">Week</option>
           </select>
         </label>
-        <a href={`/api/v1/staff/analytics/export.csv?${qs}`} className="rounded border border-border px-3 py-1 text-sm" data-testid="export-csv">
+        <a href={`/api/v1/staff/analytics/export.csv?${qs}`} className="btn btn-secondary" data-testid="export-csv">
           Export CSV
         </a>
         <label className="flex items-center gap-1 text-xs">
@@ -360,8 +360,8 @@ export function AnalyticsDashboard({ fixedDistrict }: { fixedDistrict: boolean }
           </section>
 
           <div className="grid gap-6 lg:grid-cols-2">
-            <section className="flex flex-col gap-3 rounded-md border border-border p-4">
-              <h2 className="font-semibold">Interactions by risk band</h2>
+            <section className="card flex flex-col gap-3 p-4">
+              <h2 className="section-title">Interactions by risk band</h2>
               {tableView ? (
                 <table className="text-sm">
                   <tbody>
@@ -377,8 +377,8 @@ export function AnalyticsDashboard({ fixedDistrict }: { fixedDistrict: boolean }
                 <BandBars byBand={summary.byBand} total={summary.interactions} />
               )}
             </section>
-            <section className="flex flex-col gap-3 rounded-md border border-border p-4">
-              <h2 className="font-semibold">Trend</h2>
+            <section className="card flex flex-col gap-3 p-4">
+              <h2 className="section-title">Trend</h2>
               {tableView ? (
                 <table className="text-sm">
                   <thead>
@@ -412,8 +412,8 @@ export function AnalyticsDashboard({ fixedDistrict }: { fixedDistrict: boolean }
             </section>
           </div>
 
-          <section className="flex flex-col gap-2 rounded-md border border-border p-4">
-            <h2 className="font-semibold">Districts: High and Critical per 1000 interactions</h2>
+          <section className="card flex flex-col gap-2 p-4">
+            <h2 className="section-title">Districts: High and Critical per 1000 interactions</h2>
             <table className="text-sm" data-testid="heatmap">
               <thead>
                 <tr className="text-left text-xs text-[var(--ink-2)]">
@@ -448,8 +448,8 @@ export function AnalyticsDashboard({ fixedDistrict }: { fixedDistrict: boolean }
             </table>
           </section>
 
-          <section className="flex flex-col gap-2 rounded-md border border-border p-4">
-            <h2 className="font-semibold">Demand and capacity: referrals by district and support type</h2>
+          <section className="card flex flex-col gap-2 p-4">
+            <h2 className="section-title">Demand and capacity: referrals by district and support type</h2>
             <table className="text-sm" data-testid="capacity">
               <thead>
                 <tr className="text-left text-xs text-[var(--ink-2)]">

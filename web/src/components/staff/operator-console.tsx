@@ -74,12 +74,12 @@ const DIM: Record<string, string> = {
   ACUTE_STRESS: "Acute stress",
 };
 const EMO_COLOR: Record<string, string> = {
-  fear: "bg-purple-200 text-purple-950",
-  sadness: "bg-blue-200 text-blue-950",
-  anger: "bg-red-200 text-red-950",
-  flat: "bg-gray-300 text-gray-900",
-  shame: "bg-amber-200 text-amber-950",
-  shock: "bg-orange-200 text-orange-950",
+  fear: "bg-[#e6e0ef] text-[#352a4d]",
+  sadness: "bg-[#dfe7f1] text-[#1f3a5f]",
+  anger: "bg-[#f4dcdc] text-[#6e1012]",
+  flat: "bg-[#e3e1dc] text-[#333]",
+  shame: "bg-[#f5e6c4] text-[#4a3700]",
+  shock: "bg-[#f7dfcf] text-[#6b2a0d]",
   neutral: "bg-muted text-foreground",
 };
 
@@ -121,7 +121,7 @@ function VoiceStrip({ windows }: { windows: Win[] }) {
           return (
             <div key={w.windowIndex} className="flex w-6 flex-col items-center gap-0.5" title={`Window ${w.windowIndex}: pitch ${w.pitch?.meanHz ?? "–"} Hz (spread ${w.pitch?.stdHz ?? "–"}), ${w.pauses.count} pauses, longest ${(w.pauses.maxMs / 1000).toFixed(1)} s, ${w.speechRateWpm ?? "–"} wpm`}>
               <span className="w-3 rounded-t bg-foreground/70" style={{ height: `${h}px` }} />
-              <span className="w-3 rounded bg-sky-500" style={{ height: `${Math.round(w.pauses.silenceRatio * 16) + 1}px` }} />
+              <span className="w-3 rounded-[1px] bg-navy" style={{ height: `${Math.round(w.pauses.silenceRatio * 16) + 1}px` }} />
             </div>
           );
         })}
@@ -237,8 +237,8 @@ function CallView({ live, onMessage }: { live: Live; onMessage: (m: string) => v
         </div>
       </div>
 
-      <section className="rounded-md border border-border p-3">
-        <h3 className="mb-2 text-sm font-semibold">Suggested next questions</h3>
+      <section className="card p-3">
+        <h3 className="section-title mb-2">Suggested next questions</h3>
         <ol className="flex flex-col gap-2" data-testid="suggestions">
           {sugs.map((s) => (
             <li key={s.key} className="text-sm">
@@ -251,7 +251,7 @@ function CallView({ live, onMessage }: { live: Live; onMessage: (m: string) => v
       </section>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <section className="flex flex-col gap-2 rounded-md border border-border p-3">
+        <section className="card flex flex-col gap-2 p-3">
           <h3 className="text-sm font-semibold">Live transcript</h3>
           <ol className="flex max-h-80 flex-col gap-2 overflow-y-auto text-sm" data-testid="live-transcript" aria-live="polite">
             {msgs.map((m) => (
@@ -269,20 +269,20 @@ function CallView({ live, onMessage }: { live: Live; onMessage: (m: string) => v
             <label htmlFor="op-text" className="sr-only">
               Type what the caller said
             </label>
-            <input id="op-text" name="text" maxLength={2000} placeholder="Type what the caller said" className="flex-1 rounded border border-border p-1" />
-            <button type="submit" disabled={busy} className="rounded bg-primary px-3 text-primary-foreground disabled:opacity-60">
+            <input id="op-text" name="text" maxLength={2000} placeholder="Type what the caller said" className="field flex-1" />
+            <button type="submit" disabled={busy} className="btn btn-primary">
               Add
             </button>
           </form>
         </section>
 
-        <section className="flex flex-col gap-2 rounded-md border border-border p-3">
+        <section className="card flex flex-col gap-2 p-3">
           <h3 className="text-sm font-semibold">Indicators</h3>
           <ul className="flex flex-wrap gap-1" data-testid="indicator-chips">
             {topInds.map((i) => (
               <li
                 key={i.id}
-                className="rounded-full border border-border px-2 py-0.5 text-xs"
+                className="tag border-line bg-white"
                 title={i.evidence.quote ? `"${i.evidence.quote}"` : (i.label ?? i.evidence.eventType ?? "")}
               >
                 {DIM[i.dimension] ?? i.dimension} {i.score.toFixed(2)} · {i.source === "VOICE" ? "voice" : i.source === "SAFETY_LEXICON" ? "safety rule" : i.source.toLowerCase()}
@@ -295,8 +295,8 @@ function CallView({ live, onMessage }: { live: Live; onMessage: (m: string) => v
         </section>
       </div>
 
-      <section className="rounded-md border border-border p-3">
-        <h3 className="mb-2 text-sm font-semibold">Emotion over the session</h3>
+      <section className="card p-3">
+        <h3 className="section-title mb-2">Emotion over the session</h3>
         <EmotionTimeline points={emos} />
       </section>
     </div>
@@ -338,9 +338,9 @@ export function OperatorConsole({ me, queueChannels }: { me: string; queueChanne
   return (
     <div className="grid gap-6 xl:grid-cols-[18rem_1fr]">
       <aside className="flex flex-col gap-2">
-        <h2 className="font-semibold">Live sessions</h2>
+        <h2 className="section-title">Live sessions</h2>
         {msg && (
-          <p role="status" className="text-sm text-red-700">
+          <p role="status" className="text-sm text-danger">
             {msg}
           </p>
         )}
@@ -350,7 +350,7 @@ export function OperatorConsole({ me, queueChannels }: { me: string; queueChanne
           {live?.map((l) => {
             const mine = l.operator?.id === me;
             return (
-              <li key={l.id} data-testid="live-row" className={`rounded-md border p-2 text-sm ${selected === l.id ? "border-primary" : "border-border"}`}>
+              <li key={l.id} data-testid="live-row" className={`rounded-[4px] border bg-white p-2 text-sm ${selected === l.id ? "border-navy border-l-4" : "border-line"}`}>
                 <div className="flex items-center gap-2">
                   <span className="font-mono">{l.docketNumber}</span>
                   <BandBadge band={l.band} />
@@ -359,12 +359,12 @@ export function OperatorConsole({ me, queueChannels }: { me: string; queueChanne
                   {l.channel.replace(/_/g, " ").toLowerCase()} · {l.language} · {l.operator ? `with ${l.operator.name}` : "unattended"}
                 </p>
                 {mine ? (
-                  <button type="button" className="mt-1 underline" onClick={() => setSelected(l.id)}>
+                  <button type="button" className="link mt-1" onClick={() => setSelected(l.id)}>
                     Open
                   </button>
                 ) : (
                   !l.operator && (
-                    <button type="button" className="mt-1 rounded bg-primary px-2 py-0.5 text-primary-foreground" onClick={() => take(l.id)}>
+                    <button type="button" className="btn btn-primary btn-sm mt-1" onClick={() => take(l.id)}>
                       Take call
                     </button>
                   )

@@ -59,7 +59,7 @@ export function DistrictCases({ channels }: { channels: string[] }) {
   if (rows === null) return <p className="text-muted-foreground">Loading…</p>;
   if (rows.length === 0) return <p className="text-muted-foreground">No High or Critical cases open in your district.</p>;
   return (
-    <table className="w-full text-left text-sm" data-testid="district-cases">
+    <table className="data-table" data-testid="district-cases">
       <thead className="bg-muted">
         <tr>
           <th className="p-2">Band</th>

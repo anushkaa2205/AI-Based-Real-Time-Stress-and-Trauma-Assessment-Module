@@ -59,7 +59,7 @@ export function CaseQueue({ channels, caseHref }: { channels: string[]; caseHref
   return (
     <section className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold">Case queue</h1>
+        <h1 className="text-[1.375rem] font-bold leading-tight text-ink">Case queue</h1>
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked={mine} onChange={(e) => setMine(e.target.checked)} />
           Only my cases
@@ -72,9 +72,9 @@ export function CaseQueue({ channels, caseHref }: { channels: string[]; caseHref
       ) : items.length === 0 ? (
         <p>No open cases.</p>
       ) : (
-        <div className="overflow-x-auto rounded-md border border-border">
-          <table className="w-full text-sm" data-testid="queue">
-            <thead className="bg-muted text-left">
+        <div className="card overflow-x-auto">
+          <table className="data-table" data-testid="queue">
+            <thead className="text-left">
               <tr>
                 <th className="p-2">Band</th>
                 <th className="p-2">SVI</th>
@@ -92,7 +92,7 @@ export function CaseQueue({ channels, caseHref }: { channels: string[]; caseHref
                   <td className="p-2">
                     <div className="flex flex-col gap-1">
                       <BandBadge band={c.band} />
-                      {c.openAlert && <span className="text-xs font-semibold text-red-700">● Open {c.openAlert.level.toLowerCase()} alert</span>}
+                      {c.openAlert && <span className="text-xs font-semibold text-danger">● Open {c.openAlert.level.toLowerCase()} alert</span>}
                     </div>
                   </td>
                   <td className="p-2 font-mono">
@@ -101,7 +101,7 @@ export function CaseQueue({ channels, caseHref }: { channels: string[]; caseHref
                   </td>
                   <td className="p-2 font-mono">
                     {caseHref ? (
-                      <Link href={`${caseHref}/${c.id}`} className="underline underline-offset-4">
+                      <Link href={`${caseHref}/${c.id}`} className="link">
                         {c.docketNumber}
                       </Link>
                     ) : (

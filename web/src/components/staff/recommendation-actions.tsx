@@ -80,11 +80,11 @@ export function RecommendationActions({ rec, onDone }: { rec: RecLike; onDone: (
     if (rec.decision) return <span className="text-xs text-muted-foreground">Reviewed by {rec.decision.by.name}</span>;
     return (
       <span className="flex flex-wrap items-center gap-2">
-        <span className="text-xs font-semibold text-red-700">Started automatically: needs your review</span>
-        <button type="button" disabled={busy} className="rounded border border-border px-2 text-xs" onClick={() => run({ decision: "POST_REVIEW" }, "Emergency support reviewed.")}>
+        <span className="text-xs font-semibold text-danger">Started automatically: needs your review</span>
+        <button type="button" disabled={busy} className="btn btn-secondary btn-sm" onClick={() => run({ decision: "POST_REVIEW" }, "Emergency support reviewed.")}>
           Mark reviewed
         </button>
-        {error && <span className="text-xs text-red-700">{error}</span>}
+        {error && <span className="text-xs text-danger">{error}</span>}
       </span>
     );
   }
@@ -101,53 +101,53 @@ export function RecommendationActions({ rec, onDone }: { rec: RecLike; onDone: (
     <div className="flex flex-col gap-2" data-testid={`rec-actions-${rec.type}`}>
       {mode === null && (
         <span className="flex gap-2">
-          <button type="button" className="rounded border border-border px-2 text-xs" onClick={() => setMode("approve")}>
+          <button type="button" className="btn btn-secondary btn-sm" onClick={() => setMode("approve")}>
             Approve
           </button>
-          <button type="button" className="rounded border border-border px-2 text-xs" onClick={() => setMode("reject")}>
+          <button type="button" className="btn btn-secondary btn-sm" onClick={() => setMode("reject")}>
             Reject
           </button>
         </span>
       )}
       {mode === "approve" && (
-        <form onSubmit={approve} className="flex flex-col gap-1 rounded border border-border p-2 text-xs">
+        <form onSubmit={approve} className="card flex flex-col gap-1 p-2 text-xs">
           <label htmlFor={`act-${rec.id}`} className="font-semibold">
             What should the {lower(rec.responsibleRole)} do?
           </label>
-          <p role="note" className="text-amber-800">
+          <p role="note" className="text-warn">
             This text goes to an outside agency. Write the action only: no story, no health details, no scores.
           </p>
-          <textarea id={`act-${rec.id}`} name="actionRequested" value={action} onChange={(e) => setAction(e.target.value)} rows={2} className="rounded border border-border p-1" />
-          <span className={action.length > MAX ? "text-red-700" : "text-muted-foreground"}>
+          <textarea id={`act-${rec.id}`} name="actionRequested" value={action} onChange={(e) => setAction(e.target.value)} rows={2} className="field" />
+          <span className={action.length > MAX ? "text-danger" : "text-muted-foreground"}>
             {action.length}/{MAX} characters
           </span>
-          <input name="locationHint" placeholder="Village or ward (never a full address)" maxLength={MAX} className="rounded border border-border p-1" />
-          <input name="reason" placeholder="Note for the record (optional)" className="rounded border border-border p-1" />
+          <input name="locationHint" placeholder="Village or ward (never a full address)" maxLength={MAX} className="field" />
+          <input name="reason" placeholder="Note for the record (optional)" className="field" />
           <span className="flex gap-2">
-            <button type="submit" disabled={busy} className="rounded bg-primary px-2 py-1 text-primary-foreground disabled:opacity-60">
+            <button type="submit" disabled={busy} className="btn btn-primary btn-sm">
               Approve and send referral
             </button>
-            <button type="button" className="underline" onClick={() => setMode(null)}>
+            <button type="button" className="link" onClick={() => setMode(null)}>
               Cancel
             </button>
           </span>
         </form>
       )}
       {mode === "reject" && (
-        <form onSubmit={reject} className="flex flex-col gap-1 rounded border border-border p-2 text-xs">
-          <input name="reason" placeholder="Why not? (at least 5 characters)" className="rounded border border-border p-1" />
+        <form onSubmit={reject} className="card flex flex-col gap-1 p-2 text-xs">
+          <input name="reason" placeholder="Why not? (at least 5 characters)" className="field" />
           <span className="flex gap-2">
-            <button type="submit" disabled={busy} className="rounded bg-primary px-2 py-1 text-primary-foreground disabled:opacity-60">
+            <button type="submit" disabled={busy} className="btn btn-primary btn-sm">
               Reject
             </button>
-            <button type="button" className="underline" onClick={() => setMode(null)}>
+            <button type="button" className="link" onClick={() => setMode(null)}>
               Cancel
             </button>
           </span>
         </form>
       )}
       {error && (
-        <span className="text-xs text-red-700" role="alert">
+        <span className="text-xs text-danger" role="alert">
           {error}
         </span>
       )}

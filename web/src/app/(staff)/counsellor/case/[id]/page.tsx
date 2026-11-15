@@ -8,7 +8,7 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
   const { id } = await params;
   return (
     <div className="flex flex-col gap-4">
-      <Link href="/counsellor" className="text-sm underline underline-offset-4">
+      <Link href="/counsellor" className="link text-sm">
         ← Back to queue
       </Link>
       <CaseDetailView caseId={id} />

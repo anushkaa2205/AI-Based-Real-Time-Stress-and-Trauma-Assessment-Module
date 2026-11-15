@@ -92,20 +92,20 @@ export function AlertBanner({ channels, caseHref }: { channels: string[]; caseHr
   const shown = expanded ? alerts : alerts.slice(0, SHOWN);
   const hidden = alerts.length - shown.length;
   return (
-    <div className="flex max-h-[60vh] flex-col gap-2 overflow-y-auto border-b border-border p-3" aria-live="assertive">
+    <div className="flex max-h-[60vh] flex-col gap-2 overflow-y-auto border-b border-line bg-[#efece5] px-4 py-3 md:px-7" aria-live="assertive">
       {shown.map((a) => (
         <div
           key={a.id}
           role="alert"
           data-testid={`alert-${a.level}`}
-          className={`flex flex-wrap items-center gap-3 rounded-md px-4 py-3 ${a.level === "CRITICAL" ? "bg-red-700 text-white" : "bg-orange-100 text-orange-950"}`}
+          className={`flex flex-wrap items-center gap-x-4 gap-y-2 rounded-[4px] border border-line border-l-[6px] bg-white px-4 py-2.5 ${a.level === "CRITICAL" ? "border-l-danger" : "border-l-[#d9773f]"}`}
         >
-          <strong className="uppercase">{a.level === "CRITICAL" ? "Critical alert" : "High risk"}</strong>
-          <span className="font-mono">{a.docketNumber}</span>
-          <span className="flex-1 text-sm">{a.reason}</span>
-          {a.escalationLevel > 0 && <span className="rounded bg-black/20 px-2 text-xs">Escalated (level {a.escalationLevel})</span>}
+          <strong className={`text-sm uppercase tracking-wide ${a.level === "CRITICAL" ? "text-danger" : "text-[#7a2a0c]"}`}>{a.level === "CRITICAL" ? "Critical alert" : "High risk"}</strong>
+          <span className="font-mono text-sm font-semibold">{a.docketNumber}</span>
+          <span className="min-w-40 flex-1 text-sm text-ink-2">{a.reason}</span>
+          {a.escalationLevel > 0 && <span className="tag border-line">Escalated (level {a.escalationLevel})</span>}
           {caseHref && (
-            <Link href={`${caseHref}/${a.caseId}`} className="underline underline-offset-4">
+            <Link href={`${caseHref}/${a.caseId}`} className="link text-sm font-semibold">
               Open case
             </Link>
           )}
@@ -113,14 +113,14 @@ export function AlertBanner({ channels, caseHref }: { channels: string[]; caseHr
             type="button"
             onClick={() => ack(a.id)}
             disabled={busy === a.id}
-            className="rounded-md bg-white px-3 py-1 font-semibold text-black disabled:opacity-60"
+            className={`btn btn-sm ${a.level === "CRITICAL" ? "btn-danger" : "btn-primary"}`}
           >
             Acknowledge
           </button>
         </div>
       ))}
       {(hidden > 0 || expanded) && alerts.length > SHOWN && (
-        <button type="button" data-testid="alerts-toggle" onClick={() => setExpanded(!expanded)} className="self-start text-sm underline underline-offset-4">
+        <button type="button" data-testid="alerts-toggle" onClick={() => setExpanded(!expanded)} className="link self-start text-sm">
           {expanded ? "Show fewer alerts" : `+${hidden} more open alert${hidden === 1 ? "" : "s"}`}
         </button>
       )}

@@ -57,15 +57,15 @@ export function AuditViewer() {
     setBusy(false);
   }
 
-  const input = "rounded border border-border bg-background p-1 text-sm";
+  const input = "field w-auto min-w-28";
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-3">
-        <button type="button" onClick={runVerify} disabled={busy} className="rounded bg-primary px-3 py-1 text-sm text-primary-foreground disabled:opacity-60" data-testid="verify-chain">
+        <button type="button" onClick={runVerify} disabled={busy} className="btn btn-primary" data-testid="verify-chain">
           {busy ? "Checking…" : "Verify the hash chain"}
         </button>
         {verify && (
-          <p role="status" className={`text-sm font-semibold ${verify.ok ? "text-green-800" : "text-red-700"}`} data-testid="verify-result">
+          <p role="status" className={`text-sm font-semibold ${verify.ok ? "text-ok" : "text-danger"}`} data-testid="verify-result">
             {verify.ok ? `✓ Intact: ${verify.checked} entries checked` : `✗ Broken at entry ${verify.firstBrokenId} (${verify.checked} checked)`}
           </p>
         )}
@@ -90,7 +90,7 @@ export function AuditViewer() {
           To
           <input name="to" type="date" className={input} />
         </label>
-        <button type="submit" className="rounded border border-border px-3 py-1 text-sm">
+        <button type="submit" className="btn btn-secondary">
           Search
         </button>
       </form>
@@ -125,7 +125,7 @@ export function AuditViewer() {
         </tbody>
       </table>
       {next && (
-        <button type="button" onClick={() => load(filter, next)} className="self-start underline">
+        <button type="button" onClick={() => load(filter, next)} className="link self-start">
           Load more
         </button>
       )}

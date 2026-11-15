@@ -54,7 +54,7 @@ async function call<T>(method: string, url: string, body?: unknown): Promise<{ o
 
 function Secret({ label, value }: { label: string; value: string }) {
   return (
-    <p className="rounded border border-amber-600 bg-amber-50 p-2 text-sm text-amber-950" data-testid="one-time-secret">
+    <p className="rounded-[3px] border border-[#c9a227] border-l-4 bg-[#fbf6e4] p-2 text-sm text-[#4a3700]" data-testid="one-time-secret">
       <strong>{label} (shown once):</strong> <code className="break-all">{value}</code>
     </p>
   );
@@ -175,11 +175,11 @@ export function AdminConsole({ districts }: { districts: { id: string; name: str
   }
 
   const tabBtn = (k: typeof tab, label: string) => (
-    <button type="button" onClick={() => setTab(k)} className={`rounded px-3 py-1 text-sm ${tab === k ? "bg-primary text-primary-foreground" : "border border-border"}`} aria-pressed={tab === k}>
+    <button type="button" onClick={() => setTab(k)} className={`-mb-px border-b-[3px] px-3 py-2 text-sm font-semibold ${tab === k ? "border-navy text-navy" : "border-transparent text-ink-2 hover:text-ink"}`} aria-pressed={tab === k}>
       {label}
     </button>
   );
-  const input = "rounded border border-border bg-background p-1 text-sm";
+  const input = "field w-auto min-w-28";
 
   return (
     <div className="flex flex-col gap-4">
@@ -199,7 +199,7 @@ export function AdminConsole({ districts }: { districts: { id: string; name: str
 
       {tab === "users" && (
         <section className="flex flex-col gap-3">
-          <form onSubmit={createUser} className="flex flex-wrap items-end gap-2 rounded-md border border-border p-3" data-testid="user-form">
+          <form onSubmit={createUser} className="flex flex-wrap items-end gap-2 card p-3" data-testid="user-form">
             <label className="flex flex-col text-xs">
               Name
               <input name="name" required minLength={2} className={input} />
@@ -229,7 +229,7 @@ export function AdminConsole({ districts }: { districts: { id: string; name: str
                 ))}
               </select>
             </label>
-            <button type="submit" className="rounded bg-primary px-3 py-1 text-sm text-primary-foreground">
+            <button type="submit" className="btn btn-primary">
               Create user
             </button>
           </form>
@@ -253,10 +253,10 @@ export function AdminConsole({ districts }: { districts: { id: string; name: str
                   <td className="p-1">{districtName(u.districtId)}</td>
                   <td className="p-1">{u.lastLoginAt ? new Date(u.lastLoginAt).toLocaleString() : "never"}</td>
                   <td className="flex gap-2 p-1">
-                    <button type="button" className="underline" onClick={() => patchUser(u.id, { isActive: !u.isActive }, u.isActive ? "User deactivated." : "User reactivated.")}>
+                    <button type="button" className="link" onClick={() => patchUser(u.id, { isActive: !u.isActive }, u.isActive ? "User deactivated." : "User reactivated.")}>
                       {u.isActive ? "Deactivate" : "Reactivate"}
                     </button>
-                    <button type="button" className="underline" onClick={() => patchUser(u.id, { resetPassword: true }, "Password reset.")}>
+                    <button type="button" className="link" onClick={() => patchUser(u.id, { resetPassword: true }, "Password reset.")}>
                       Reset password
                     </button>
                   </td>
@@ -269,7 +269,7 @@ export function AdminConsole({ districts }: { districts: { id: string; name: str
 
       {tab === "clients" && (
         <section className="flex flex-col gap-3">
-          <form onSubmit={createClient} className="flex flex-wrap items-end gap-3 rounded-md border border-border p-3">
+          <form onSubmit={createClient} className="flex flex-wrap items-end gap-3 card p-3">
             <label className="flex flex-col text-xs">
               System name
               <input name="name" required minLength={2} className={input} />
@@ -283,7 +283,7 @@ export function AdminConsole({ districts }: { districts: { id: string; name: str
               Requests / min
               <input name="rpm" type="number" min={1} max={10000} defaultValue={120} className={`${input} w-24`} />
             </label>
-            <button type="submit" className="rounded bg-primary px-3 py-1 text-sm text-primary-foreground">
+            <button type="submit" className="btn btn-primary">
               Create key
             </button>
           </form>
@@ -306,7 +306,7 @@ export function AdminConsole({ districts }: { districts: { id: string; name: str
                   <td className="p-1">{c.rateLimitPerMin}/min</td>
                   <td className="p-1">
                     {c.isActive && (
-                      <button type="button" className="underline" onClick={() => revoke(c.id)}>
+                      <button type="button" className="link" onClick={() => revoke(c.id)}>
                         Revoke
                       </button>
                     )}
@@ -372,14 +372,14 @@ export function AdminConsole({ districts }: { districts: { id: string; name: str
                           </table>
                         </div>
                       ) : (
-                        <button type="button" className="underline" onClick={() => simulate(c.id)}>
+                        <button type="button" className="link" onClick={() => simulate(c.id)}>
                           Simulate
                         </button>
                       )}
                     </td>
                     <td className="p-1">
                       {!c.isActive && (
-                        <button type="button" className="rounded border border-border px-2" onClick={() => activate(c)}>
+                        <button type="button" className="btn btn-secondary btn-sm" onClick={() => activate(c)}>
                           Activate
                         </button>
                       )}
@@ -401,18 +401,18 @@ export function AdminConsole({ districts }: { districts: { id: string; name: str
               <label htmlFor="cfg" className="text-sm font-semibold">
                 New version (weights must sum to 1; thresholds must increase)
               </label>
-              <textarea id="cfg" value={draft} onChange={(e) => setDraft(e.target.value)} rows={20} className="rounded border border-border bg-background p-2 font-mono text-xs" />
+              <textarea id="cfg" value={draft} onChange={(e) => setDraft(e.target.value)} rows={20} className="rounded-[3px] border border-line bg-[#faf9f6] p-2 font-mono text-xs" />
               <div className="flex gap-2">
-                <button type="button" onClick={saveDraft} className="rounded bg-primary px-3 py-1 text-sm text-primary-foreground">
+                <button type="button" onClick={saveDraft} className="btn btn-primary">
                   Save as new version
                 </button>
-                <button type="button" onClick={() => setDraft("")} className="underline">
+                <button type="button" onClick={() => setDraft("")} className="link">
                   Cancel
                 </button>
               </div>
             </div>
           ) : (
-            <button type="button" onClick={startDraft} disabled={!configs.length} className="self-start rounded border border-border px-3 py-1 text-sm disabled:opacity-60">
+            <button type="button" onClick={startDraft} disabled={!configs.length} className="btn btn-secondary self-start">
               New version from the active one
             </button>
           )}

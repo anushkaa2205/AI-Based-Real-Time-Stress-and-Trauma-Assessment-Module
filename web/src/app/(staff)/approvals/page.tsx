@@ -6,7 +6,7 @@ export default async function Page() {
   await requirePage("approvals");
   return (
     <section className="flex flex-col gap-4">
-      <h1 className="text-2xl font-semibold">Approvals</h1>
+      <h1 className="text-[1.375rem] font-bold leading-tight text-ink">Approvals</h1>
       <ApprovalInbox caseHref="/counsellor/case" />
     </section>
   );

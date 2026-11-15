@@ -121,7 +121,7 @@ function Highlighted({ text, spans }: { text: string; spans: { start: number; en
     if (s.start < pos) continue; // overlapping span: keep the first
     parts.push(text.slice(pos, s.start));
     parts.push(
-      <mark key={`${s.start}-${s.dim}`} title={`${DIM_LABEL[s.dim] ?? s.dim}${s.negated ? " (negated)" : ""}`} className={s.negated ? "bg-muted line-through" : "bg-yellow-200"}>
+      <mark key={`${s.start}-${s.dim}`} title={`${DIM_LABEL[s.dim] ?? s.dim}${s.negated ? " (negated)" : ""}`} className={s.negated ? "bg-muted line-through" : "bg-[#f6e7b0]"}>
         {text.slice(s.start, s.end)}
       </mark>,
     );
@@ -269,25 +269,25 @@ export function CaseDetailView({ caseId }: { caseId: string }) {
   return (
     <div className="flex flex-col gap-6">
       <header className="flex flex-wrap items-center gap-3">
-        <h1 className="font-mono text-2xl font-semibold">{c.docketNumber}</h1>
+        <h1 className="font-mono text-[1.375rem] font-bold text-ink">{c.docketNumber}</h1>
         <BandBadge band={c.band} />
         <span className="text-lg" data-testid="svi">
           SVI <strong>{c.svi ?? "–"}</strong>
         </span>
-        {c.overrideLockedBand && <span className="rounded border border-border px-2 text-xs">Locked at {c.overrideLockedBand.toLowerCase()}</span>}
-        {a?.limitedConfidence && <span className="rounded bg-muted px-2 text-xs">Limited AI analysis</span>}
+        {c.overrideLockedBand && <span className="tag border-navy bg-accent text-navy">Locked at {c.overrideLockedBand.toLowerCase()}</span>}
+        {a?.limitedConfidence && <span className="tag">Limited AI analysis</span>}
         <span className="text-sm text-muted-foreground">Status: {c.status.replace(/_/g, " ").toLowerCase()}</span>
         <span className="text-sm text-muted-foreground">Assigned: {c.assignedTo?.name ?? "nobody"}</span>
       </header>
       {msg && (
-        <p role="status" data-testid="case-message" className="rounded bg-muted p-2 text-sm">
+        <p role="status" data-testid="case-message" className="rounded-[3px] border border-line bg-[#faf9f6] p-2 text-sm">
           {msg}
         </p>
       )}
 
       <section className="grid gap-4 md:grid-cols-2">
-        <div className="flex flex-col gap-2 rounded-md border border-border p-4">
-          <h2 className="font-semibold">Why this band</h2>
+        <div className="card flex flex-col gap-2 p-4">
+          <h2 className="section-title">Why this band</h2>
           <p data-testid="explanation">{a?.explanation ?? "No assessment yet."}</p>
           {!!a?.overridesFired?.length && <p className="text-sm">Safety overrides: {a.overridesFired.join(", ")}</p>}
           <Timeline points={timeline} />
@@ -299,8 +299,8 @@ export function CaseDetailView({ caseId }: { caseId: string }) {
             </>
           )}
         </div>
-        <div className="flex flex-col gap-2 rounded-md border border-border p-4">
-          <h2 className="font-semibold">SVI breakdown</h2>
+        <div className="card flex flex-col gap-2 p-4">
+          <h2 className="section-title">SVI breakdown</h2>
           {dims.map(([k, d]) => (
             <div key={k} className="text-sm">
               <div className="flex justify-between">
@@ -309,8 +309,8 @@ export function CaseDetailView({ caseId }: { caseId: string }) {
                   +{d.contribution.toFixed(1)} (score {d.score.toFixed(2)})
                 </span>
               </div>
-              <div className="h-2 rounded bg-muted">
-                <div className="h-2 rounded bg-foreground/70" style={{ width: `${Math.min(100, d.score * 100)}%` }} />
+              <div className="h-2 rounded-[1px] bg-muted">
+                <div className="h-2 rounded-[1px] bg-navy" style={{ width: `${Math.min(100, d.score * 100)}%` }} />
               </div>
               <div className="text-xs text-muted-foreground">
                 {Object.entries(d.bySource)
@@ -322,12 +322,12 @@ export function CaseDetailView({ caseId }: { caseId: string }) {
         </div>
       </section>
 
-      <section className="flex flex-col gap-2 rounded-md border border-border p-4">
-        <h2 className="font-semibold">Indicators</h2>
+      <section className="card flex flex-col gap-2 p-4">
+        <h2 className="section-title">Indicators</h2>
         {indicators.length === 0 && <p className="text-sm text-muted-foreground">{noShare ? "Not shared: the person did not consent to sharing with a counsellor." : "No text indicators."}</p>}
         <ul className="flex flex-col gap-2">
           {indicators.map((i) => (
-            <li key={i.id} className={`rounded border border-border p-2 text-sm ${i.status === "REJECTED" || i.negated ? "opacity-60" : ""}`} data-testid="indicator">
+            <li key={i.id} className={`rounded-[3px] border border-line bg-white p-2 text-sm ${i.status === "REJECTED" || i.negated ? "opacity-60" : ""}`} data-testid="indicator">
               <div className="flex flex-wrap items-center gap-2">
                 <strong>{DIM_LABEL[i.dimension] ?? i.dimension}</strong>
                 <span className="font-mono">{(i.review?.score ?? i.score).toFixed(2)}</span>
@@ -335,7 +335,7 @@ export function CaseDetailView({ caseId }: { caseId: string }) {
                   {i.source.toLowerCase().replace("_", " ")} · confidence {i.confidence.toFixed(2)}
                   {i.negated ? " · negated (not scored)" : ""} · {i.status.toLowerCase()}
                 </span>
-                {i.flags.length > 0 && <span className="rounded bg-red-100 px-1 text-xs text-red-900">{i.flags.join(", ")}</span>}
+                {i.flags.length > 0 && <span className="tag bg-danger-soft text-danger">{i.flags.join(", ")}</span>}
               </div>
               {i.evidence.quote && <q className="block italic">{i.evidence.quote}</q>}
               {i.label && <span className="block text-xs text-muted-foreground">{i.label}</span>}
@@ -346,7 +346,7 @@ export function CaseDetailView({ caseId }: { caseId: string }) {
               )}
               <div className="mt-1 flex gap-2">
                 {(["CONFIRM", "REJECT", "ADJUST"] as const).map((act) => (
-                  <button key={act} type="button" className="rounded border border-border px-2 text-xs" onClick={() => setReview({ id: i.id, action: act })}>
+                  <button key={act} type="button" className="btn btn-secondary btn-sm" onClick={() => setReview({ id: i.id, action: act })}>
                     {act.toLowerCase()}
                   </button>
                 ))}
@@ -356,17 +356,17 @@ export function CaseDetailView({ caseId }: { caseId: string }) {
                   {review.action === "ADJUST" && (
                     <label className="flex flex-col text-xs">
                       New score
-                      <input name="score" type="number" min="0" max="1" step="0.05" required className="w-20 rounded border border-border px-1" />
+                      <input name="score" type="number" min="0" max="1" step="0.05" required className="field w-20" />
                     </label>
                   )}
                   <label className="flex flex-1 flex-col text-xs">
                     Reason (required)
-                    <input name="reason" minLength={5} required className="rounded border border-border px-1" />
+                    <input name="reason" minLength={5} required className="field w-auto" />
                   </label>
-                  <button type="submit" className="rounded bg-primary px-2 py-1 text-xs text-primary-foreground">
+                  <button type="submit" className="btn btn-primary btn-sm">
                     Save {review.action.toLowerCase()}
                   </button>
-                  <button type="button" className="text-xs underline" onClick={() => setReview(null)}>
+                  <button type="button" className="link text-xs" onClick={() => setReview(null)}>
                     Cancel
                   </button>
                 </form>
@@ -376,8 +376,8 @@ export function CaseDetailView({ caseId }: { caseId: string }) {
         </ul>
       </section>
 
-      <section className="flex flex-col gap-2 rounded-md border border-border p-4">
-        <h2 className="font-semibold">Transcript</h2>
+      <section className="card flex flex-col gap-2 p-4">
+        <h2 className="section-title">Transcript</h2>
         {noShare && <p className="text-sm text-muted-foreground">The person did not consent to sharing their words with a counsellor.</p>}
         <ol className="flex flex-col gap-3">
           {messages.map((m) => (
@@ -396,8 +396,8 @@ export function CaseDetailView({ caseId }: { caseId: string }) {
       </section>
 
       <section className="grid gap-4 md:grid-cols-2">
-        <div className="flex flex-col gap-2 rounded-md border border-border p-4 text-sm">
-          <h2 className="font-semibold">Consent and context</h2>
+        <div className="card flex flex-col gap-2 p-4 text-sm">
+          <h2 className="section-title">Consent and context</h2>
           <p>
             Text analysis: {c.consent.textAnalysis ? "yes" : "no"} · Voice: {c.consent.voiceAnalysis ? "yes" : "no"} · Share with counsellor:{" "}
             {c.consent.shareWithCounsellor ? "yes" : "no"} · Follow-up contact: {c.consent.followUpContact ? "yes" : "no"}
@@ -415,8 +415,8 @@ export function CaseDetailView({ caseId }: { caseId: string }) {
             </p>
           )}
         </div>
-        <div className="flex flex-col gap-2 rounded-md border border-border p-4 text-sm">
-          <h2 className="font-semibold">Recommendations</h2>
+        <div className="card flex flex-col gap-2 p-4 text-sm">
+          <h2 className="section-title">Recommendations</h2>
           {c.recommendations.length === 0 && <p className="text-muted-foreground">None.</p>}
           <ul className="flex flex-col gap-1">
             {c.recommendations.map((r) => (
@@ -441,18 +441,18 @@ export function CaseDetailView({ caseId }: { caseId: string }) {
       </section>
 
       <section className="grid gap-4 md:grid-cols-2">
-        <form onSubmit={override} className="flex flex-col gap-2 rounded-md border border-border p-4 text-sm" data-testid="override-form">
-          <h2 className="font-semibold">Change band (human override)</h2>
+        <form onSubmit={override} className="card flex flex-col gap-2 p-4 text-sm" data-testid="override-form">
+          <h2 className="section-title">Change band (human override)</h2>
           <p className="text-xs text-muted-foreground">Only a person can lower a locked band, with a written reason (FR-RISK-03).</p>
-          <select name="toBand" defaultValue={c.band ?? "LOW"} className="rounded border border-border p-1">
+          <select name="toBand" defaultValue={c.band ?? "LOW"} className="field">
             {["LOW", "MODERATE", "HIGH", "CRITICAL"].map((b) => (
               <option key={b} value={b}>
                 {b.toLowerCase()}
               </option>
             ))}
           </select>
-          <input name="reason" placeholder="Reason (at least 5 characters)" className="rounded border border-border p-1" />
-          <button type="submit" className="rounded bg-primary px-3 py-1 text-primary-foreground">
+          <input name="reason" placeholder="Reason (at least 5 characters)" className="field" />
+          <button type="submit" className="btn btn-primary">
             Change band
           </button>
           {c.bandOverrides.map((o, i) => (
@@ -461,11 +461,11 @@ export function CaseDetailView({ caseId }: { caseId: string }) {
             </p>
           ))}
         </form>
-        <div className="flex flex-col gap-2 rounded-md border border-border p-4 text-sm">
-          <h2 className="font-semibold">Case actions and notes</h2>
+        <div className="card flex flex-col gap-2 p-4 text-sm">
+          <h2 className="section-title">Case actions and notes</h2>
           <div className="flex flex-wrap gap-2">
             {["UNDER_REVIEW", "ACTION_TAKEN", "CLOSED"].map((s) => (
-              <button key={s} type="button" onClick={() => patch({ status: s })} className="rounded border border-border px-2">
+              <button key={s} type="button" onClick={() => patch({ status: s })} className="btn btn-secondary btn-sm">
                 Mark {s.replace(/_/g, " ").toLowerCase()}
               </button>
             ))}
@@ -474,15 +474,15 @@ export function CaseDetailView({ caseId }: { caseId: string }) {
             <label htmlFor="fu-due" className="text-xs">
               Follow-up
             </label>
-            <input id="fu-due" name="dueAt" type="datetime-local" className="rounded border border-border p-1" />
-            <select name="channel" defaultValue="VOICE_CALL" aria-label="Follow-up channel" className="rounded border border-border p-1">
+            <input id="fu-due" name="dueAt" type="datetime-local" className="field" />
+            <select name="channel" defaultValue="VOICE_CALL" aria-label="Follow-up channel" className="field">
               {["VOICE_CALL", "CHATBOT", "PORTAL", "MOBILE_APP"].map((ch) => (
                 <option key={ch} value={ch}>
                   {ch.replace(/_/g, " ").toLowerCase()}
                 </option>
               ))}
             </select>
-            <button type="submit" className="rounded border border-border px-2">
+            <button type="submit" className="btn btn-secondary btn-sm">
               Schedule
             </button>
           </form>
@@ -493,10 +493,10 @@ export function CaseDetailView({ caseId }: { caseId: string }) {
                   <span>
                     {new Date(f.dueAt).toLocaleString()} · {f.channel.replace(/_/g, " ").toLowerCase()} · {f.assignedTo?.name ?? "unassigned"}
                   </span>
-                  <button type="button" className="underline" onClick={() => finishFollowUp(f.id, "DONE")}>
+                  <button type="button" className="link" onClick={() => finishFollowUp(f.id, "DONE")}>
                     Done
                   </button>
-                  <button type="button" className="underline" onClick={() => finishFollowUp(f.id, "CANCELLED")}>
+                  <button type="button" className="link" onClick={() => finishFollowUp(f.id, "CANCELLED")}>
                     Cancel
                   </button>
                 </li>
@@ -504,8 +504,8 @@ export function CaseDetailView({ caseId }: { caseId: string }) {
             </ul>
           )}
           <form onSubmit={addNote} className="flex gap-2">
-            <input name="body" required placeholder="Add a note" className="flex-1 rounded border border-border p-1" />
-            <button type="submit" className="rounded bg-primary px-3 text-primary-foreground">
+            <input name="body" required placeholder="Add a note" className="field flex-1" />
+            <button type="submit" className="btn btn-primary">
               Save
             </button>
           </form>
