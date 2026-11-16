@@ -1,10 +1,11 @@
 /**
- * Accessibility (task 9.4, AC-ACC-01, NFR-ACC): axe-core WCAG 2.1 A/AA rules on every victim page,
- * and a keyboard-only pass. A real low-end phone and a screen-reader session still need a person.
+ * Accessibility (task 9.4, AC-ACC-01, NFR-ACC-01): axe-core WCAG 2.1 A/AA rules on the sign-in page and
+ * the staff dashboards, plus a keyboard-only pass on sign-in. The module has no victim-facing pages
+ * (PRODUCT_VISION.md §5); calling systems own those. A screen-reader session still needs a person.
  */
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
-import { freshIp } from "./helpers";
+import { freshIp, staffLogin } from "./helpers";
 
 const WCAG = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"];
 
@@ -14,77 +15,41 @@ async function audit(page: Page, label: string) {
   expect(problems, `${label}\n${problems.join("\n")}`).toEqual([]);
 }
 
-test("victim pages have no WCAG 2.1 AA violations (AC-ACC-01)", async ({ page }) => {
+test("sign-in and staff dashboards have no WCAG 2.1 AA violations (AC-ACC-01)", async ({ page }) => {
   test.setTimeout(180_000);
   await page.setExtraHTTPHeaders({ "x-forwarded-for": freshIp() });
-  // Public pages (task F.2): homepage in every language, How it works, Privacy, and the phone menu open.
-  for (const lang of ["en", "hi", "mr", "ta", "bn"]) {
-    await page.goto(lang === "en" ? "/" : `/?lang=${lang}`);
-    await audit(page, `home ${lang}`);
-  }
-  await page.goto("/how-it-works?lang=ta");
-  await audit(page, "how it works");
-  await page.goto("/privacy?lang=hi");
-  await audit(page, "privacy");
-  await page.setViewportSize({ width: 320, height: 720 });
   await page.goto("/");
-  await page.getByTestId("site-menu").locator("summary").click();
-  await audit(page, "home 320px, menu open");
-  await page.setViewportSize({ width: 1280, height: 800 });
+  await expect(page).toHaveURL(/\/login/); // no victim website: / goes to staff sign-in
+  await audit(page, "login");
 
-  for (const lang of ["en", "hi", "mr", "ta", "bn"]) {
-    await page.goto(`/portal/${lang}`);
-    await audit(page, `start ${lang}`);
-  }
-  await page.goto("/portal/en/ivrs");
-  await audit(page, "ivrs");
+  await staffLogin(page, "COUNSELLOR");
+  await page.goto("/counsellor");
+  await expect(page.getByTestId("queue").or(page.getByText("No open cases."))).toBeVisible();
+  await audit(page, "counsellor queue");
 
-  // Consent and chat need a session.
-  await page.goto("/portal/en");
-  await page.getByRole("button", { name: "Start" }).click();
-  await page.waitForURL(/\/portal\/en\/consent/);
-  await audit(page, "consent");
-  await page.getByRole("checkbox").first().check();
-  await page.getByRole("button", { name: "Continue" }).click();
-  await page.waitForURL(/\/portal\/en\/chat/);
-  await expect(page.getByTestId("prompt")).toBeVisible();
-  await audit(page, "chat");
+  await staffLogin(page, "OPERATOR");
+  await page.goto("/operator");
+  await audit(page, "operator console");
 });
 
-test("keyboard only on the homepage: skip link first, then quick exit, Start and the three ways", async ({ page }) => {
-  await page.goto("/");
-  await page.keyboard.press("Tab");
-  expect(await page.evaluate(() => document.activeElement?.getAttribute("href"))).toBe("#main"); // skip link
+test("keyboard only: the sign-in form is reachable and focus is always visible", async ({ page }) => {
+  await page.setExtraHTTPHeaders({ "x-forwarded-for": freshIp() });
+  await page.goto("/login");
   const seen: string[] = [];
-  for (let i = 0; i < 25; i++) {
+  for (let i = 0; i < 8; i++) {
     await page.keyboard.press("Tab");
-    // Accessible name where one is set (Quick exit has an aria-label), otherwise the visible text on one line.
+    // Skip the page body (focus wraps after the last control) and the dev-mode overlay (not in production).
+    if (await page.evaluate(() => ["NEXTJS-PORTAL", "BODY"].includes(document.activeElement?.tagName ?? "BODY"))) continue;
     seen.push(
       await page.evaluate(() => {
-        const el = document.activeElement as HTMLElement | null;
-        return (el?.getAttribute("aria-label") ?? el?.innerText ?? "").replace(/\s+/g, " ").trim();
+        const el = document.activeElement as HTMLInputElement | HTMLButtonElement | null;
+        return `${el?.tagName ?? ""}:${(el as HTMLInputElement | null)?.name ?? ""}:${(el?.textContent ?? "").trim()}`;
       }),
     );
+    const outline = await page.evaluate(() => getComputedStyle(document.activeElement as Element).outlineStyle);
+    expect(outline, seen.at(-1)).not.toBe("none");
   }
-  expect(seen.some((t) => /quick exit/i.test(t)), seen.join(" | ")).toBe(true);
-  for (const name of ["Start", "Write", "Speak", "Guided questions"]) {
-    expect(seen.some((t) => t === name || t.startsWith(`${name} `)), `${name}: ${seen.join(" | ")}`).toBe(true);
-  }
-  const outline = await page.evaluate(() => getComputedStyle(document.activeElement as Element).outlineStyle);
-  expect(outline).not.toBe("none");
-});
-
-test("keyboard only: quick exit and start are reachable and usable", async ({ page }) => {
-  await page.setExtraHTTPHeaders({ "x-forwarded-for": freshIp() });
-  await page.goto("/portal/en");
-  const seen: string[] = [];
-  for (let i = 0; i < 12; i++) {
-    await page.keyboard.press("Tab");
-    seen.push(await page.evaluate(() => (document.activeElement as HTMLElement | null)?.innerText?.trim() ?? ""));
-  }
-  expect(seen.some((t) => /quick exit|leave/i.test(t)), seen.join(" | ")).toBe(true);
-  expect(seen).toContain("Start");
-  // Focus is always visible (no outline removal on focus).
-  const outline = await page.evaluate(() => getComputedStyle(document.activeElement as Element).outlineStyle);
-  expect(outline).not.toBe("none");
+  expect(seen.some((s) => s.startsWith("INPUT:email")), seen.join(" | ")).toBe(true);
+  expect(seen.some((s) => s.startsWith("INPUT:password")), seen.join(" | ")).toBe(true);
+  expect(seen.some((s) => s.startsWith("BUTTON:")), seen.join(" | ")).toBe(true);
 });

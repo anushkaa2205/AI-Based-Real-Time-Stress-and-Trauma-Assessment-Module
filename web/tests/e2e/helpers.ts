@@ -55,14 +55,77 @@ async function signIn(page: Page, role: string): Promise<void> {
   }
 }
 
-/** A victim session driven over the API (synthetic text only). */
-export async function victimSession(request: APIRequestContext, lang: "en" | "hi" | "mr" | "ta" | "bn" = "en") {
-  const headers = { "x-forwarded-for": freshIp() };
-  const start = await request.post("/api/v1/victim/interactions", { data: { channel: "CHATBOT", language: lang, districtCode: "MH-PUN" }, headers });
-  const { interactionId, docketNumber } = await start.json();
-  const call = (path: string, data: unknown, method: "post" | "put" = "post") =>
-    request[method](`/api/v1/victim/interactions/${interactionId}${path}`, { data, headers });
-  return { interactionId: interactionId as string, docketNumber: docketNumber as string, call, headers };
+export type Lang = "en" | "hi" | "mr" | "ta" | "bn";
+
+export interface Consent {
+  textAnalysis: boolean;
+  voiceAnalysis: boolean;
+  shareWithCounsellor: boolean;
+  followUpContact: boolean;
+}
+
+/** One synthetic API client per test run, with every integration scope. Removed by dropIntegrationKeys(). */
+let keyPromise: Promise<string> | null = null;
+const KEY_NAME = "e2e integration (synthetic)";
+
+async function integrationKey(): Promise<string> {
+  keyPromise ??= (async () => {
+    // Same shape as `npm run api:client` writes (core/integration/apikey.ts).
+    const { generateKey } = await import("../../src/core/integration/apikey");
+    const k = generateKey();
+    await withDb((db) =>
+      db.collection("api_clients").insertOne({
+        name: KEY_NAME,
+        keyPrefix: k.prefix,
+        keyHash: k.keyHash,
+        scopes: ["interactions:write", "assessments:read", "stream:read"],
+        rateLimitPerMin: 600,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      }),
+    );
+    return k.key;
+  })();
+  return keyPromise;
+}
+
+/** Call from test.afterAll in specs that use integrationSession(). */
+export async function dropIntegrationKeys(): Promise<void> {
+  await withDb((db) => db.collection("api_clients").deleteMany({ name: KEY_NAME }));
+  keyPromise = null;
+}
+
+/**
+ * An interaction started by a calling NHAA system through the integration API, the module's only
+ * input (task M.2). `say` sends the person's words; `ask` sends a question from NHAA's chatbot or
+ * operator, which is stored as context and never scored. Synthetic text only.
+ */
+export async function integrationSession(
+  request: APIRequestContext,
+  opts: { lang?: Lang; consent?: Partial<Consent>; channel?: string } = {},
+) {
+  const lang = opts.lang ?? "en";
+  const key = await integrationKey();
+  const headers = { authorization: `ApiKey ${key}` };
+  const consent = { noticeVersion: "2026-11-v1", language: lang, textAnalysis: true, voiceAnalysis: false, shareWithCounsellor: true, followUpContact: false, ...opts.consent };
+  const start = await request.post("/api/v1/integration/interactions", {
+    data: { channel: opts.channel ?? "CHATBOT", language: lang, districtCode: "MH-PUN", consent },
+    headers,
+  });
+  if (start.status() !== 201) throw new Error(`integration start failed: ${start.status()}`);
+  const { interactionId, docketNumber } = (await start.json()) as { interactionId: string; docketNumber: string };
+  const base = `/api/v1/integration/interactions/${interactionId}`;
+  const call = (path: string, data: unknown, method: "post" | "put" = "post") => request[method](`${base}${path}`, { data, headers });
+  return {
+    interactionId,
+    docketNumber,
+    headers,
+    base,
+    call,
+    say: (text: string) => call("/messages", { text, sender: "VICTIM" }),
+    ask: (text: string) => call("/messages", { text, sender: "OPERATOR" }),
+  };
 }
 
 export async function withDb<T>(fn: (db: mongoose.mongo.Db) => Promise<T>): Promise<T> {

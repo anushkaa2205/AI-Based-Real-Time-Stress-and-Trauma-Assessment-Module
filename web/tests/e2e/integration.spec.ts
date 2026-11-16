@@ -24,7 +24,7 @@ const api = (request: APIRequestContext, key: string | null) => ({
   get: (path: string) => request.get(`/api/v1/integration${path}`, { headers: key ? { authorization: `ApiKey ${key}` } : {} }),
 });
 
-test("a full interaction with a docket number: start → answers → message → SVI → recommendations → close (AC-API-01, FR-API-04)", async ({ request }) => {
+test("a full interaction with a docket number: start → question and answers → SVI → recommendations → close (AC-API-01, FR-API-04, AC-CH-07)", async ({ request }) => {
   const c = api(request, await client(["interactions:write", "assessments:read", "stream:read"]));
   const docketNumber = `NHAA-2026-MH-${String(Math.floor(Math.random() * 1e6)).padStart(6, "0")}`;
   const start = await c.post("/interactions", { channel: "PORTAL", language: "en", docketNumber, districtCode: "MH-PUN", externalRef: "e2e-1", consent });
@@ -35,11 +35,15 @@ test("a full interaction with a docket number: start → answers → message →
   // Listen on the stream while the call goes on (FR-API-03).
   const streamP = c.get(`/interactions/${s.interactionId}/stream`);
 
-  expect((await c.post(`/interactions/${s.interactionId}/screeners`, { instrument: "SAFETY_CHECK", itemCode: "SAFETY_SAFE_NOW", value: 1 })).status()).toBe(201);
-  const crit = await c.post(`/interactions/${s.interactionId}/screeners`, { instrument: "SAFETY_CHECK", itemCode: "SAFETY_ACCUSED_NEARBY", value: 1 });
-  expect((await crit.json()).showEmergencyPanel).toBe(true);
+  // NHAA's chatbot asks; the module stores the question as context and never scores it (AC-CH-07).
+  const question = await c.post(`/interactions/${s.interactionId}/messages`, { text: "Are you thinking of ending your life?", sender: "OPERATOR" });
+  expect(question.status()).toBe(201);
+  expect((await question.json()).showEmergencyPanel).toBe(false);
+  // No endpoint takes structured answers any more (FR-CH-01).
+  expect((await c.post(`/interactions/${s.interactionId}/screeners`, { instrument: "SAFETY_CHECK", itemCode: "SAFETY_SAFE_NOW", value: 1 })).status()).toBe(404);
   const msg = await c.post(`/interactions/${s.interactionId}/messages`, { text: "They are standing outside the house now.", sender: "VICTIM" });
   expect(msg.status()).toBe(201);
+  expect((await msg.json()).showEmergencyPanel).toBe(true);
   expect((await c.post(`/interactions/${s.interactionId}/messages`, { text: "Caller sounds out of breath.", sender: "OPERATOR" })).status()).toBe(201);
 
   const a = await (await c.get(`/interactions/${s.interactionId}/assessment`)).json();
@@ -60,9 +64,12 @@ test("a full interaction with a docket number: start → answers → message →
     const i = await db.collection("interactions").findOne({ _id: new mongoose.Types.ObjectId(s.interactionId) });
     expect(i!.externalRef).toBe("e2e-1");
     expect(i!.status).toBe("ENDED");
-    // The operator's words are kept but not scored as the caller's.
-    const op = await db.collection("messages").findOne({ interactionId: i!._id, sender: "OPERATOR" });
-    expect(op).toBeTruthy();
+    // The operator's words are kept but not scored as the caller's (AC-CH-07): the suicide question
+    // asked by the chatbot produced no indicator.
+    const ops = await db.collection("messages").find({ interactionId: i!._id, sender: "OPERATOR" }).toArray();
+    expect(ops).toHaveLength(2);
+    expect(await db.collection("indicators").countDocuments({ interactionId: i!._id, "evidence.messageId": { $in: ops.map((m) => m._id) } })).toBe(0);
+    expect(await db.collection("indicators").countDocuments({ interactionId: i!._id, dimension: "SUICIDAL_IDEATION" })).toBe(0);
     const audit = await db.collection("audit_logs").findOne({ action: "interaction.start", entityId: s.interactionId });
     expect(audit!.actorType).toBe("API_CLIENT");
   });
@@ -99,4 +106,50 @@ test("keys, scopes, ownership and rate limits (AC-API-02)", async ({ request }) 
   const statuses: number[] = [];
   for (let n = 0; n < 5; n++) statuses.push((await limited.get(`/interactions/${interactionId}/assessment`)).status());
   expect(statuses).toContain(429);
+});
+
+test("withdrawing consent through the API stops analysis at once; the safety lexicon keeps running (AC-CON-04, FR-CON-04, rule 6)", async ({ request }) => {
+  const c = api(request, await client(["interactions:write", "assessments:read"]));
+  const start = await c.post("/interactions", { channel: "CHATBOT", language: "en", districtCode: "MH-PUN", consent });
+  const { interactionId } = await start.json();
+  await c.post(`/interactions/${interactionId}/messages`, { text: "Since the complaint I cannot sleep and I feel very low.", sender: "VICTIM" });
+  const iid = new mongoose.Types.ObjectId(interactionId);
+  const before = await withDb((db) => db.collection("assessments").countDocuments({ interactionId: iid }));
+  expect(before).toBeGreaterThan(0);
+
+  const w = await c.post(`/interactions/${interactionId}/consent/withdraw`, { reason: null });
+  expect(w.status()).toBe(200);
+  expect(await w.json()).toEqual({ mode: "SAFETY_ONLY", audioDeleted: true });
+
+  // After withdrawal: no new SVI, but a life-safety statement still raises the band (rule 6).
+  const r = await c.post(`/interactions/${interactionId}/messages`, { text: "They are standing outside my house right now.", sender: "VICTIM" });
+  expect((await r.json()).showEmergencyPanel).toBe(true);
+  await withDb(async (db) => {
+    expect(await db.collection("assessments").countDocuments({ interactionId: iid })).toBe(before);
+    const i = await db.collection("interactions").findOne({ _id: iid });
+    expect(i!.mode).toBe("SAFETY_ONLY");
+    expect(i!.consents.at(-1).action).toBe("WITHDRAWN");
+    expect(await db.collection("audit_logs").countDocuments({ action: "consent.withdraw", entityId: interactionId })).toBe(1);
+  });
+});
+
+test("a short answer is read with the question before it (AC-NLP-08, FR-NLP-11, task M.9)", async ({ request }) => {
+  const c = api(request, await client(["interactions:write", "assessments:read"]));
+  const start = async () => (await (await c.post("/interactions", { channel: "CHATBOT", language: "en", districtCode: "MH-PUN", consent })).json()).interactionId as string;
+
+  // "No" right after the chatbot's "Are you safe right now?" → OV-9, at least High.
+  const a = await start();
+  await c.post(`/interactions/${a}/messages`, { text: "Are you safe right now?", sender: "OPERATOR" });
+  await c.post(`/interactions/${a}/messages`, { text: "No", sender: "VICTIM" });
+  const ra = await (await c.get(`/interactions/${a}/assessment`)).json();
+  expect(ra.overridesFired).toContain("OV-9");
+  expect(["HIGH", "CRITICAL"]).toContain(ra.band);
+
+  // The same "No" after an unrelated question does not.
+  const b = await start();
+  await c.post(`/interactions/${b}/messages`, { text: "Did you get a copy of your complaint?", sender: "OPERATOR" });
+  await c.post(`/interactions/${b}/messages`, { text: "No", sender: "VICTIM" });
+  const rb = await (await c.get(`/interactions/${b}/assessment`)).json();
+  expect(rb.overridesFired ?? []).not.toContain("OV-9");
+  expect(rb.band).toBe("LOW");
 });

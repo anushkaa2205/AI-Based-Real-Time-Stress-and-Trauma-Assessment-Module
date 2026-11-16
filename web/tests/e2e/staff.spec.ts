@@ -5,22 +5,17 @@
  */
 import { expect, test } from "@playwright/test";
 import mongoose from "mongoose";
-import { staffLogin, victimSession, withDb } from "./helpers";
+import { dropIntegrationKeys, integrationSession, staffLogin, withDb } from "./helpers";
 
 test.describe.configure({ mode: "serial" });
+test.afterAll(dropIntegrationKeys);
 
-async function makeCritical(request: Parameters<typeof victimSession>[0]) {
-  const v = await victimSession(request);
-  await v.call("/consent", {
-    noticeVersion: "2026-11-v1",
-    language: "en",
-    textAnalysis: true,
-    voiceAnalysis: false,
-    shareWithCounsellor: true,
-    followUpContact: false,
-  });
-  await v.call("/screeners", { instrument: "SAFETY_CHECK", itemCode: "SAFETY_SAFE_NOW", value: 1 });
-  return v;
+/** The person says the accused is outside the house now: the safety lexicon fires OV-2 → Critical. */
+const DANGER_NOW = "They are standing outside my house right now.";
+
+/** A new interaction from a calling system (text analysis and counsellor sharing consented). */
+async function makeCritical(request: Parameters<typeof integrationSession>[0]) {
+  return integrationSession(request);
 }
 
 test("a Critical case appears on the counsellor's screen within 5 s, without a refresh (AC-ALR-01, AC-RISK-04)", async ({ page, request }) => {
@@ -30,23 +25,27 @@ test("a Critical case appears on the counsellor's screen within 5 s, without a r
   await page.waitForTimeout(1500); // let the real-time subscription settle
 
   const v = await makeCritical(request);
+  const r = await v.say(DANGER_NOW);
+  expect(r.status()).toBe(201);
+  // AC-ALR-01 measures from the band change, which is committed when this response returns (the
+  // message path includes the AI call, which the old structured answer did not).
   const t0 = Date.now();
-  const r = await v.call("/screeners", { instrument: "SAFETY_CHECK", itemCode: "SAFETY_ACCUSED_NEARBY", value: 1 });
-  expect(r.status()).toBe(200);
 
   const banner = page.getByTestId("alert-CRITICAL").filter({ hasText: v.docketNumber });
   await expect(banner).toBeVisible({ timeout: 5_000 });
   expect(Date.now() - t0).toBeLessThan(5_000);
 
-  // The queue row shows the band as colour AND text (AC-RISK-04).
-  const row = page.getByTestId("queue-row").filter({ hasText: v.docketNumber });
+  // Queue rows show the band as colour AND text (AC-RISK-04). The shared test database holds many older
+  // Critical cases with a higher SVI, so this case may sort below the visible rows (Critical, then SVI,
+  // then waiting time, FR-CASE-01); any Critical row shows the same band tag.
+  const row = page.getByTestId("queue-row").filter({ has: page.locator("[data-band=CRITICAL]") }).first();
   await expect(row).toBeVisible({ timeout: 5_000 });
   await expect(row.locator("[data-band=CRITICAL]")).toHaveText(/critical/i);
 });
 
 test("an unacknowledged Critical alert escalates; acknowledgement time is stored (AC-ALR-02)", async ({ page, request }) => {
   const v = await makeCritical(request);
-  await v.call("/screeners", { instrument: "SAFETY_CHECK", itemCode: "SAFETY_ACCUSED_NEARBY", value: 1 });
+  await v.say(DANGER_NOW);
 
   const caseId = await withDb(async (db) => {
     const c = await db.collection("cases").findOne({ docketNumber: v.docketNumber });
@@ -93,7 +92,7 @@ test("an unacknowledged Critical alert escalates; acknowledgement time is stored
 
 test("band override without a reason is blocked; with a reason it can lower a locked band (AC-CASE-02, FR-RISK-03)", async ({ page, request }) => {
   const v = await makeCritical(request);
-  await v.call("/screeners", { instrument: "SAFETY_CHECK", itemCode: "SAFETY_ACCUSED_NEARBY", value: 1 });
+  await v.say(DANGER_NOW);
   const caseId = await withDb(async (db) => String((await db.collection("cases").findOne({ docketNumber: v.docketNumber }))!._id));
 
   await staffLogin(page, "COUNSELLOR");
@@ -112,7 +111,7 @@ test("band override without a reason is blocked; with a reason it can lower a lo
   await expect(page.getByTestId("case-message")).toContainText("Band changed");
 
   // The same old evidence does not push it back up on the next turn (FR-RISK-03).
-  await v.call("/screeners", { instrument: "SAFETY_CHECK", itemCode: "SAFETY_SUICIDAL_THOUGHTS", value: 0 });
+  await v.say("I am at my sister's place now.");
   const after = await page.request.get(`/api/v1/staff/cases/${caseId}`).then((x) => x.json());
   expect(after.band).toBe("HIGH");
   expect(after.bandOverrides).toHaveLength(1);
@@ -120,9 +119,10 @@ test("band override without a reason is blocked; with a reason it can lower a lo
 
 test("rejecting an indicator recalculates the SVI and keeps the original value in the audit trail (AC-IND-02, AC-AUD-01)", async ({ page, request }) => {
   const v = await makeCritical(request);
-  for (const code of ["SAFETY_ACCUSED_NEARBY", "SAFETY_SUICIDAL_THOUGHTS"]) await v.call("/screeners", { instrument: "SAFETY_CHECK", itemCode: code, value: 0 });
+  await v.ask("Is the person who harmed you near you right now?");
+  await v.say("No.");
   await v.call("/context", {}, "put");
-  await v.call("/messages", { text: "Since the complaint the village has boycotted us and I feel very low.", promptKey: "flow.narrative.open" });
+  await v.say("Since the complaint the village has boycotted us and I feel very low.");
   const caseId = await withDb(async (db) => String((await db.collection("cases").findOne({ docketNumber: v.docketNumber }))!._id));
 
   await staffLogin(page, "COUNSELLOR");

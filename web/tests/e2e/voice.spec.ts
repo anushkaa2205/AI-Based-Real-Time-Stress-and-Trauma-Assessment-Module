@@ -6,7 +6,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { expect, test } from "@playwright/test";
-import { staffLogin, victimSession, withDb } from "./helpers";
+import { dropIntegrationKeys, integrationSession, staffLogin, withDb } from "./helpers";
 
 test.describe.configure({ mode: "serial" });
 
@@ -47,6 +47,8 @@ function wavWindows(path: string): Buffer[] {
   return out;
 }
 
+test.afterAll(dropIntegrationKeys);
+
 test.beforeAll(async () => {
   const url = process.env.ANALYSIS_URL;
   const ok = url ? await fetch(new URL("/v1/health", url), { signal: AbortSignal.timeout(3000) }).then((r) => r.ok).catch(() => false) : false;
@@ -55,9 +57,8 @@ test.beforeAll(async () => {
 
 test("a simulated voice call updates the operator console every window; no audio is kept (AC-CH-02, AC-VOI-06)", async ({ page, request }) => {
   test.setTimeout(180_000);
-  const v = await victimSession(request);
-  await v.call("/consent", { noticeVersion: "2026-11-v1", language: "en", textAnalysis: true, voiceAnalysis: true, shareWithCounsellor: true, followUpContact: false });
-  await v.call("/screeners", { instrument: "SAFETY_CHECK", itemCode: "SAFETY_SAFE_NOW", value: 1 });
+  // A helpline call sent by the calling system through the integration API (the caller's channel only).
+  const v = await integrationSession(request, { channel: "VOICE_CALL", consent: { voiceAnalysis: true } });
 
   await staffLogin(page, "OPERATOR");
   expect((await page.request.post(`/api/v1/staff/interactions/${v.interactionId}/claim`)).status()).toBe(200);
@@ -73,7 +74,7 @@ test("a simulated voice call updates the operator console every window; no audio
   const timings: number[] = [];
   for (const [i, wav] of windows.entries()) {
     const t0 = Date.now();
-    const r = await request.post(`/api/v1/victim/interactions/${v.interactionId}/audio`, {
+    const r = await request.post(`${v.base}/audio`, {
       headers,
       multipart: { audio: { name: `w${i}.wav`, mimeType: "audio/wav", buffer: wav }, windowIndex: String(i), startMs: String(i * WINDOW_S * 1000) },
     });
@@ -81,7 +82,7 @@ test("a simulated voice call updates the operator console every window; no audio
     expect(r.status()).toBe(202);
     const body = await r.json();
     expect(body.analysed).toBe(true);
-    // Victims never see scores (rule 1).
+    // The audio response carries no scores (rule 1).
     expect(Object.keys(body).sort()).toEqual(["analysed", "emergency", "showEmergencyPanel", "transcript", "windowIndex"]);
   }
   console.log(`voice window ms: ${timings.join(", ")}`);
@@ -93,7 +94,7 @@ test("a simulated voice call updates the operator console every window; no audio
   await expect(page.getByTestId("voice-strip")).toBeVisible();
 
   // A retried window is answered without analysing it again.
-  const again = await request.post(`/api/v1/victim/interactions/${v.interactionId}/audio`, {
+  const again = await request.post(`${v.base}/audio`, {
     headers,
     multipart: { audio: { name: "w0.wav", mimeType: "audio/wav", buffer: windows[0]! }, windowIndex: "0", startMs: "0" },
   });
@@ -116,9 +117,8 @@ test("a simulated voice call updates the operator console every window; no audio
 });
 
 test("voice without voice consent is refused before any analysis (FR-CON-02)", async ({ request }) => {
-  const v = await victimSession(request);
-  await v.call("/consent", { noticeVersion: "2026-11-v1", language: "en", textAnalysis: true, voiceAnalysis: false, shareWithCounsellor: false, followUpContact: false });
-  const r = await request.post(`/api/v1/victim/interactions/${v.interactionId}/audio`, {
+  const v = await integrationSession(request, { consent: { voiceAnalysis: false, shareWithCounsellor: false } });
+  const r = await request.post(`${v.base}/audio`, {
     headers: v.headers,
     multipart: { audio: { name: "w0.wav", mimeType: "audio/wav", buffer: wavWindows(FIXTURE)[0]! }, windowIndex: "0", startMs: "0" },
   });

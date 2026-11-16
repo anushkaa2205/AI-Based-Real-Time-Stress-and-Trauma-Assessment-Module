@@ -6,16 +6,18 @@
 import { expect, test, type Page } from "@playwright/test";
 import { STAFF_PAGES, homeFor, navFor } from "../../src/lib/staff-nav";
 import type { Role } from "../../src/models/enums";
-import { staffLogin, victimSession, withDb } from "./helpers";
+import { dropIntegrationKeys, integrationSession, staffLogin, withDb } from "./helpers";
 
 test.describe.configure({ mode: "serial" });
+test.afterAll(dropIntegrationKeys);
 
-/** A Critical case with "accused nearby" → police intervention proposed, emergency support auto-triggered. */
-async function policeCase(request: Parameters<typeof victimSession>[0]) {
-  const v = await victimSession(request);
-  await v.call("/consent", { noticeVersion: "2026-11-v1", language: "en", textAnalysis: true, voiceAnalysis: false, shareWithCounsellor: true, followUpContact: true });
-  await v.call("/screeners", { instrument: "SAFETY_CHECK", itemCode: "SAFETY_SAFE_NOW", value: 1 });
-  await v.call("/screeners", { instrument: "SAFETY_CHECK", itemCode: "SAFETY_ACCUSED_NEARBY", value: 1 });
+/**
+ * A Critical case with "accused nearby" in NHAA's case details (sent as `/context` metadata, OV-2)
+ * → police intervention proposed, emergency support auto-triggered.
+ */
+async function policeCase(request: Parameters<typeof integrationSession>[0]) {
+  const v = await integrationSession(request, { consent: { followUpContact: true } });
+  expect((await v.call("/context", { accusedNearby: true }, "put")).status()).toBe(200);
   const caseId = await withDb(async (db) => String((await db.collection("cases").findOne({ docketNumber: v.docketNumber }))!._id));
   return { ...v, caseId };
 }
