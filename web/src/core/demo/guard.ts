@@ -5,6 +5,7 @@
  */
 import { createHmac, timingSafeEqual } from "node:crypto";
 import type { Limit } from "@/lib/ratelimit";
+import { LIVE_IDLE_MS } from "./limits";
 
 /** Starting values from the plan (§7). Named here so they are easy to tune after the first deployment. */
 export const DEMO_LIMITS = {
@@ -24,11 +25,7 @@ export const DEMO_LIMITS = {
   daily: { limit: 150, windowMs: 24 * 60 * 60_000 },
 } as const satisfies Record<string, Limit>;
 
-/** Per-case caps (§7) */
-export const MAX_MESSAGES_PER_CASE = 40;
-export const MAX_LIVE_CALL_MS = 3 * 60_000;
-/** A live call with no audio window for this long counts as over and frees the line. */
-export const LIVE_IDLE_MS = 20_000;
+export { LIVE_IDLE_MS, MAX_LIVE_CALL_MS, MAX_MESSAGES_PER_CASE } from "./limits";
 
 export const OWN_COOKIE = "nivara_demo";
 const OWN_MAX = 20;

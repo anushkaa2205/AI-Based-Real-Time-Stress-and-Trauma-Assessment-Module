@@ -11,7 +11,7 @@ import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { LiveRecorder } from "@/components/audio/live-recorder";
 import type { VictimLang } from "@/contracts/interaction";
-import { MAX_LIVE_CALL_MS } from "@/core/demo/guard";
+import { MAX_LIVE_CALL_MS } from "@/core/demo/limits";
 import { ConsentFields, DEFAULT_DISTRICT, DistrictSelect, FULL_CONSENT, LanguageSelect, type DemoConsent, type DistrictOption } from "./consent-fields";
 import { DemoShell } from "./demo-shell";
 import { EmergencyPanel } from "./emergency-panel";
