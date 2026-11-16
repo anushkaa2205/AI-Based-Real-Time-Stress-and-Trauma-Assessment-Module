@@ -56,7 +56,7 @@ async function call<T>(method: string, url: string, body?: unknown): Promise<{ o
 
 function Secret({ label, value }: { label: string; value: string }) {
   return (
-    <p className="rounded-[3px] border border-[#c9a227] border-l-4 bg-[#fbf6e4] p-2 text-sm text-[#4a3700]" data-testid="one-time-secret">
+    <p className="rounded-lg border border-warn/40 bg-warn-soft px-3 py-2 text-sm text-warn" data-testid="one-time-secret">
       <strong>{label} (shown once):</strong> <code className="break-all">{value}</code>
     </p>
   );
@@ -237,7 +237,7 @@ export function AdminConsole({ districts }: { districts: { id: string; name: str
           </form>
           <table className="text-sm" data-testid="users">
             <thead>
-              <tr className="text-left text-xs text-muted-foreground">
+              <tr className="text-left text-xs text-ink-3">
                 <th className="p-1">Name</th>
                 <th className="p-1">E-mail</th>
                 <th className="p-1">Role</th>
@@ -248,7 +248,7 @@ export function AdminConsole({ districts }: { districts: { id: string; name: str
             </thead>
             <tbody>
               {users.map((u) => (
-                <tr key={u.id} className={`border-t border-border ${u.isActive ? "" : "text-muted-foreground line-through"}`}>
+                <tr key={u.id} className={`border-t border-border ${u.isActive ? "" : "text-ink-3 line-through"}`}>
                   <td className="p-1">{u.name}</td>
                   <td className="p-1">{u.email}</td>
                   <td className="p-1">{lower(u.role)}</td>
@@ -294,7 +294,7 @@ export function AdminConsole({ districts }: { districts: { id: string; name: str
           </form>
           <table className="text-sm">
             <thead>
-              <tr className="text-left text-xs text-muted-foreground">
+              <tr className="text-left text-xs text-ink-3">
                 <th className="p-1">System</th>
                 <th className="p-1">Key prefix</th>
                 <th className="p-1">Scopes</th>
@@ -304,11 +304,11 @@ export function AdminConsole({ districts }: { districts: { id: string; name: str
             </thead>
             <tbody>
               {clients.map((c) => (
-                <tr key={c.id} className={`border-t border-border ${c.isActive ? "" : "text-muted-foreground line-through"}`}>
+                <tr key={c.id} className={`border-t border-border ${c.isActive ? "" : "text-ink-3 line-through"}`}>
                   <td className="p-1">
                     {c.name} <DemoMark show={c.isDemo} />
                   </td>
-                  <td className="p-1 font-mono">{c.keyPrefix}</td>
+                  <td className="p-1 num">{c.keyPrefix}</td>
                   <td className="p-1 text-xs">{c.scopes.join(", ")}</td>
                   <td className="p-1">{c.rateLimitPerMin}/min</td>
                   <td className="p-1">
@@ -329,7 +329,7 @@ export function AdminConsole({ districts }: { districts: { id: string; name: str
         <section className="flex flex-col gap-3">
           <table className="text-sm" data-testid="configs">
             <thead>
-              <tr className="text-left text-xs text-muted-foreground">
+              <tr className="text-left text-xs text-ink-3">
                 <th className="p-1">Version</th>
                 <th className="p-1">Status</th>
                 <th className="p-1">Notes</th>
@@ -343,7 +343,7 @@ export function AdminConsole({ districts }: { districts: { id: string; name: str
                 const s = sims[c.id];
                 return (
                   <tr key={c.id} className="border-t border-border align-top">
-                    <td className="p-1 font-mono">v{c.version}</td>
+                    <td className="p-1 num">v{c.version}</td>
                     <td className="p-1">{c.isActive ? <strong>active</strong> : "inactive"}</td>
                     <td className="p-1 text-xs">{c.notes ?? "–"}</td>
                     <td className="p-1 text-xs">{new Date(c.createdAt).toLocaleString()}</td>
@@ -396,7 +396,7 @@ export function AdminConsole({ districts }: { districts: { id: string; name: str
               })}
               {!configs.length && (
                 <tr>
-                  <td colSpan={6} className="p-1 text-muted-foreground">
+                  <td colSpan={6} className="p-1 text-ink-3">
                     No stored versions: the built-in default is in use. Run the seed to store it.
                   </td>
                 </tr>
@@ -408,7 +408,7 @@ export function AdminConsole({ districts }: { districts: { id: string; name: str
               <label htmlFor="cfg" className="text-sm font-semibold">
                 New version (weights must sum to 1; thresholds must increase)
               </label>
-              <textarea id="cfg" value={draft} onChange={(e) => setDraft(e.target.value)} rows={20} className="rounded-[3px] border border-line bg-[#faf9f6] p-2 font-mono text-xs" />
+              <textarea id="cfg" value={draft} onChange={(e) => setDraft(e.target.value)} rows={20} className="rounded-lg border border-line bg-surface-2 p-2 num text-xs" />
               <div className="flex gap-2">
                 <button type="button" onClick={saveDraft} className="btn btn-primary">
                   Save as new version

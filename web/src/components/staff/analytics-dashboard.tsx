@@ -67,25 +67,13 @@ const duration = (c: Cell<number | null>) => {
   return s < 90 ? `${s} s` : s < 5400 ? `${Math.round(s / 60)} min` : `${(s / 3600).toFixed(1)} h`;
 };
 
-/** Validated ordinal ramps (dataviz validator: all checks pass, light and dark). */
+/** One theme (plan §9.6): charts use the brand colour and the band colours only. */
 const VIZ_STYLE = `
 .viz-root {
-  --surface-1: #fcfcfb; --ink-1: #0b0b0b; --ink-2: #52514e; --ink-muted: #898781;
-  --grid: #e1e0d9; --axis: #c3c2b7;
-  --band-LOW: #86b6ef; --band-MODERATE: #3987e5; --band-HIGH: #1c5cab; --band-CRITICAL: #0d366b;
-  --seq-0: #cde2fb; --seq-1: #9ec5f4; --seq-2: #5598e7; --seq-3: #256abf; --seq-4: #104281;
-}
-@media (prefers-color-scheme: dark) {
-  :root:where(:not([data-theme="light"])) .viz-root {
-    --surface-1: #1a1a19; --ink-1: #f0efec; --ink-2: #c3c2b7; --grid: #2c2c2a; --axis: #383835;
-    --band-LOW: #184f95; --band-MODERATE: #2a78d6; --band-HIGH: #6da7ec; --band-CRITICAL: #b7d3f6;
-    --seq-0: #184f95; --seq-1: #256abf; --seq-2: #3987e5; --seq-3: #6da7ec; --seq-4: #b7d3f6;
-  }
-}
-:root[data-theme="dark"] .viz-root {
-  --surface-1: #1a1a19; --ink-1: #f0efec; --ink-2: #c3c2b7; --grid: #2c2c2a; --axis: #383835;
-  --band-LOW: #184f95; --band-MODERATE: #2a78d6; --band-HIGH: #6da7ec; --band-CRITICAL: #b7d3f6;
-  --seq-0: #184f95; --seq-1: #256abf; --seq-2: #3987e5; --seq-3: #6da7ec; --seq-4: #b7d3f6;
+  --surface-1: #ffffff; --ink-1: #14181f; --ink-2: #4a5361; --ink-muted: #7a8290;
+  --grid: #e3e0d8; --axis: #c9c4b8;
+  --band-LOW: #b8c0ca; --band-MODERATE: #b7860b; --band-HIGH: #c4511a; --band-CRITICAL: #b42318;
+  --seq-0: #d6e7e9; --seq-1: #a9cdd1; --seq-2: #6ea9b1; --seq-3: #2f7c8b; --seq-4: #0b5563;
 }
 `;
 
@@ -96,9 +84,9 @@ async function get<T>(path: string): Promise<T | null> {
 
 function Tile({ label, value, hint, testId }: { label: string; value: string; hint?: string; testId?: string }) {
   return (
-    <div className="card flex flex-col gap-1 p-3" data-testid={testId}>
-      <span className="text-xs text-[var(--ink-2)]">{label}</span>
-      <span className="text-2xl font-semibold tabular-nums text-[var(--ink-1)]">{value}</span>
+    <div className="card flex flex-col gap-1 px-4 py-3" data-testid={testId}>
+      <span className="section-title">{label}</span>
+      <span className="num text-2xl font-medium text-[var(--ink-1)]">{value}</span>
       {hint && <span className="text-xs text-[var(--ink-muted)]">{hint}</span>}
     </div>
   );
@@ -178,7 +166,7 @@ function TrendChart({ items }: { items: Trend[] }) {
               return <span key={b} className={top ? "rounded-t" : ""} style={{ height: `${(v / max) * h}px`, background: `var(--band-${b})` }} />;
             })}
             {hover === i && (
-              <div role="tooltip" className="absolute bottom-full left-1/2 z-10 mb-1 w-40 -translate-x-1/2 rounded-[3px] border border-border bg-[var(--surface-1)] p-2 text-xs shadow">
+              <div role="tooltip" className="absolute bottom-full left-1/2 z-10 mb-1 w-40 -translate-x-1/2 rounded-lg border border-border bg-[var(--surface-1)] p-2 text-xs shadow">
                 <p className="font-semibold text-[var(--ink-1)]">{t.period}</p>
                 {BANDS.map((b) => (
                   <p key={b} className="flex justify-between text-[var(--ink-2)]">
@@ -370,7 +358,7 @@ export function AnalyticsDashboard({ fixedDistrict }: { fixedDistrict: boolean }
           </section>
 
           <div className="grid gap-6 lg:grid-cols-2">
-            <section className="card flex flex-col gap-3 p-4">
+            <section className="card card-pad flex flex-col gap-3">
               <h2 className="section-title">Interactions by risk band</h2>
               {tableView ? (
                 <table className="text-sm">
@@ -387,7 +375,7 @@ export function AnalyticsDashboard({ fixedDistrict }: { fixedDistrict: boolean }
                 <BandBars byBand={summary.byBand} total={summary.interactions} />
               )}
             </section>
-            <section className="card flex flex-col gap-3 p-4">
+            <section className="card card-pad flex flex-col gap-3">
               <h2 className="section-title">Trend</h2>
               {tableView ? (
                 <table className="text-sm">
@@ -422,7 +410,7 @@ export function AnalyticsDashboard({ fixedDistrict }: { fixedDistrict: boolean }
             </section>
           </div>
 
-          <section className="card flex flex-col gap-2 p-4">
+          <section className="card card-pad flex flex-col gap-3">
             <h2 className="section-title">Districts: High and Critical per 1000 interactions</h2>
             <table className="text-sm" data-testid="heatmap">
               <thead>
@@ -458,7 +446,7 @@ export function AnalyticsDashboard({ fixedDistrict }: { fixedDistrict: boolean }
             </table>
           </section>
 
-          <section className="card flex flex-col gap-2 p-4">
+          <section className="card card-pad flex flex-col gap-3">
             <h2 className="section-title">Demand and capacity: referrals by district and support type</h2>
             <table className="text-sm" data-testid="capacity">
               <thead>

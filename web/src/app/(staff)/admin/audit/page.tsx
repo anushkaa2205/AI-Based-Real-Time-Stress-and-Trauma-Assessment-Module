@@ -6,8 +6,8 @@ export default async function Page() {
   await requirePage("audit");
   return (
     <section className="flex flex-col gap-4">
-      <h1 className="text-[1.375rem] font-bold leading-tight text-ink">Audit log</h1>
-      <p className="text-sm text-muted-foreground">Every view, change and export, chained by hash so that any edit or deletion shows up.</p>
+      <h1 className="page-title">Audit log</h1>
+      <p className="text-sm text-ink-3">Every view, change and export, chained by hash so that any edit or deletion shows up.</p>
       <AuditViewer />
     </section>
   );

@@ -77,7 +77,7 @@ export function RecommendationActions({ rec, onDone }: { rec: RecLike; onDone: (
   }
 
   if (rec.status === "AUTO_TRIGGERED" && rec.type === "EMERGENCY_SUPPORT") {
-    if (rec.decision) return <span className="text-xs text-muted-foreground">Reviewed by {rec.decision.by.name}</span>;
+    if (rec.decision) return <span className="text-xs text-ink-3">Reviewed by {rec.decision.by.name}</span>;
     return (
       <span className="flex flex-wrap items-center gap-2">
         <span className="text-xs font-semibold text-danger">Started automatically: needs your review</span>
@@ -90,7 +90,7 @@ export function RecommendationActions({ rec, onDone }: { rec: RecLike; onDone: (
   }
   if (rec.status !== "PROPOSED") {
     return rec.decision ? (
-      <span className="text-xs text-muted-foreground">
+      <span className="text-xs text-ink-3">
         {lower(rec.status)} by {rec.decision.by.name}
         {rec.referralId ? " · referral sent" : ""}
       </span>
@@ -118,7 +118,7 @@ export function RecommendationActions({ rec, onDone }: { rec: RecLike; onDone: (
             This text goes to an outside agency. Write the action only: no story, no health details, no scores.
           </p>
           <textarea id={`act-${rec.id}`} name="actionRequested" value={action} onChange={(e) => setAction(e.target.value)} rows={2} className="field" />
-          <span className={action.length > MAX ? "text-danger" : "text-muted-foreground"}>
+          <span className={action.length > MAX ? "text-danger" : "text-ink-3"}>
             {action.length}/{MAX} characters
           </span>
           <input name="locationHint" placeholder="Village or ward (never a full address)" maxLength={MAX} className="field" />

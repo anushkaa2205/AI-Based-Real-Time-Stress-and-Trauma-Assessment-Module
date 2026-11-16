@@ -7,7 +7,7 @@ export default async function Page() {
   const title = user.role === "MINISTRY_ADMIN" ? "National analytics" : user.role === "STATE_ADMIN" ? "State analytics" : user.role === "DISTRICT_OFFICER" ? "District analytics" : "Analytics";
   return (
     <section className="flex flex-col gap-4">
-      <h1 className="text-[1.375rem] font-bold leading-tight text-ink">{title}</h1>
+      <h1 className="page-title">{title}</h1>
       <AnalyticsDashboard fixedDistrict={user.role === "DISTRICT_OFFICER"} />
     </section>
   );

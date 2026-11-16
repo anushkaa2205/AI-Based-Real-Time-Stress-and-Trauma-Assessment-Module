@@ -58,11 +58,11 @@ export function DistrictCases({ channels }: { channels: string[] }) {
     if (env.event.startsWith("case.") || env.event === "assessment.updated") void load();
   });
 
-  if (rows === null) return <p className="text-muted-foreground">Loading…</p>;
-  if (rows.length === 0) return <p className="text-muted-foreground">No High or Critical cases open in your district.</p>;
+  if (rows === null) return <div className="skeleton h-24 w-full" aria-busy="true" />;
+  if (rows.length === 0) return <div className="empty">No High or Critical cases open in your district</div>;
   return (
     <table className="data-table" data-testid="district-cases">
-      <thead className="bg-muted">
+      <thead className="bg-surface-2">
         <tr>
           <th className="p-2">Band</th>
           <th className="p-2">SVI</th>
@@ -78,8 +78,8 @@ export function DistrictCases({ channels }: { channels: string[] }) {
             <td className="p-2">
               <BandBadge band={r.band} />
             </td>
-            <td className="p-2 font-mono">{r.svi ?? "–"}</td>
-            <td className="p-2 font-mono">
+            <td className="p-2 num">{r.svi ?? "–"}</td>
+            <td className="p-2 num">
               {r.docketNumber} <DemoMark show={r.isDemo} />
             </td>
             <td className="p-2">{r.status.replace(/_/g, " ").toLowerCase()}</td>

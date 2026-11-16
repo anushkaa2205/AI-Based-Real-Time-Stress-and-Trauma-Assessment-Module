@@ -12,8 +12,8 @@ export default async function Page() {
   return (
     <section className="flex flex-col gap-4">
       <div>
-        <h1 className="text-[1.375rem] font-bold leading-tight text-ink">Referrals</h1>
-        <p className="text-sm text-muted-foreground">Relief, rehabilitation, legal aid and medical support approved for your district.</p>
+        <h1 className="page-title">Referrals</h1>
+        <p className="text-sm text-ink-3">Relief, rehabilitation, legal aid and medical support approved for your district.</p>
       </div>
       <ReferralQueue channels={channels} canUpdate emptyText="No referrals for your district." />
     </section>

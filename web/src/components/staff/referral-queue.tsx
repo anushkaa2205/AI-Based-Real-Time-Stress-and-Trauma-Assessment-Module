@@ -91,31 +91,31 @@ export function ReferralQueue({
         </p>
       )}
       {items === null ? (
-        <p className="text-muted-foreground">Loading…</p>
+        <p className="text-ink-3">Loading…</p>
       ) : items.length === 0 ? (
-        <p className="text-muted-foreground">{emptyText}</p>
+        <div className="empty">{emptyText}</div>
       ) : (
         <ul className="flex flex-col gap-2" data-testid="referrals">
           {items.map((r) => {
             const overdue = !!r.dueAt && OPEN.has(r.status) && new Date(r.dueAt).getTime() < now;
             const next = NEXT[r.status];
             return (
-              <li key={r.id} data-testid="referral-row" data-status={r.status} className="card flex flex-col gap-1 p-3 text-sm">
+              <li key={r.id} data-testid="referral-row" data-status={r.status} className="card flex flex-col gap-1.5 px-4 py-3 text-sm">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-mono">{r.docketNumber}</span>
+                  <span className="num font-medium text-ink">{r.docketNumber}</span>
                   <DemoMark show={r.isDemo} />
                   <span className="tag">{lower(r.type)}</span>
-                  <span className={`tag ${r.urgency === "IMMEDIATE" || r.urgency === "WITHIN_15_MIN" ? "bg-danger text-white" : ""}`}>{lower(r.urgency)}</span>
-                  <span className="text-xs">Status: {lower(r.status)}</span>
+                  <span className={`tag ${r.urgency === "IMMEDIATE" || r.urgency === "WITHIN_15_MIN" ? "tag-danger" : ""}`}>{lower(r.urgency)}</span>
+                  <span className={`tag ${r.status === "DONE" ? "tag-ok" : r.status === "DECLINED" ? "" : "tag-brand"}`}>{lower(r.status)}</span>
                   {r.dueAt && (
-                    <span className={`text-xs ${overdue ? "font-semibold text-danger" : "text-muted-foreground"}`}>
+                    <span className={`text-xs ${overdue ? "font-semibold text-danger" : "text-ink-3"}`}>
                       {overdue ? "Overdue since " : "Due "}
                       {new Date(r.dueAt).toLocaleString()}
                     </span>
                   )}
                 </div>
-                <p>
-                  <strong>Action:</strong> {r.actionRequested}
+                <p className="mt-1 text-ink">
+                  <strong className="text-ink-2">Action:</strong> {r.actionRequested}
                 </p>
                 {r.locationHint && (
                   <p>
@@ -125,7 +125,7 @@ export function ReferralQueue({
                 <p>
                   <strong>Contact:</strong> {r.contactRoute}
                 </p>
-                {r.outcomeNote && <p className="text-xs text-muted-foreground">Outcome: {r.outcomeNote}</p>}
+                {r.outcomeNote && <p className="text-xs text-ink-3">Outcome: {r.outcomeNote}</p>}
                 {canUpdate && OPEN.has(r.status) && (
                   <div className="flex flex-wrap items-center gap-2">
                     {next && (

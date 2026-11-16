@@ -92,16 +92,16 @@ export function AlertBanner({ channels, caseHref }: { channels: string[]; caseHr
   const shown = expanded ? alerts : alerts.slice(0, SHOWN);
   const hidden = alerts.length - shown.length;
   return (
-    <div className="flex max-h-[60vh] flex-col gap-2 overflow-y-auto border-b border-line bg-[#efece5] px-4 py-3 md:px-7" aria-live="assertive">
+    <div className="flex max-h-[60vh] flex-col gap-2 overflow-y-auto border-b border-line bg-surface-2 px-4 py-3 md:px-7" aria-live="assertive">
       {shown.map((a) => (
         <div
           key={a.id}
           role="alert"
           data-testid={`alert-${a.level}`}
-          className={`flex flex-wrap items-center gap-x-4 gap-y-2 rounded-[4px] border border-line border-l-[6px] bg-white px-4 py-2.5 ${a.level === "CRITICAL" ? "border-l-danger" : "border-l-[#d9773f]"}`}
+          className={`flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-line border-l-[6px] bg-white px-4 py-2.5 ${a.level === "CRITICAL" ? "border-l-danger" : "border-l-[#c4511a]"}`}
         >
-          <strong className={`text-sm uppercase tracking-wide ${a.level === "CRITICAL" ? "text-danger" : "text-[#7a2a0c]"}`}>{a.level === "CRITICAL" ? "Critical alert" : "High risk"}</strong>
-          <span className="font-mono text-sm font-semibold">{a.docketNumber}</span>
+          <strong className={`text-sm uppercase tracking-wide ${a.level === "CRITICAL" ? "text-danger" : "text-[#7a2e0b]"}`}>{a.level === "CRITICAL" ? "Critical alert" : "High risk"}</strong>
+          <span className="num text-sm font-semibold">{a.docketNumber}</span>
           <span className="min-w-40 flex-1 text-sm text-ink-2">{a.reason}</span>
           {a.escalationLevel > 0 && <span className="tag border-line">Escalated (level {a.escalationLevel})</span>}
           {caseHref && (

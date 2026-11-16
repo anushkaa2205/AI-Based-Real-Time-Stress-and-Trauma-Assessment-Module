@@ -33,21 +33,21 @@ function List({ items, caseHref, onDone }: { items: Item[]; caseHref: string | n
         <li key={r.id} data-testid="approval-row" data-type={r.type} className="card flex flex-col gap-1 p-3 text-sm">
           <div className="flex flex-wrap items-center gap-2">
             {caseHref ? (
-              <Link href={`${caseHref}/${r.caseId}`} className="font-mono underline underline-offset-4">
+              <Link href={`${caseHref}/${r.caseId}`} className="num underline underline-offset-4">
                 {r.docketNumber}
               </Link>
             ) : (
-              <span className="font-mono">{r.docketNumber}</span>
+              <span className="num">{r.docketNumber}</span>
             )}
             <DemoMark show={r.isDemo} />
             <BandBadge band={r.band} />
             <strong>{lower(r.type)}</strong>
             <span className="text-xs">{lower(r.urgency)}</span>
-            <span className="text-xs text-muted-foreground">→ {lower(r.responsibleRole)}</span>
-            {r.dueAt && <span className="text-xs text-muted-foreground">due {new Date(r.dueAt).toLocaleString()}</span>}
+            <span className="text-xs text-ink-3">→ {lower(r.responsibleRole)}</span>
+            {r.dueAt && <span className="text-xs text-ink-3">due {new Date(r.dueAt).toLocaleString()}</span>}
           </div>
-          <p className="text-xs text-muted-foreground">{r.reason}</p>
-          {r.legalBasis && <p className="text-xs text-muted-foreground">Basis: {r.legalBasis}</p>}
+          <p className="text-xs text-ink-3">{r.reason}</p>
+          {r.legalBasis && <p className="text-xs text-ink-3">Basis: {r.legalBasis}</p>}
           <RecommendationActions rec={r} onDone={onDone} />
         </li>
       ))}
@@ -113,9 +113,9 @@ export function ApprovalInbox({ caseHref, showReviews = true }: { caseHref: stri
       <section className="flex flex-col gap-2">
         <h2 className="section-title">Waiting for approval{proposed ? ` (${proposed.length})` : ""}</h2>
         {proposed === null ? (
-          <p className="text-muted-foreground">Loading…</p>
+          <div className="skeleton h-16 w-full" aria-busy="true" />
         ) : proposed.length === 0 ? (
-          <p className="text-muted-foreground">Nothing waiting.</p>
+          <div className="empty">Nothing is waiting for approval</div>
         ) : (
           <List items={proposed} caseHref={caseHref} onDone={done} />
         )}

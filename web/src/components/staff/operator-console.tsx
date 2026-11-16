@@ -76,13 +76,13 @@ const DIM: Record<string, string> = {
   ACUTE_STRESS: "Acute stress",
 };
 const EMO_COLOR: Record<string, string> = {
-  fear: "bg-[#e6e0ef] text-[#352a4d]",
-  sadness: "bg-[#dfe7f1] text-[#1f3a5f]",
-  anger: "bg-[#f4dcdc] text-[#6e1012]",
-  flat: "bg-[#e3e1dc] text-[#333]",
-  shame: "bg-[#f5e6c4] text-[#4a3700]",
-  shock: "bg-[#f7dfcf] text-[#6b2a0d]",
-  neutral: "bg-muted text-foreground",
+  fear: "bg-[#e9e3f3] text-[#3b2d5c]",
+  sadness: "bg-[#e1e8f1] text-[#263c5a]",
+  anger: "bg-[#f6dcdc] text-[#6e1012]",
+  flat: "bg-[#e7e5e0] text-[#3d4753]",
+  shame: "bg-[#f3e8cf] text-[#4a3700]",
+  shock: "bg-[#f8e1d2] text-[#6b2a0d]",
+  neutral: "bg-surface-2 text-foreground",
 };
 
 async function getJson<T>(url: string): Promise<T | null> {
@@ -96,10 +96,10 @@ function Gauge({ svi, band }: { svi: number | null; band: string | null }) {
     <div className="flex flex-col gap-1" data-testid="svi-gauge" data-svi={svi ?? ""}>
       <div className="flex items-baseline gap-2">
         <span className="text-4xl font-bold tabular-nums">{svi ?? "–"}</span>
-        <span className="text-sm text-muted-foreground">SVI</span>
+        <span className="text-sm text-ink-3">SVI</span>
         <BandBadge band={band} />
       </div>
-      <div className="relative h-3 w-full rounded bg-muted" role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={v} aria-label="SVI">
+      <div className="relative h-3 w-full rounded bg-surface-2" role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={v} aria-label="SVI">
         {[30, 55, 75].map((t) => (
           <span key={t} className="absolute top-0 h-3 w-px bg-foreground/40" style={{ left: `${t}%` }} />
         ))}
@@ -110,7 +110,7 @@ function Gauge({ svi, band }: { svi: number | null; band: string | null }) {
 }
 
 function VoiceStrip({ windows }: { windows: Win[] }) {
-  if (!windows.length) return <p className="text-sm text-muted-foreground">No voice yet.</p>;
+  if (!windows.length) return <p className="text-sm text-ink-3">No voice yet.</p>;
   const last = windows.slice(-24);
   const pitches = last.map((w) => w.pitch?.meanHz ?? 0).filter((x) => x > 0);
   const lo = Math.min(...pitches, 400);
@@ -128,7 +128,7 @@ function VoiceStrip({ windows }: { windows: Win[] }) {
           );
         })}
       </div>
-      <p className="text-xs text-muted-foreground">Dark bars: pitch. Blue bars: share of silence. Hover for details.</p>
+      <p className="text-xs text-ink-3">Dark bars: pitch. Blue bars: share of silence. Hover for details.</p>
       {last.at(-1) && (
         <p className="text-sm">
           Latest window: {last.at(-1)!.pauses.count} pauses (longest {(last.at(-1)!.pauses.maxMs / 1000).toFixed(1)} s), {last.at(-1)!.speechRateWpm ?? "–"} words/min
@@ -140,7 +140,7 @@ function VoiceStrip({ windows }: { windows: Win[] }) {
 }
 
 function EmotionTimeline({ points }: { points: EmoPoint[] }) {
-  if (!points.length) return <p className="text-sm text-muted-foreground">No emotion signals yet.</p>;
+  if (!points.length) return <p className="text-sm text-ink-3">No emotion signals yet.</p>;
   const rows: [string, keyof EmoPoint][] = [
     ["Text", "text"],
     ["Voice", "voice"],
@@ -150,11 +150,11 @@ function EmotionTimeline({ points }: { points: EmoPoint[] }) {
     <div className="flex flex-col gap-1 overflow-x-auto text-xs" data-testid="emotion-timeline">
       {rows.map(([label, key]) => (
         <div key={key} className="flex items-center gap-1">
-          <span className="w-12 shrink-0 text-muted-foreground">{label}</span>
+          <span className="w-12 shrink-0 text-ink-3">{label}</span>
           {points.map((p, i) => {
             const e = p[key] as EmoPoint["text"];
             return (
-              <span key={i} title={e ? `${e.label} (${Math.round(e.confidence * 100)}%) at ${Math.round(p.atMs / 1000)} s` : "no signal"} className={`min-w-12 rounded px-1 text-center ${e ? (EMO_COLOR[e.label] ?? "bg-muted") : "text-muted-foreground"}`}>
+              <span key={i} title={e ? `${e.label} (${Math.round(e.confidence * 100)}%) at ${Math.round(p.atMs / 1000)} s` : "no signal"} className={`min-w-12 rounded px-1 text-center ${e ? (EMO_COLOR[e.label] ?? "bg-surface-2") : "text-ink-3"}`}>
                 {e ? e.label : "·"}
               </span>
             );
@@ -229,10 +229,10 @@ function CallView({ live, onMessage }: { live: Live; onMessage: (m: string) => v
     <div className="flex flex-col gap-4" data-testid="call-view">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h2 className="flex items-center gap-2 font-mono text-xl font-semibold">
+          <h2 className="flex items-center gap-2 num text-xl font-semibold">
             {live.docketNumber} <DemoMark show={live.isDemo} />
           </h2>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs text-ink-3">
             {live.channel.replace(/_/g, " ").toLowerCase()} · {live.language}
           </p>
         </div>
@@ -241,33 +241,33 @@ function CallView({ live, onMessage }: { live: Live; onMessage: (m: string) => v
         </div>
       </div>
 
-      <section className="card p-3">
+      <section className="card card-pad">
         <h3 className="section-title mb-2">Suggested next questions</h3>
         <ol className="flex flex-col gap-2" data-testid="suggestions">
           {sugs.map((s) => (
             <li key={s.key} className="text-sm">
               <p className="font-medium">{s.text}</p>
-              {s.text !== s.textEn && <p className="text-xs text-muted-foreground">{s.textEn}</p>}
-              <p className="text-xs text-muted-foreground">Why: {s.reason}</p>
+              {s.text !== s.textEn && <p className="text-xs text-ink-3">{s.textEn}</p>}
+              <p className="text-xs text-ink-3">Why: {s.reason}</p>
             </li>
           ))}
         </ol>
       </section>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <section className="card flex flex-col gap-2 p-3">
-          <h3 className="text-sm font-semibold">Live transcript</h3>
+        <section className="card card-pad flex flex-col gap-2">
+          <h3 className="section-title">Live transcript</h3>
           <ol className="flex max-h-80 flex-col gap-2 overflow-y-auto text-sm" data-testid="live-transcript" aria-live="polite">
             {msgs.map((m) => (
               <li key={m.id}>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs text-ink-3">
                   #{m.seq} {m.modality === "VOICE_TRANSCRIPT" ? "🎤" : ""}
                 </span>{" "}
                 {m.text}
-                {m.translation && <span className="block text-xs text-muted-foreground">EN: {m.translation}</span>}
+                {m.translation && <span className="block text-xs text-ink-3">EN: {m.translation}</span>}
               </li>
             ))}
-            {!msgs.length && <li className="text-muted-foreground">Nothing yet.</li>}
+            {!msgs.length && <li className="text-ink-3">Nothing yet.</li>}
           </ol>
           <form onSubmit={typed} className="flex gap-2">
             <label htmlFor="op-text" className="sr-only">
@@ -280,7 +280,7 @@ function CallView({ live, onMessage }: { live: Live; onMessage: (m: string) => v
           </form>
         </section>
 
-        <section className="card flex flex-col gap-2 p-3">
+        <section className="card card-pad flex flex-col gap-2">
           <h3 className="text-sm font-semibold">Indicators</h3>
           <ul className="flex flex-wrap gap-1" data-testid="indicator-chips">
             {topInds.map((i) => (
@@ -292,14 +292,14 @@ function CallView({ live, onMessage }: { live: Live; onMessage: (m: string) => v
                 {DIM[i.dimension] ?? i.dimension} {i.score.toFixed(2)} · {i.source === "VOICE" ? "voice" : i.source === "SAFETY_LEXICON" ? "safety rule" : i.source.toLowerCase()}
               </li>
             ))}
-            {!topInds.length && <li className="text-sm text-muted-foreground">None yet.</li>}
+            {!topInds.length && <li className="text-sm text-ink-3">None yet.</li>}
           </ul>
           <h3 className="mt-2 text-sm font-semibold">Voice: pitch and pauses</h3>
           <VoiceStrip windows={wins} />
         </section>
       </div>
 
-      <section className="card p-3">
+      <section className="card card-pad">
         <h3 className="section-title mb-2">Emotion over the session</h3>
         <EmotionTimeline points={emos} />
       </section>
@@ -348,19 +348,19 @@ export function OperatorConsole({ me, queueChannels }: { me: string; queueChanne
             {msg}
           </p>
         )}
-        {live === null && <p className="text-muted-foreground">Loading…</p>}
-        {live?.length === 0 && <p className="text-muted-foreground">No live sessions.</p>}
+        {live === null && <div className="skeleton h-16 w-full" aria-busy="true" />}
+        {live?.length === 0 && <div className="empty">No live sessions right now</div>}
         <ul className="flex flex-col gap-2" data-testid="live-sessions">
           {live?.map((l) => {
             const mine = l.operator?.id === me;
             return (
-              <li key={l.id} data-testid="live-row" className={`rounded-[4px] border bg-white p-2 text-sm ${selected === l.id ? "border-brand border-l-4" : "border-line"}`}>
+              <li key={l.id} data-testid="live-row" className={`rounded-lg border bg-surface px-3 py-2.5 text-sm transition-colors ${selected === l.id ? "border-brand ring-2 ring-brand-soft" : "border-line"}`}>
                 <div className="flex items-center gap-2">
-                  <span className="font-mono">{l.docketNumber}</span>
+                  <span className="num">{l.docketNumber}</span>
                   <DemoMark show={l.isDemo} />
                   <BandBadge band={l.band} />
                 </div>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-ink-3">
                   {l.channel.replace(/_/g, " ").toLowerCase()} · {l.language} · {l.operator ? `with ${l.operator.name}` : "unattended"}
                 </p>
                 {mine ? (
@@ -379,7 +379,7 @@ export function OperatorConsole({ me, queueChannels }: { me: string; queueChanne
           })}
         </ul>
       </aside>
-      <div>{current ? <CallView key={current.id} live={current} onMessage={setMsg} /> : <p className="text-muted-foreground">Take a call to see it live here.</p>}</div>
+      <div>{current ? <CallView key={current.id} live={current} onMessage={setMsg} /> : <div className="empty">Take a call to see it live here</div>}</div>
     </div>
   );
 }

@@ -96,7 +96,7 @@ export function AuditViewer() {
       </form>
       <table className="text-sm" data-testid="audit-table">
         <thead>
-          <tr className="text-left text-xs text-muted-foreground">
+          <tr className="text-left text-xs text-ink-3">
             <th className="p-1">When</th>
             <th className="p-1">Who</th>
             <th className="p-1">Action</th>
@@ -111,15 +111,15 @@ export function AuditViewer() {
               <td className="p-1 text-xs">
                 {e.actorType.toLowerCase().replace(/_/g, " ")}
                 <br />
-                <span className="font-mono text-muted-foreground">{e.actorId ?? "–"}</span>
+                <span className="num text-ink-3">{e.actorId ?? "–"}</span>
               </td>
-              <td className="p-1 font-mono text-xs">{e.action}</td>
+              <td className="p-1 num text-xs">{e.action}</td>
               <td className="p-1 text-xs">
                 {e.entityType}
                 <br />
-                <span className="font-mono text-muted-foreground">{e.entityId}</span>
+                <span className="num text-ink-3">{e.entityId}</span>
               </td>
-              <td className="p-1 font-mono text-[11px]">{e.metadata ? JSON.stringify(e.metadata) : ""}</td>
+              <td className="p-1 num text-[11px]">{e.metadata ? JSON.stringify(e.metadata) : ""}</td>
             </tr>
           ))}
         </tbody>

@@ -6,7 +6,10 @@ export default async function Page() {
   await requirePage("approvals");
   return (
     <section className="flex flex-col gap-4">
-      <h1 className="text-[1.375rem] font-bold leading-tight text-ink">Approvals</h1>
+      <div>
+        <h1 className="page-title">Approvals</h1>
+        <p className="page-lead">Proposed support waits here until a person approves or rejects it. Emergency support that was auto-triggered is listed for review.</p>
+      </div>
       <ApprovalInbox caseHref="/counsellor/case" />
     </section>
   );
