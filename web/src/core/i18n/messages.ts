@@ -1,9 +1,10 @@
 /**
- * Victim-facing text, loaded from messages/*.json (CLAUDE.md: never hard-coded).
- * Server code translates with `t(lang, key)`; pages receive the same JSON.
+ * Translated text the module returns or shows, loaded from messages/*.json (CLAUDE.md: never
+ * hard-coded): the emergency options for calling systems and the operator's suggested questions.
+ * Server code translates with `t(lang, key)`.
  */
 import { createTranslator } from "next-intl";
-import type { VictimLang } from "@/contracts/victim";
+import type { VictimLang } from "@/contracts/interaction";
 import en from "../../../messages/en.json";
 import bn from "../../../messages/bn.json";
 import hi from "../../../messages/hi.json";
@@ -22,9 +23,9 @@ const translators = {
   bn: createTranslator({ locale: "bn", messages: bn }),
 };
 
-/** Translate a dotted key, e.g. t("hi", "flow.narrative.open"). */
+/** Translate a dotted key, e.g. t("hi", "operatorQuestions.safeNow"). */
 export function t(lang: VictimLang, key: string): string {
-  // Keys are built at run time from flow state, so the typed key check cannot apply here.
+  // Keys are built at run time (suggested questions), so the typed key check cannot apply here.
   return (translators[lang] as unknown as (k: string) => string)(key);
 }
 

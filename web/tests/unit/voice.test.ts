@@ -1,6 +1,8 @@
 /** Voice → scoring signals, emotion fusion, operator suggestions (tasks 7.3–7.5, 7.7; AC-VOI-02/05, AC-EMO-01). */
 import { describe, expect, it } from "vitest";
-import { suggestQuestions } from "@/core/conversation/suggest";
+import { VICTIM_LANGS } from "@/contracts/interaction";
+import { hasKey } from "@/core/i18n/messages";
+import { suggestQuestions } from "@/core/operator/suggest";
 import { assess } from "@/core/scoring/assess";
 import { DEFAULT_CONFIG } from "@/core/scoring/defaultConfig";
 import type { IndicatorInput } from "@/core/scoring/types";
@@ -83,38 +85,30 @@ describe("fuseEmotion (FR-EMO-02, AC-EMO-01)", () => {
   });
 });
 
-describe("suggestQuestions (FR-CH-04)", () => {
-  const none = new Map<string, number | null>();
-  it("asks the safety check first", () => {
-    expect(suggestQuestions({ answered: none, dimensions: {}, suicideSignal: false }).map((s) => s.key)).toEqual([
-      "flow.screener.SAFETY_SAFE_NOW",
-      "flow.screener.SAFETY_ACCUSED_NEARBY",
+describe("suggestQuestions (FR-CH-04, FR-DSH-01): scripted questions for the operator to ask aloud", () => {
+  const q = (k: string) => `operatorQuestions.${k}`;
+  it("puts safety first when nothing is known", () => {
+    expect(suggestQuestions({ dimensions: {}, suicideSignal: false, notSafeNow: false }).map((s) => s.key)).toEqual([
+      q("safeNow"),
+      q("accusedNearby"),
+      q("sayMore"),
     ]);
   });
-  it("follows the evidence once the safety check is done, at most three", () => {
-    const answered = new Map<string, number | null>([
-      ["SAFETY_SAFE_NOW", 0],
-      ["SAFETY_ACCUSED_NEARBY", 0],
-    ]);
-    const s = suggestQuestions({ answered, dimensions: { SUICIDAL_IDEATION: 0.4, INTIMIDATION: 0.7, DEPRESSION: 0.5 }, suicideSignal: false });
-    expect(s.map((x) => x.key)).toEqual(["flow.screener.SAFETY_SUICIDAL_THOUGHTS", "suggest.safePlace", "suggest.threatDetails"]);
+  it("asks about suicidal thoughts on any sign, and about intent when the signs are clear, at most three", () => {
+    const s = suggestQuestions({ dimensions: { SUICIDAL_IDEATION: 0.6, INTIMIDATION: 0.7 }, suicideSignal: true, notSafeNow: false });
+    expect(s.map((x) => x.key)).toEqual([q("safeNow"), q("suicidalThoughts"), q("suicidalIntent")]);
     expect(s.every((x) => x.reason.length > 0)).toBe(true);
   });
-  it("asks about intent after a yes to suicidal thoughts", () => {
-    const answered = new Map<string, number | null>([
-      ["SAFETY_SAFE_NOW", 1],
-      ["SAFETY_ACCUSED_NEARBY", 0],
-      ["SAFETY_SUICIDAL_THOUGHTS", 1],
-    ]);
-    expect(suggestQuestions({ answered, dimensions: {}, suicideSignal: true })[0]!.key).toBe("flow.screener.SAFETY_SUICIDAL_INTENT");
+  it("asks for a safe place once the person has said they are not safe (OV-9)", () => {
+    const s = suggestQuestions({ dimensions: { INTIMIDATION: 0.7 }, suicideSignal: false, notSafeNow: true });
+    expect(s.map((x) => x.key)).toEqual([q("safePlace"), q("accusedNearby"), q("threatDetails")]);
   });
-  it("invites more when nothing specific is open", () => {
-    const answered = new Map<string, number | null>([
-      ["SAFETY_SAFE_NOW", 1],
-      ["SAFETY_ACCUSED_NEARBY", 0],
-    ]);
-    expect(suggestQuestions({ answered, dimensions: {}, suicideSignal: false })).toEqual([
-      { key: "flow.narrative.more", reason: expect.any(String) },
-    ]);
+  it("only ever suggests keys that exist in every language", () => {
+    const all = [
+      suggestQuestions({ dimensions: {}, suicideSignal: false, notSafeNow: false }),
+      suggestQuestions({ dimensions: { SUICIDAL_IDEATION: 0.9 }, suicideSignal: true, notSafeNow: true }),
+      suggestQuestions({ dimensions: { SOCIAL_ISOLATION: 0.8, EXTREME_VULNERABILITY: 0.8 }, suicideSignal: false, notSafeNow: false }),
+    ].flat();
+    for (const lang of VICTIM_LANGS) for (const s of all) expect(hasKey(lang, s.key), `${lang}: ${s.key}`).toBe(true);
   });
 });
