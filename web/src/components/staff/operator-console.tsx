@@ -123,7 +123,7 @@ function VoiceStrip({ windows }: { windows: Win[] }) {
           return (
             <div key={w.windowIndex} className="flex w-6 flex-col items-center gap-0.5" title={`Window ${w.windowIndex}: pitch ${w.pitch?.meanHz ?? "–"} Hz (spread ${w.pitch?.stdHz ?? "–"}), ${w.pauses.count} pauses, longest ${(w.pauses.maxMs / 1000).toFixed(1)} s, ${w.speechRateWpm ?? "–"} wpm`}>
               <span className="w-3 rounded-t bg-foreground/70" style={{ height: `${h}px` }} />
-              <span className="w-3 rounded-[1px] bg-navy" style={{ height: `${Math.round(w.pauses.silenceRatio * 16) + 1}px` }} />
+              <span className="w-3 rounded-[1px] bg-brand" style={{ height: `${Math.round(w.pauses.silenceRatio * 16) + 1}px` }} />
             </div>
           );
         })}
@@ -354,7 +354,7 @@ export function OperatorConsole({ me, queueChannels }: { me: string; queueChanne
           {live?.map((l) => {
             const mine = l.operator?.id === me;
             return (
-              <li key={l.id} data-testid="live-row" className={`rounded-[4px] border bg-white p-2 text-sm ${selected === l.id ? "border-navy border-l-4" : "border-line"}`}>
+              <li key={l.id} data-testid="live-row" className={`rounded-[4px] border bg-white p-2 text-sm ${selected === l.id ? "border-brand border-l-4" : "border-line"}`}>
                 <div className="flex items-center gap-2">
                   <span className="font-mono">{l.docketNumber}</span>
                   <DemoMark show={l.isDemo} />

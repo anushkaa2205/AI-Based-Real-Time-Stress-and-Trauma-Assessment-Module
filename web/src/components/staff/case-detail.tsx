@@ -276,7 +276,7 @@ export function CaseDetailView({ caseId }: { caseId: string }) {
         <span className="text-lg" data-testid="svi">
           SVI <strong>{c.svi ?? "–"}</strong>
         </span>
-        {c.overrideLockedBand && <span className="tag border-navy bg-accent text-navy">Locked at {c.overrideLockedBand.toLowerCase()}</span>}
+        {c.overrideLockedBand && <span className="tag border-brand bg-accent text-brand">Locked at {c.overrideLockedBand.toLowerCase()}</span>}
         {a?.limitedConfidence && <span className="tag">Limited AI analysis</span>}
         <span className="text-sm text-muted-foreground">Status: {c.status.replace(/_/g, " ").toLowerCase()}</span>
         <span className="text-sm text-muted-foreground">Assigned: {c.assignedTo?.name ?? "nobody"}</span>
@@ -312,7 +312,7 @@ export function CaseDetailView({ caseId }: { caseId: string }) {
                 </span>
               </div>
               <div className="h-2 rounded-[1px] bg-muted">
-                <div className="h-2 rounded-[1px] bg-navy" style={{ width: `${Math.min(100, d.score * 100)}%` }} />
+                <div className="h-2 rounded-[1px] bg-brand" style={{ width: `${Math.min(100, d.score * 100)}%` }} />
               </div>
               <div className="text-xs text-muted-foreground">
                 {Object.entries(d.bySource)

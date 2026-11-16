@@ -238,7 +238,7 @@ export function LiveTextDemo({ scenarios, questions }: { scenarios: TextScenario
           <section className="card flex min-h-[34rem] flex-col overflow-hidden" aria-label="Simulated NHAA chatbot">
             <header className="flex flex-wrap items-center justify-between gap-2 border-b border-line bg-[#eef1f5] px-4 py-2.5">
               <div className="flex items-center gap-2.5">
-                <span aria-hidden className="grid size-8 place-items-center rounded-[3px] bg-navy text-[0.62rem] font-bold text-white">
+                <span aria-hidden className="grid size-8 place-items-center rounded-[3px] bg-brand text-[0.62rem] font-bold text-white">
                   14566
                 </span>
                 <div className="leading-tight">
@@ -275,7 +275,7 @@ export function LiveTextDemo({ scenarios, questions }: { scenarios: TextScenario
                   <span className="px-1 text-[0.68rem] font-semibold uppercase tracking-wide text-muted-foreground">{l.sender === "VICTIM" ? "Person" : "NHAA chatbot"}</span>
                   <p
                     className={`max-w-[34rem] whitespace-pre-wrap rounded-[4px] border px-3 py-2 text-[0.95rem] leading-snug ${
-                      l.sender === "VICTIM" ? "border-navy bg-navy text-white" : "border-line bg-white text-ink"
+                      l.sender === "VICTIM" ? "border-brand bg-brand text-white" : "border-line bg-white text-ink"
                     } ${l.state === "failed" ? "opacity-60" : ""}`}
                   >
                     {l.text}
@@ -325,7 +325,7 @@ export function LiveTextDemo({ scenarios, questions }: { scenarios: TextScenario
                           role="radio"
                           aria-checked={sender === s}
                           onClick={() => setSender(s)}
-                          className={`px-3 py-1 ${sender === s ? "bg-navy font-semibold text-white" : "bg-white text-ink hover:bg-muted"} ${s === "OPERATOR" ? "border-l border-input" : ""}`}
+                          className={`px-3 py-1 ${sender === s ? "bg-brand font-semibold text-white" : "bg-white text-ink hover:bg-muted"} ${s === "OPERATOR" ? "border-l border-input" : ""}`}
                         >
                           {s === "VICTIM" ? "Person" : "Chatbot"}
                         </button>

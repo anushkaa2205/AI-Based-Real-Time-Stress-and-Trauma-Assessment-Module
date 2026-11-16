@@ -63,12 +63,12 @@ export default async function Page() {
 
       <div className="grid gap-4 md:grid-cols-2">
         {MODES.map((m) => (
-          <Link key={m.href} href={m.href} className="card group flex flex-col gap-3 p-5 no-underline transition-colors hover:border-navy" data-testid={`mode-${m.n}`}>
+          <Link key={m.href} href={m.href} className="card group flex flex-col gap-3 p-5 no-underline transition-colors hover:border-brand" data-testid={`mode-${m.n}`}>
             <div className="flex items-baseline justify-between gap-3">
               <span className="font-mono text-xs font-semibold text-muted-foreground">Mode {m.n}</span>
               <span className="text-xs text-muted-foreground">{m.represents}</span>
             </div>
-            <h2 className="text-lg font-bold text-ink group-hover:text-navy">{m.title}</h2>
+            <h2 className="text-lg font-bold text-ink group-hover:text-brand">{m.title}</h2>
             <p className="text-sm leading-relaxed text-ink-2">{m.body}</p>
             <p className="mt-auto border-t border-line pt-3 font-mono text-xs text-ink-2">{m.path}</p>
             {m.n === 3 && (
@@ -76,7 +76,7 @@ export default async function Page() {
                 {recorded} of {library.length} library scenarios recorded
               </p>
             )}
-            <span className="text-sm font-semibold text-navy underline-offset-4 group-hover:underline">Open {m.title.toLowerCase()} →</span>
+            <span className="text-sm font-semibold text-brand underline-offset-4 group-hover:underline">Open {m.title.toLowerCase()} →</span>
           </Link>
         ))}
       </div>
@@ -90,7 +90,7 @@ export default async function Page() {
             ["The module", "safety rules, AI analysis, SVI, band, overrides, proposals."],
             ["Staff dashboards", "queue in risk order, approvals, referrals; marked Demo."],
           ].map(([t, d], i) => (
-            <li key={t} className="border-l-[3px] border-navy pl-3">
+            <li key={t} className="border-l-[3px] border-brand pl-3">
               <span className="font-mono text-xs text-muted-foreground">{i + 1}</span>
               <p className="font-semibold text-ink">{t}</p>
               <p className="text-xs leading-relaxed">{d}</p>

@@ -177,7 +177,7 @@ export function AdminConsole({ districts }: { districts: { id: string; name: str
   }
 
   const tabBtn = (k: typeof tab, label: string) => (
-    <button type="button" onClick={() => setTab(k)} className={`-mb-px border-b-[3px] px-3 py-2 text-sm font-semibold ${tab === k ? "border-navy text-navy" : "border-transparent text-ink-2 hover:text-ink"}`} aria-pressed={tab === k}>
+    <button type="button" onClick={() => setTab(k)} className={`-mb-px border-b-[3px] px-3 py-2 text-sm font-semibold ${tab === k ? "border-brand text-brand" : "border-transparent text-ink-2 hover:text-ink"}`} aria-pressed={tab === k}>
       {label}
     </button>
   );

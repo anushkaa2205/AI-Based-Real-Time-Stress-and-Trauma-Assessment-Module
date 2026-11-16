@@ -30,9 +30,9 @@ export default async function StaffLayout({ children }: { children: React.ReactN
   return (
     <RealtimeProvider config={realtime}>
       <div className="flex min-h-full flex-1 flex-col md:flex-row">
-        <aside className="flex flex-col gap-5 bg-navy-deep px-3 py-4 text-white md:sticky md:top-0 md:h-screen md:w-56 md:shrink-0">
+        <aside className="flex flex-col gap-5 bg-brand-deep px-3 py-4 text-white md:sticky md:top-0 md:h-screen md:w-56 md:shrink-0">
           <div className="flex items-center gap-2.5 px-1">
-            <span aria-hidden className="grid size-9 shrink-0 place-items-center rounded-[3px] bg-white text-[0.68rem] font-bold text-navy-deep">
+            <span aria-hidden className="grid size-9 shrink-0 place-items-center rounded-[3px] bg-white text-[0.68rem] font-bold text-brand-deep">
               14566
             </span>
             <div className="min-w-0 leading-tight">

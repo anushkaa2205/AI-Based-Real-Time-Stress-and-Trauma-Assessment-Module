@@ -122,7 +122,7 @@ export function ResultsPanel({
 
   return (
     <aside aria-label="Module results" className="card flex flex-col overflow-hidden shadow-[0_1px_0_#d8d3c8]" data-testid="results-panel">
-      <header className="flex items-center justify-between gap-2 bg-navy-deep px-4 py-2.5 text-white">
+      <header className="flex items-center justify-between gap-2 bg-brand-deep px-4 py-2.5 text-white">
         <div>
           <p className="text-[0.7rem] font-semibold uppercase tracking-[0.1em] text-white/70">Module output</p>
           <h2 className="text-base font-bold leading-tight">Assessment results</h2>
@@ -212,7 +212,7 @@ export function ResultsPanel({
                   <div key={k} className="grid grid-cols-[minmax(0,10rem)_1fr_2.5rem] items-center gap-2 text-xs">
                     <span className="truncate text-ink-2">{DIMENSION_LABEL[k] ?? k}</span>
                     <span className="h-2 rounded-[1px] bg-muted">
-                      <span className="block h-full rounded-[1px] bg-navy" style={{ width: `${Math.round(d.score * 100)}%` }} />
+                      <span className="block h-full rounded-[1px] bg-brand" style={{ width: `${Math.round(d.score * 100)}%` }} />
                     </span>
                     <span className="text-right font-mono">{d.score.toFixed(2)}</span>
                   </div>

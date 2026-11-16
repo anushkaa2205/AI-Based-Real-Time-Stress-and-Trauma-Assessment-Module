@@ -1,16 +1,10 @@
 /** Risk band shown as colour AND text everywhere (FR-RISK-05, AC-RISK-04). Staff screens only. */
-const STYLE: Record<string, string> = {
-  CRITICAL: "bg-[#a4161a] text-white border-[#a4161a]",
-  HIGH: "bg-[#fbe3d3] text-[#7a2a0c] border-[#d9773f]",
-  MODERATE: "bg-[#fbf0c9] text-[#5e4500] border-[#c9a227]",
-  LOW: "bg-[#e4efe3] text-[#24502c] border-[#8db592]",
-};
 const LABEL: Record<string, string> = { CRITICAL: "Critical", HIGH: "High", MODERATE: "Moderate", LOW: "Low" };
 
 export function BandBadge({ band }: { band: string | null | undefined }) {
-  if (!band) return <span className="tag border-line">Not assessed</span>;
+  if (!band) return <span className="band band-none">Not assessed</span>;
   return (
-    <span className={`tag whitespace-nowrap uppercase tracking-wide ${STYLE[band] ?? ""}`} data-band={band}>
+    <span className={`band band-${band}`} data-band={band}>
       {LABEL[band] ?? band}
     </span>
   );

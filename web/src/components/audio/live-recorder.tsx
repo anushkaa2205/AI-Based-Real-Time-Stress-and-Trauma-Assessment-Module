@@ -245,7 +245,7 @@ export function LiveRecorder({
 
   if (phase === "idle") {
     return (
-      <button type="button" onClick={start} className="btn btn-secondary btn-lg border-navy text-ink" data-testid="voice-start">
+      <button type="button" onClick={start} className="btn btn-secondary btn-lg border-brand text-ink" data-testid="voice-start">
         🎤 {t("speak")}
       </button>
     );

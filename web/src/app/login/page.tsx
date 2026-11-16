@@ -56,7 +56,7 @@ export default function LoginPage() {
   return (
     <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-5 px-4 py-10">
       <div className="flex items-center gap-3">
-        <span aria-hidden className="grid size-10 shrink-0 place-items-center rounded-[3px] bg-navy text-[0.72rem] font-bold text-white">
+        <span aria-hidden className="grid size-10 shrink-0 place-items-center rounded-[3px] bg-brand text-[0.72rem] font-bold text-white">
           14566
         </span>
         <div className="leading-tight">

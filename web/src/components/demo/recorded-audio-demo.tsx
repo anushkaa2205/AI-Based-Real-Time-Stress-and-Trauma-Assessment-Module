@@ -250,7 +250,7 @@ export function RecordedAudioDemo({ library }: { library: LibraryScenario[] }) {
                   {library.map((s) => (
                     <li key={s.id} className="card" data-testid="library-item">
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-2 p-3.5">
-                        <span className="font-mono text-sm font-bold text-navy">{s.id}</span>
+                        <span className="font-mono text-sm font-bold text-brand">{s.id}</span>
                         <div className="min-w-0 flex-1 basis-56">
                           <p className="text-sm font-semibold leading-snug">{s.title}</p>
                           <p className="text-xs text-muted-foreground">
@@ -276,7 +276,7 @@ export function RecordedAudioDemo({ library }: { library: LibraryScenario[] }) {
                         <ol className="flex flex-col gap-1 border-t border-line bg-[#fbfaf7] px-3.5 py-3 text-sm" data-testid="script">
                           {s.script.map((t, i) => (
                             <li key={i} className="grid grid-cols-[4.5rem_1fr] gap-2">
-                              <span className={`text-xs font-semibold uppercase tracking-wide ${t.speaker === "OPERATOR" ? "text-navy" : "text-[#7a4a00]"}`}>{t.speaker === "OPERATOR" ? "Operator" : "Caller"}</span>
+                              <span className={`text-xs font-semibold uppercase tracking-wide ${t.speaker === "OPERATOR" ? "text-brand" : "text-[#7a4a00]"}`}>{t.speaker === "OPERATOR" ? "Operator" : "Caller"}</span>
                               <span>{t.text}</span>
                             </li>
                           ))}
@@ -336,13 +336,13 @@ export function RecordedAudioDemo({ library }: { library: LibraryScenario[] }) {
               <div className="flex gap-[3px]" data-testid="window-strip" aria-hidden>
                 {Array.from({ length: run.total ?? 0 }, (_, i) => {
                   const w = run.windows.find((x) => x.windowIndex === i);
-                  const cls = !w ? (i === run.windows.length && run.state === "playing" ? "bg-[#9fb3cc] animate-pulse" : "bg-muted") : w.error ? "bg-danger" : w.analysed ? "bg-navy" : "bg-warn";
+                  const cls = !w ? (i === run.windows.length && run.state === "playing" ? "bg-[#9fb3cc] animate-pulse" : "bg-muted") : w.error ? "bg-danger" : w.analysed ? "bg-brand" : "bg-warn";
                   return <span key={i} className={`h-7 flex-1 rounded-[2px] ${cls}`} title={`${clock(i * 5000)}`} />;
                 })}
               </div>
               <p className="flex flex-wrap gap-x-4 text-[0.7rem] text-muted-foreground">
                 <span>
-                  <span className="mr-1 inline-block size-2 rounded-[1px] bg-navy align-middle" />
+                  <span className="mr-1 inline-block size-2 rounded-[1px] bg-brand align-middle" />
                   analysed
                 </span>
                 <span>
@@ -383,7 +383,7 @@ export function RecordedAudioDemo({ library }: { library: LibraryScenario[] }) {
                 <ol className="flex max-h-[26rem] flex-col gap-1.5 overflow-y-auto pr-1 text-sm" data-testid="speaker-transcript">
                   {transcript.map((m) => (
                     <li key={m.id} className="grid grid-cols-[4.25rem_1fr] gap-2">
-                      <span className={`text-[0.7rem] font-semibold uppercase tracking-wide ${m.sender === "OPERATOR" ? "text-navy" : "text-[#7a4a00]"}`}>{m.sender === "OPERATOR" ? "Operator" : "Caller"}</span>
+                      <span className={`text-[0.7rem] font-semibold uppercase tracking-wide ${m.sender === "OPERATOR" ? "text-brand" : "text-[#7a4a00]"}`}>{m.sender === "OPERATOR" ? "Operator" : "Caller"}</span>
                       <span>{m.text}</span>
                     </li>
                   ))}

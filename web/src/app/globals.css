@@ -6,16 +6,18 @@
 @custom-variant dark (&:where(.force-dark-never, .force-dark-never *));
 
 /*
- * NHAA Assist: one theme (no dark mode, no theme switcher).
- * Institutional and calm: ink-navy on warm paper, solid colours, small corner radii,
- * Noto Sans for every script we support. Risk bands always pair colour with a text label.
+ * Nivara design foundation (NIVARA_FLOW_AND_UI_PLAN.md §9, task N.5): "calm instrument".
+ * Public pages: a dark petrol hero with a marigold accent, then light and quiet.
+ * Staff portals: light and dense; risk colour is the only loud colour.
+ * Marigold never appears on staff screens, so it cannot be read as the Moderate band.
  */
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-noto), var(--font-noto-deva), var(--font-noto-taml), var(--font-noto-beng), system-ui, sans-serif;
-  --font-mono: var(--font-noto-mono), ui-monospace, monospace;
+  --font-sans: var(--font-plex), var(--font-noto-deva), var(--font-noto-taml), var(--font-noto-beng), system-ui, sans-serif;
+  --font-display: var(--font-fraunces), var(--font-plex), Georgia, serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
   --font-heading: var(--font-sans);
   --color-ring: var(--ring);
   --color-input: var(--input);
@@ -34,57 +36,78 @@
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
   --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
   --color-ink: var(--ink);
   --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
   --color-line: var(--line);
-  --color-navy: var(--navy);
-  --color-navy-deep: var(--navy-deep);
+  --color-brand: var(--brand);
+  --color-brand-deep: var(--brand-deep);
+  --color-brand-soft: var(--brand-soft);
+  --color-night: var(--night);
+  --color-night-2: var(--night-2);
+  --color-marigold: var(--marigold);
+  --color-marigold-deep: var(--marigold-deep);
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
   --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
   --color-warn: var(--warn);
-  --radius-sm: 2px;
-  --radius-md: 3px;
-  --radius-lg: 4px;
-  --radius-xl: 6px;
-  --radius-2xl: 6px;
-  --radius-3xl: 6px;
-  --radius-4xl: 6px;
+  --color-warn-soft: var(--warn-soft);
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+  --radius-3xl: 24px;
+  --radius-4xl: 28px;
+  --shadow-raise: 0 1px 2px rgb(12 26 31 / 0.06), 0 12px 32px -12px rgb(12 26 31 / 0.25);
 }
 
 :root {
-  /* Palette */
-  --paper: #f6f4ef; /* page background: warm, not stark white */
-  --ink: #1b2433; /* body text */
-  --ink-2: #4b5565; /* secondary text */
-  --line: #d8d3c8; /* rules and borders */
-  --navy: #1f3a5f; /* primary actions, staff chrome */
-  --navy-deep: #152a45;
-  --danger: #a4161a; /* quick exit, critical */
-  --danger-soft: #fbeaea;
-  --ok: #2f6b3a;
-  --warn: #8a5300;
+  /* Palette (plan §9.3) */
+  --paper: #f7f6f2;
+  --surface: #ffffff;
+  --surface-2: #f1efe9;
+  --ink: #14181f;
+  --ink-2: #4a5361;
+  --ink-3: #7a8290;
+  --line: #e3e0d8;
+  --brand: #0b5563;
+  --brand-deep: #073b46;
+  --brand-soft: #e3f0f1;
+  --night: #0c1a1f;
+  --night-2: #13262c;
+  --marigold: #f2b544;
+  --marigold-deep: #d99a1e;
+  --danger: #b42318;
+  --danger-soft: #fde9e6;
+  --ok: #1f6b3a;
+  --ok-soft: #e6f2ea;
+  --warn: #8a5a00;
+  --warn-soft: #fbf1cf;
 
   /* shadcn roles mapped onto the palette */
   --background: var(--paper);
   --foreground: var(--ink);
-  --card: #ffffff;
+  --card: var(--surface);
   --card-foreground: var(--ink);
-  --popover: #ffffff;
+  --popover: var(--surface);
   --popover-foreground: var(--ink);
-  --primary: var(--navy);
+  --primary: var(--brand);
   --primary-foreground: #ffffff;
-  --secondary: #ebe7de;
+  --secondary: var(--surface-2);
   --secondary-foreground: var(--ink);
-  --muted: #efece5;
-  --muted-foreground: #5a6372;
-  --accent: #e9eef5;
-  --accent-foreground: var(--navy-deep);
+  --muted: var(--surface-2);
+  --muted-foreground: var(--ink-3);
+  --accent: var(--brand-soft);
+  --accent-foreground: var(--brand-deep);
   --destructive: var(--danger);
   --border: var(--line);
-  --input: #b9b2a4;
-  --ring: #b45309; /* amber focus ring: visible on navy and on paper */
-  --radius: 4px;
+  --input: #c9c4b8;
+  --ring: #b45309; /* amber focus ring: visible on light and on dark */
+  --radius: 8px;
 }
 
 @layer base {
@@ -99,7 +122,9 @@
   body {
     background: var(--paper);
     color: var(--ink);
-    font-feature-settings: "kern";
+    font-feature-settings: "kern", "ss01";
+    font-size: 0.9375rem;
+    line-height: 1.5;
   }
   :focus-visible {
     outline: 3px solid var(--ring);
@@ -108,164 +133,406 @@
   h1,
   h2,
   h3 {
-    letter-spacing: -0.005em;
+    letter-spacing: -0.01em;
     text-wrap: balance;
   }
   ::selection {
-    background: #f3dfb8;
+    background: #f6dfa6;
+    color: var(--ink);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
   }
 }
 
-/* Shared building blocks: plain classes so every screen uses the same parts. */
 @layer components {
+  /* Type (plan §9.4) */
+  .display {
+    font-family: var(--font-display);
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+    font-variation-settings: "opsz" 144, "SOFT" 30;
+  }
+  .page-title {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: 1.75rem;
+    line-height: 1.15;
+    letter-spacing: -0.015em;
+    color: var(--ink);
+  }
+  .page-lead {
+    margin-top: 0.25rem;
+    max-width: 48rem;
+    color: var(--ink-2);
+    font-size: 0.9375rem;
+  }
+  .section-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .eyebrow {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--brand);
+  }
+  .num {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Buttons */
   .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.4rem;
-    min-height: 2.25rem;
-    padding: 0.4rem 0.9rem;
+    gap: 0.45rem;
+    min-height: 2.5rem;
+    padding: 0.5rem 1rem;
     border: 1px solid transparent;
-    border-radius: 4px;
+    border-radius: 8px;
     font-weight: 600;
     font-size: 0.9375rem;
     line-height: 1.2;
     cursor: pointer;
-    transition: background-color 120ms ease, border-color 120ms ease;
+    white-space: nowrap;
+    transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease, transform 140ms ease, box-shadow 140ms ease;
     text-decoration: none;
   }
+  .btn:active:not(:disabled) {
+    transform: translateY(1px);
+  }
   .btn:disabled {
-    opacity: 0.55;
+    opacity: 0.5;
     cursor: not-allowed;
   }
   .btn-primary {
-    background: var(--navy);
+    background: var(--brand);
     color: #fff;
   }
   .btn-primary:hover:not(:disabled) {
-    background: var(--navy-deep);
+    background: var(--brand-deep);
   }
   .btn-secondary {
-    background: #fff;
+    background: var(--surface);
     color: var(--ink);
     border-color: var(--input);
   }
   .btn-secondary:hover:not(:disabled) {
-    background: var(--muted);
+    background: var(--surface-2);
+    border-color: var(--ink-3);
   }
   .btn-danger {
     background: var(--danger);
     color: #fff;
   }
   .btn-danger:hover:not(:disabled) {
-    background: #86120f;
+    background: #8f1b12;
   }
   .btn-quiet {
     background: transparent;
-    color: var(--navy);
-    padding-inline: 0.25rem;
-    text-decoration: underline;
-    text-underline-offset: 3px;
+    color: var(--brand);
+    padding-inline: 0.35rem;
+  }
+  .btn-quiet:hover:not(:disabled) {
+    background: var(--brand-soft);
+  }
+  /* Public pages only (plan §9.3): the marigold action. */
+  .btn-accent {
+    background: var(--marigold);
+    color: var(--night);
+    box-shadow: var(--shadow-raise);
+  }
+  .btn-accent:hover:not(:disabled) {
+    background: var(--marigold-deep);
+  }
+  .btn-ghost-light {
+    background: transparent;
+    color: #fff;
+    border-color: rgb(255 255 255 / 0.28);
+  }
+  .btn-ghost-light:hover:not(:disabled) {
+    background: rgb(255 255 255 / 0.08);
+    border-color: rgb(255 255 255 / 0.5);
   }
   .btn-sm {
-    min-height: 1.875rem;
-    padding: 0.25rem 0.6rem;
+    min-height: 2rem;
+    padding: 0.3rem 0.7rem;
     font-size: 0.8125rem;
+    border-radius: 6px;
   }
-  /* Large touch targets for the victim screens (≥ 48 px). */
   .btn-lg {
     min-height: 3.25rem;
-    padding: 0.75rem 1.25rem;
-    font-size: 1.125rem;
-    width: 100%;
+    padding: 0.8rem 1.4rem;
+    font-size: 1.0625rem;
+    border-radius: 10px;
   }
 
+  /* Surfaces */
   .card {
-    background: #fff;
+    background: var(--surface);
     border: 1px solid var(--line);
-    border-radius: 4px;
+    border-radius: 12px;
   }
   .card-pad {
-    padding: 1rem 1.125rem;
+    padding: 1.125rem 1.25rem;
   }
-  .section-title {
-    font-size: 0.8125rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: var(--ink-2);
+  .card-raise {
+    box-shadow: var(--shadow-raise);
+  }
+  .panel-night {
+    background: var(--night);
+    color: #fff;
   }
 
+  /* Fields */
   .field {
     width: 100%;
-    background: #fff;
+    background: var(--surface);
     border: 1px solid var(--input);
-    border-radius: 3px;
-    padding: 0.45rem 0.6rem;
+    border-radius: 8px;
+    padding: 0.55rem 0.75rem;
     font-size: 0.9375rem;
     color: var(--ink);
+    transition: border-color 140ms ease, box-shadow 140ms ease;
+  }
+  .field::placeholder {
+    color: var(--ink-3);
+  }
+  .field:hover:not(:disabled) {
+    border-color: var(--ink-3);
   }
   .field:focus-visible {
     outline: 3px solid var(--ring);
     outline-offset: 0;
-    border-color: var(--navy);
+    border-color: var(--brand);
   }
   .label {
     display: block;
     font-size: 0.8125rem;
     font-weight: 600;
     color: var(--ink-2);
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.3rem;
+  }
+  .hint {
+    font-size: 0.8125rem;
+    color: var(--ink-3);
   }
 
-  /* Square-ish tags, never pills. */
+  /* Tags: pills (plan §9.5) */
   .tag {
     display: inline-flex;
     align-items: center;
-    gap: 0.25rem;
-    border-radius: 2px;
-    padding: 0.05rem 0.4rem;
+    gap: 0.3rem;
+    border-radius: 999px;
+    padding: 0.1rem 0.55rem;
     font-size: 0.75rem;
     font-weight: 600;
-    line-height: 1.4;
-    background: var(--muted);
+    line-height: 1.5;
+    background: var(--surface-2);
     color: var(--ink-2);
     border: 1px solid transparent;
+    white-space: nowrap;
+  }
+  .tag-brand {
+    background: var(--brand-soft);
+    color: var(--brand-deep);
+  }
+  .tag-ok {
+    background: var(--ok-soft);
+    color: var(--ok);
+  }
+  .tag-warn {
+    background: var(--warn-soft);
+    color: var(--warn);
+  }
+  .tag-danger {
+    background: var(--danger-soft);
+    color: var(--danger);
   }
 
+  /* Tables (staff) */
   .data-table {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
     font-size: 0.875rem;
   }
   .data-table th {
     text-align: left;
-    font-size: 0.75rem;
-    font-weight: 700;
-    letter-spacing: 0.03em;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--ink-2);
-    padding: 0.5rem 0.6rem;
-    border-bottom: 2px solid var(--line);
-    background: #faf9f6;
+    color: var(--ink-3);
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid var(--line);
+    background: var(--surface-2);
     position: sticky;
     top: 0;
+    z-index: 1;
+  }
+  .data-table th:first-child {
+    border-top-left-radius: 10px;
+  }
+  .data-table th:last-child {
+    border-top-right-radius: 10px;
   }
   .data-table td {
-    padding: 0.55rem 0.6rem;
-    border-bottom: 1px solid #ebe7de;
-    vertical-align: top;
+    padding: 0.65rem 0.75rem;
+    border-bottom: 1px solid var(--line);
+    vertical-align: middle;
+    font-variant-numeric: tabular-nums;
   }
-  .data-table tbody tr:hover {
+  .data-table tbody tr:last-child td {
+    border-bottom: 0;
+  }
+  .data-table tbody tr:hover td {
     background: #fbfaf7;
+  }
+  .data-table tbody tr[data-band="CRITICAL"] td:first-child {
+    box-shadow: inset 4px 0 0 var(--danger);
+  }
+
+  /* Band chips: colour AND text, staff screens only (FR-RISK-05, plan §9.3) */
+  .band {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border-radius: 999px;
+    padding: 0.1rem 0.6rem;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    line-height: 1.6;
+    border: 1px solid transparent;
+    white-space: nowrap;
+  }
+  .band::before {
+    content: "";
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: 999px;
+    background: currentColor;
+  }
+  .band-CRITICAL {
+    background: #b42318;
+    color: #fff;
+    border-color: #b42318;
+  }
+  .band-HIGH {
+    background: #fce9dd;
+    color: #7a2e0b;
+    border-color: #c4511a;
+  }
+  .band-MODERATE {
+    background: #fbf1cf;
+    color: #5c4300;
+    border-color: #b7860b;
+  }
+  .band-LOW {
+    background: #e9ecef;
+    color: #3d4753;
+    border-color: #b8c0ca;
+  }
+  .band-none {
+    background: transparent;
+    color: var(--ink-3);
+    border-color: var(--line);
+  }
+  .band-none::before {
+    display: none;
   }
 
   .link {
-    color: var(--navy);
+    color: var(--brand);
     text-decoration: underline;
     text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
   }
   .link:hover {
-    color: var(--navy-deep);
+    color: var(--brand-deep);
+  }
+
+  /* Empty states and loading (plan §9.6) */
+  .empty {
+    display: grid;
+    place-items: center;
+    gap: 0.35rem;
+    padding: 2.5rem 1rem;
+    text-align: center;
+    color: var(--ink-3);
+    font-size: 0.9375rem;
+    border: 1px dashed var(--line);
+    border-radius: 12px;
+  }
+  .skeleton {
+    border-radius: 6px;
+    background: linear-gradient(90deg, var(--surface-2) 25%, #e9e6df 50%, var(--surface-2) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s ease-in-out infinite;
+  }
+  @keyframes shimmer {
+    from {
+      background-position: 200% 0;
+    }
+    to {
+      background-position: -200% 0;
+    }
+  }
+
+  /* Public hero entrance and the listening ring (plan §9.5) */
+  .rise {
+    animation: rise 560ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  }
+  .rise-2 {
+    animation-delay: 120ms;
+  }
+  .rise-3 {
+    animation-delay: 240ms;
+  }
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(14px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  .listening {
+    position: relative;
+  }
+  .listening::after {
+    content: "";
+    position: absolute;
+    inset: -6px;
+    border-radius: 999px;
+    border: 2px solid var(--brand);
+    animation: pulse-ring 1.6s ease-out infinite;
+  }
+  @keyframes pulse-ring {
+    from {
+      opacity: 0.8;
+      transform: scale(0.9);
+    }
+    to {
+      opacity: 0;
+      transform: scale(1.35);
+    }
   }
 }
