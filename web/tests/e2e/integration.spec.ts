@@ -75,6 +75,35 @@ test("a full interaction with a docket number: start â†’ question and answers â†
   });
 });
 
+test("indicators with evidence need the indicators:read scope; quotes are exact (M.5, FR-IND-04, rule 12)", async ({ request }) => {
+  const reader = api(request, await client(["interactions:write", "assessments:read", "indicators:read"]));
+  const start = await reader.post("/interactions", { channel: "CHATBOT", language: "en", consent });
+  const { interactionId } = await start.json();
+  const text = "They told my brother he will not live long if we go to court.";
+  expect((await reader.post(`/interactions/${interactionId}/messages`, { text, sender: "VICTIM" })).status()).toBe(201);
+
+  const res = await reader.get(`/interactions/${interactionId}/indicators`);
+  expect(res.status()).toBe(200);
+  expect(res.headers()["x-request-id"]).toMatch(/^req_/);
+  const { items } = (await res.json()) as { items: { flags: string[]; evidence: { type: string; quote?: string; start?: number; end?: number } }[] };
+  const spans = items.filter((i) => i.evidence.type === "TEXT_SPAN");
+  expect(spans.length).toBeGreaterThan(0);
+  for (const i of spans) {
+    expect(text).toContain(i.evidence.quote!);
+    expect(text.slice(i.evidence.start, i.evidence.end)).toBe(i.evidence.quote);
+  }
+  expect(items.some((i) => i.flags.includes("THREAT_TO_LIFE"))).toBe(true);
+  for (const i of items) expect(Object.keys(i)).not.toContain("review");
+
+  // Without the scope: 403. Another client: 404.
+  const plain = api(request, await client(["interactions:write", "assessments:read"]));
+  const own = (await (await plain.post("/interactions", { channel: "CHATBOT", language: "en", consent })).json()) as { interactionId: string };
+  const refused = await plain.get(`/interactions/${own.interactionId}/indicators`);
+  expect(refused.status()).toBe(403);
+  expect((await refused.json()).code).toBe("SCOPE_MISSING");
+  expect((await reader.get(`/interactions/${own.interactionId}/indicators`)).status()).toBe(404);
+});
+
 test("keys, scopes, ownership and rate limits (AC-API-02)", async ({ request }) => {
   const writeOnly = await client(["interactions:write"], 4);
   const other = await client(["interactions:write", "assessments:read"]);

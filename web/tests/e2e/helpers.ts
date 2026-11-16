@@ -78,7 +78,7 @@ async function integrationKey(): Promise<string> {
         name: KEY_NAME,
         keyPrefix: k.prefix,
         keyHash: k.keyHash,
-        scopes: ["interactions:write", "assessments:read", "stream:read"],
+        scopes: ["interactions:write", "assessments:read", "stream:read", "indicators:read"],
         rateLimitPerMin: 600,
         isActive: true,
         createdAt: new Date(),
