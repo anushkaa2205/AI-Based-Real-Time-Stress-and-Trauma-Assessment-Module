@@ -17,7 +17,7 @@ Free tiers change often: re-check before the demo.
 
 | Tool | Use | Free? | Limits / cost | Notes |
 |---|---|---|---|---|
-| **Groq: `openai/gpt-oss-120b`** (and `gpt-oss-20b`) | Warning signs + text emotion (strict JSON) | ✅ Free, no card | 30 req/min, 1,000 req/day, 8K tokens/min, 200K tokens/day, per model | Groq does not train on API data. Limits are per model, so `gpt-oss-20b` gives a second quota for development. The demo's generated-text mode (task M.13) uses the same quota: one call per generated conversation. |
+| **Groq: `openai/gpt-oss-120b`** (and `gpt-oss-20b`) | Warning signs + text emotion (strict JSON) | ✅ Free, no card | 30 req/min, 1,000 req/day, 8K tokens/min, 200K tokens/day, per model | Groq does not train on API data. Limits are per model, so `gpt-oss-20b` gives a second quota for development. The **public demo** draws on this quota, which is why it is rate-limited per visitor and capped per day (`NIVARA_FLOW_AND_UI_PLAN.md` §7). The generated-text mode was removed in Phase N. |
 | **Groq: `whisper-large-v3-turbo`** | Speech-to-text (Hindi, English) | ✅ Free | 20 req/min, 2,000 req/day, 2 h audio/hour, 8 h audio/day | 5-second chunks = 12 req/min per live call → one call at a time on the free tier. |
 | **Google Gemini (Flash-Lite; currently `gemini-3.5-flash-lite`, thinking level low)** | Backup LLM. `gemini-2.5-flash` is closed to new API keys; `3.8-flash` was overloaded and slow when tested | ✅ Free | Limits shown per project in AI Studio | Free-tier content **is used to improve Google products** → synthetic test data only. |
 | **Bhashini (Govt. of India)** | Backup for regional ASR/translation | ✅ Free (registration) | Not verified on the official site | Use only if self-hosted IndicConformer fails or is too slow on the team laptop. |
@@ -35,6 +35,7 @@ Free tiers change often: re-check before the demo.
 | **XLM-EMO** | Optional text-emotion backup | Code MIT; model released for research use | Optional; only joy/anger/fear/sadness. |
 | **YAMNet** | Optional crying/sobbing detection | Apache-licensed TensorFlow tooling | Optional. |
 | Next.js, React, Mongoose, Auth.js, Zod, FastAPI, Groq SDK | App and API | MIT / Apache-2.0 | |
+| Fraunces, IBM Plex Sans, IBM Plex Mono, Noto Sans (Devanagari, Tamil, Bengali) | Fonts (plan §9.4), self-hosted by `next/font/google` at build time | OFL | No runtime request to Google; no new npm dependency. |
 
 ## Hosting and infrastructure
 

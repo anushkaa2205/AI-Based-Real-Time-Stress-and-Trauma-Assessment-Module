@@ -172,7 +172,8 @@ interface Page<T> { items: T[]; nextCursor: string | null }
 | Scoring configs | — | — | — | — | — | — | — | — | ✅ | ✅ (read) |
 | Users, API clients | — | — | — | — | — | — | — | — | ✅ | — |
 | Audit logs, chain verify | — | — | — | — | — | — | — | — | — | ✅ |
-| Demo input layer `/demo`, `/api/demo/*` (only when `DEMO_ENABLED`, §6.5) | — | ✅ | — | — | — | — | — | — | — | — |
+| Demo input layer `/demo/*`, `/track`, `/api/demo/*` (public since Phase N, only when `DEMO_ENABLED`, §6.5) | public | public | public | public | public | public | public | public | public | public |
+| Take the live demo line over (`demo.use`, §6.5) | — | ✅ | — | — | — | — | — | — | — | — |
 
 Rules enforced in `src/core/policies`:
 1. **Police and welfare roles have no route to case, interaction, message, indicator or assessment data.** Requests return `403` (AC-DSH-01).
@@ -362,6 +363,7 @@ Base: `/api/v1/integration`. **The module's only input interface** (FR-API-05), 
 | `assessments:read` | Read current assessment and recommendations for interactions this client created |
 | `stream:read` | Subscribe to the live stream of an interaction this client created |
 | `indicators:read` | Read indicators with their evidence for interactions this client created (§6.4a, task M.5). Granted only to systems that need it; never shown to the person |
+| `status:read` | Read a case's status and arranged support for cases this client created (§6.6, task N.3). Safe for a tracking page in the calling system |
 
 | Method | Path | Request → Response |
 |---|---|---|
@@ -373,6 +375,7 @@ Base: `/api/v1/integration`. **The module's only input interface** (FR-API-05), 
 | `GET` | `/interactions/{id}/assessment` | `200 { svi, band, confidence, limitedConfidence, explanation, overridesFired, topDimensions: [{dimension, score}], updatedAt }` |
 | `GET` | `/interactions/{id}/recommendations` | `200 { items: RecommendationDto[] }` |
 | `GET` | `/interactions/{id}/indicators` | `200 { items: IntegrationIndicator[] }` (§6.4a), scope `indicators:read` |
+| `GET` | `/cases/{docket}/status` | `200 CaseStatusResponse` (§6.6), scope `status:read` |
 | `GET` | `/interactions/{id}/stream` | **Server-Sent Events**: `event: assessment.updated` / `event: emergency.show` / `event: recommendation.created`, with the payloads in §7 (FR-API-03) |
 | `POST` | `/interactions/{id}/end` | `{ reason }` → `200` |
 
@@ -385,7 +388,7 @@ data: {"interactionId":"6735a1f0c2a4b1e0f0a1in01","svi":81,"band":"CRITICAL","se
 
 Errors specific to integration: `401 INVALID_API_KEY`, `403 SCOPE_MISSING`, `404` for interactions created by another client, `429 RATE_LIMITED`.
 
-**Contract version (task M.6, gap V2).** Every integration response, errors included, carries `X-Contract-Version` (now `1.1`: `inputMethod` and `GET …/indicators` added to 1.0). The path stays `/api/v1`; additions are backwards compatible, and a breaking change would mean `/api/v2`.
+**Contract version (task M.6, gap V2).** Every integration response, errors included, carries `X-Contract-Version` (now `1.2`: `GET /cases/{docket}/status` added to 1.1, which had added `inputMethod` and `GET …/indicators` to 1.0). The path stays `/api/v1`; additions are backwards compatible, and a breaking change would mean `/api/v2`.
 
 ### 6.1 Consent
 The calling system obtains consent in its own workflow and sends it on start as `consent: ConsentRequest`:
@@ -478,27 +481,39 @@ interface IntegrationIndicator {
 ```
 Staff review details (who, why) are not included. Like the assessment, this is for the calling system's authorised reviewers: **never shown to the person** (CLAUDE.md rule 1). The staff indicator endpoint (§5.3) carries the same voice time positions.
 
-### 6.5 Demo input layer (detachable; not part of the module)
+### 6.5 Demo input layer (detachable; public; not part of the module)
 
-Pages and routes for presenters (`PRODUCT_VISION.md` §6–§7, tasks M.7, M.8, M.11, M.14). **Off unless `DEMO_ENABLED=true`**; when off, every `/demo` page and `/api/demo/*` route answers `404` and the menu entry is hidden, and the module is unchanged (FR-API-05). Only a signed-in `NHAA_SUPERVISOR` may use them (policy action `demo.use`, §4).
+Pages and routes for anyone who visits the site (`NIVARA_FLOW_AND_UI_PLAN.md` §5–§8, tasks N.4, N.7, N.8). **Off unless `DEMO_ENABLED=true`**; when off, every `/demo` page, the `/track` pages and every `/api/demo/*` route answer `404`, the home page hides the demo starter, and the module is unchanged (FR-API-05). No sign-in is needed.
 
-The demo calls the module **only through this integration API**, over HTTP, with its own key `DEMO_API_KEY` (a server-only environment variable; the key never reaches the browser). The demo key's client has `isDemo: true` (set when the key is created, `npm run api:client -- --demo`), so every case and interaction it creates is tagged demo **on the server** (M.7). Nothing in a request body can set or clear the tag.
+The demo calls the module **only through this integration API**, over HTTP, with its own key `DEMO_API_KEY` (a server-only environment variable; the key never reaches the browser). The demo key's client has `isDemo: true` (set when the key is created, `npm run api:client -- --demo`, scopes include `status:read`), so every case and interaction it creates is tagged demo **on the server** (M.7). Nothing in a request body can set or clear the tag.
+
+**Safeguards on every route (plan §7, `core/demo/public.ts`):** kill switch → unsafe methods must carry an `Origin` equal to this site (`403`) → per-visitor limit by hashed IP (new cases 5 / 10 min, messages 30 / min, recordings 3 / 10 min, tracking 20 / min, `429`) → for `/interactions/{id}/…`, the id must be in the browser's signed, http-only `nivara_demo` cookie (otherwise `404`, so other people's cases cannot even be discovered). A daily cap of 150 new cases across all visitors (`429`). Responses carry **only what the page needs**: no module body, request id, timing, transcript, case id or expected label.
 
 | Method | Path | Request → Response |
 |---|---|---|
-| `POST` | `/api/demo/interactions` | `{ mode: "LIVE_TEXT" \| "RECORDED_AUDIO" \| "LIVE_AUDIO" \| "GENERATED_TEXT", language, consent: ConsentRequest, scenarioId? }` → `201 { interactionId, docketNumber, caseId, mode, call }`. Calls `POST /integration/interactions` with channel `CHATBOT` (live or generated text) or `VOICE_CALL` (recorded audio, live microphone). `LIVE_AUDIO` first ends any other active live microphone call: one at a time on the free tier (TOOLS_AND_COSTS). |
-| `POST` | `/api/demo/interactions/{id}/messages` | `{ text, sender }` → `200 { status, call, body }`: the module's status and body unchanged, plus `call = { requestId, ms }` |
-| `POST` | `/api/demo/interactions/{id}/recording` | Either JSON `{ scenarioId }` (a library file on the server) or `multipart/form-data` with one WAV `file` (≤ 4 MB), plus `audioSource`, `firstSpeaker`, and optionally `fromWindow` (default 0). The server cuts the WAV into 5 s windows (M.8) and sends them to `POST /integration/…/audio` in order. **Response: `application/x-ndjson`**, one line per event: `{ type: "start", windows, durationMs }`, then per window `{ type: "window", windowIndex, startMs, endMs, status, analysed, transcript, call }`, then `{ type: "done" }` or `{ type: "error", code }`. A request stops after about 45 s (hosting limit: 60 s on Vercel Hobby) with `{ type: "more", nextWindow, windows }`; the caller sends the same recording again with `fromWindow = nextWindow`, so a recording of any length works. `DEMO_RECORDING_BUDGET_MS` (optional, 1000–50000) lowers the budget, for tests. |
-| `POST` | `/api/demo/interactions/{id}/end` | → `200`; calls `POST /integration/…/end` |
-| `GET` | `/api/demo/library` | `{ items: DemoScenario[] }`: the scenario library (below), each with `recordingAvailable` |
-| `POST` | `/api/demo/interactions/{id}/audio` | One live-microphone window (task M.12): multipart `audio`, `windowIndex`, `startMs`, relayed to `POST /integration/…/audio` as `audioSource: CALLER_ONLY`, `inputMethod: LIVE_AUDIO`. The module's status and body come back unchanged; `X-Module-Request-Id` and `X-Module-Ms` carry the call details. Nothing is stored. |
-| `POST` | `/api/demo/generate` | `{ category, language, length: "short" \| "medium" \| "long", tone: "calm" \| "worried" \| "distressed" }` → `200 { turns: [{ speaker: "CHATBOT" \| "PERSON", text }], synthetic: true, modelVersion }` (task M.13). Calls the analysis service's `POST /v1/demo/generate` (§8.3a) with NHAA's scripted questions in that language; `503 ANALYSIS_DEGRADED` if it cannot. The page shows the result labelled synthetic and only then plays it through `/messages`. |
+| `POST` | `/api/demo/interactions` | `{ mode: "LIVE_TEXT" \| "RECORDED_AUDIO" \| "LIVE_AUDIO", language, consent: ConsentRequest, districtCode, scenarioId?, takeover? }` → `201 { interactionId }` and the `nivara_demo` cookie. Calls `POST /integration/interactions` with channel `CHATBOT` (live text) or `VOICE_CALL` (recorded audio, live microphone) and the chosen seeded district (plan §8.4). `LIVE_AUDIO`: one call at a time on the free tier; while another call is live (an audio window in the last 20 s) the answer is `409 LINE_BUSY`, unless `takeover: true` comes from a signed-in staff member with `demo.use` (a supervisor), which ends the older call. Idle calls are ended and the line freed. |
+| `POST` | `/api/demo/interactions/{id}/messages` | `{ text, sender }` → `200 DemoReceipt = { ok: true, showEmergencyPanel, emergency }`. At most 40 messages per case (`429`). The module's `409 CONSENT_REQUIRED` / `INTERACTION_ENDED` pass through; anything else is `503 ANALYSIS_DEGRADED`. |
+| `POST` | `/api/demo/interactions/{id}/audio` | One live-microphone window (M.12): multipart `audio`, `windowIndex`, `startMs`, relayed to `POST /integration/…/audio` as `audioSource: CALLER_ONLY`, `inputMethod: LIVE_AUDIO`. `startMs` past three minutes → `409 INTERACTION_ENDED`. → `200 { ok: true, analysed, showEmergencyPanel, emergency }`. Nothing is stored. |
+| `POST` | `/api/demo/interactions/{id}/recording` | Either JSON `{ scenarioId }` (a library file on the server) or `multipart/form-data` with one WAV `file` (≤ 4 MB), plus `audioSource`, `firstSpeaker` and optionally `fromWindow` (default 0). The server cuts the WAV into 5 s windows (M.8) and sends them to `POST /integration/…/audio` in order. **Response: `application/x-ndjson`**: `{ type: "start", windows, durationMs, fromWindow }`, then per window `{ type: "window", windowIndex, startMs, endMs, status, analysed, error }` (no transcript), then `{ type: "done", windows, analysed, showEmergencyPanel, emergency }` or `{ type: "error", code, message }`. A request stops after about 45 s (hosting limit: 60 s on Vercel Hobby) with `{ type: "more", nextWindow, windows }`; the page sends the same recording again with `fromWindow = nextWindow`, so a recording of any length works. `DEMO_RECORDING_BUDGET_MS` (optional, 1000–50000) lowers the budget, for tests. |
+| `POST` | `/api/demo/interactions/{id}/end` | → `200 { docketNumber }`; calls `POST /integration/…/end`. The docket number is revealed only here, when the person finishes (plan §6.3). |
+| `GET` | `/api/demo/library` | `{ items }`: the scenario library without its `expected` labels, each with `script` (for the live-text replay) and `recordingAvailable` |
+| `GET` | `/api/demo/track?docket=` | → `200 CaseStatusResponse` (§6.6) read through `GET /integration/cases/{docket}/status` with the demo key; `404` for any other docket, demo or not; `400` for a malformed one |
 
 **Recorded audio (M.8).** Library files and uploads must be PCM WAV (16-bit, mono or stereo, any sample rate; convert with Audacity, which is free). Each window is a standalone WAV of at most 5 s; a final piece under 1 s is dropped. Windows are sent one at a time, never in parallel, with `startMs` = window × 5000 (also across the requests of one recording). The real audio goes through the real audio path; a prewritten transcript is never sent.
 
-**Scenario library (M.14).** `demo/library/library.json` (committed) lists scenarios with a stable `id`, `title`, `language`, `audioSource`, `firstSpeaker`, a `script` of turns (`{ speaker: "OPERATOR" | "CALLER", text }`, synthetic, respectful, non-graphic) for the team to record and for the live-text page to replay, and `expected` (band, overrides; draft labels fixed before any run). Recordings are the team's own voices reading the script, stored as `demo/library/audio/<id>.wav`, **git-ignored and never committed** (FR-VOI-09). Audio is never generated (`PRODUCT_VISION.md` Q4). `expected` is test metadata: it is never sent to the module, and the results view shows it apart, labelled "expected".
+**Scenario library (M.14).** `demo/library/library.json` (committed) lists scenarios with a stable `id`, `title`, `language`, `audioSource`, `firstSpeaker`, a `script` of turns (`{ speaker: "OPERATOR" | "CALLER", text }`, synthetic, respectful, non-graphic) for the team to record and for the live-text page to replay, and `expected` (band, overrides; draft labels fixed before any run). Recordings are the team's own voices reading the script, stored as `demo/library/audio/<id>.wav`, **git-ignored and never committed** (FR-VOI-09). Audio is never generated (`PRODUCT_VISION.md` Q4). `expected` is test metadata: it is never sent to the module and, since Phase N, never to the browser.
 
-**Results view.** The demo pages read the case through the staff API (§5) as the signed-in supervisor, with the same role rules as any staff screen: `GET /staff/interactions/{id}/assessments/current`, `/assessments`, `/indicators`, `/transcript`, `/voice`, and `GET /staff/recommendations?caseId=`. Nothing is computed on the page.
+**What a demo page shows.** Only that input was received, the scripted emergency options when the module raises them (`CLAUDE.md` rule 1), a progress bar for recordings, and at the end the docket ID. The assessment appears only in the staff portals, read by signed-in staff through the staff API (§5) with the same role rules as always.
+
+### 6.6 Case status (task N.3, FR-API-06)
+
+`GET /cases/{docketNumber}/status`, scope **`status:read`**, only for cases that this client's own interactions created; anything else, including a malformed docket, is `404 NOT_FOUND`.
+
+```json
+{ "docketNumber": "NHAA-2026-MH-004512", "status": "ACTION_TAKEN", "registeredAt": "…", "updatedAt": "…", "support": ["COUNSELLING", "EMERGENCY_SUPPORT"] }
+```
+
+`status` is the case status (`NEW`, `UNDER_REVIEW`, `ACTION_TAKEN`, `FOLLOW_UP_SCHEDULED`, `CLOSED`); `support` lists the support types whose recommendation is `APPROVED` or `AUTO_TRIGGERED`. The key set is exactly these five fields: never a score, band, urgency, indicator, note or staff name (rule 1). This is what a tracking page in NHAA's own portal, or the demo's `/track`, may show.
 
 ---
 
@@ -619,9 +634,6 @@ The first windows (until 20–30 s of speech) return `baselineUpdate` instead of
 ### 8.3 `POST /v1/summarize`
 `{ requestId, messages: [{ sender, text }], language }` → `{ summary, summaryEn, modelVersion }`: neutral, factual, no diagnosis (FR-NLP-09).
 
-### 8.3a `POST /v1/demo/generate` (demo input layer only, task M.13)
-`{ requestId, category, language, length, tone, questions: string[] }` → `{ turns: [{ speaker, text }], synthetic: true, modelVersion }`. The LLM writes SYNTHETIC test data, never anything a person sees, and scores nothing (CLAUDE.md rules 2 and 3). Guardrails applied to whatever the model returns: chatbot lines are kept only if they are one of `questions` word for word; lines with a link, phone-like number or e-mail are dropped; at most 4, 8 or 12 lines. No caching. `422` for unknown options or nothing usable, `503 MODEL_UNAVAILABLE` if the LLM fails.
-
 ### 8.4 `GET /v1/health`
 `{ status: "ok", models: { stt: "loaded", ser: "loaded", nlp: "reachable" } }`
 
@@ -656,6 +668,7 @@ Error responses never contain message text or other victim content.
 | 409 | `CONSENT_REQUIRED` | Analysis endpoint called without the matching consent |
 | 409 | `INTERACTION_ENDED` | Writing to an ended interaction |
 | 409 | `ALREADY_ACKNOWLEDGED` / `INVALID_TRANSITION` / `DUPLICATE_WINDOW` | State conflicts |
+| `LINE_BUSY` | 409 | Public demo only: another live microphone call is in progress (§6.5) |
 | 413 | `PAYLOAD_TOO_LARGE` | Text > 2,000 characters or audio chunk > 200 KB |
 | 422 | `REASON_REQUIRED` / `FOLLOW_UP_REQUIRED` / `INVALID_CONFIG` / `REFERRAL_TOO_DETAILED` | Business rule failed |
 | 429 | `RATE_LIMITED` | Too many requests (`Retry-After` header) |
@@ -670,6 +683,8 @@ Error responses never contain message text or other victim content.
 | FR-CH-01/02 | integration `POST /interactions`, `/messages` (`sender`), `/audio` |
 | FR-CH-03/04 | integration `/audio`, `/staff/interactions/{id}/transcript`, `/suggested-questions`, `/operator-message`, `transcript.appended` |
 | FR-CH-07 | `docketNumber` on interaction and case; integration `POST /interactions` |
+| FR-API-06, FR-DEMO-02 | integration `GET /cases/{docket}/status`; demo `GET /api/demo/track` |
+| FR-DEMO-01, FR-DEMO-03 | `/api/demo/*` (§6.5) behind the public safeguards |
 | FR-CH-08 | integration `PUT /…/context` |
 | FR-CON-01…06 | `consent` on integration start, integration `/consent/withdraw`, `CONSENT_REQUIRED` |
 | FR-VOI-01…10 | integration `/audio`, `/v1/analyze/audio`, `/staff/interactions/{id}/voice` |

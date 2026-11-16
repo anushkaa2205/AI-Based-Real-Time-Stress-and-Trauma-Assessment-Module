@@ -4,7 +4,7 @@
 | Field | Value |
 |---|---|
 | Problem statement | SIH26093, Ministry of Social Justice and Empowerment (MoSJE), Department of Social Justice and Empowerment |
-| Project name | *TBD* |
+| Project name | **Nivara** |
 | Platform | Plug-in assessment module (Next.js API and staff dashboards, Python analysis service) called by NHAA's systems through an integration API |
 | Version | 0.2 (draft): module scope, no questionnaire (PRODUCT_VISION.md) |
 | Date | 16 Nov 2026 |
@@ -48,7 +48,7 @@ The module sits **between NHAA's contact channels and the human responders**. It
 - dashboards for every stakeholder (the reference consuming system),
 - the integration API, which is the module's only input interface.
 
-The module never questions the person. If safety or wellbeing questions are asked, NHAA's chatbot asks them in the chat or the operator asks them aloud, and the answers arrive as ordinary text or speech. A detachable **demo input layer** (live text, live microphone, recorded audio, generated text) exists only to present and test the module through the same API.
+The module never questions the person. If safety or wellbeing questions are asked, NHAA's chatbot asks them in the chat or the operator asks them aloud, and the answers arrive as ordinary text or speech. A detachable, public **demo input layer** (type a message, speak, play a recording) exists only to present and test the module through the same API; it ends with a docket ID and a tracking page, never a result (`NIVARA_FLOW_AND_UI_PLAN.md`).
 
 Long-term monitoring after the complaint is filed is covered by the sister problem **SIH26094** and is **out of scope**. This module provides a hook for it (scheduled follow-ups for High/Critical cases).
 
@@ -254,6 +254,10 @@ Long-term monitoring after the complaint is filed is covered by the sister probl
 | FR-API-03 | The API shall support **streaming updates** (Server-Sent Events or WebSocket) for live SVI during calls. | S |
 | FR-API-04 | The API shall accept and return the **NHAA docket number** to link with existing records. | M |
 | FR-API-05 | The integration API shall be the module's **only input interface**. There is no victim-facing API; the module must run and be tested with the demo input layer switched off. | M |
+| FR-API-06 | The integration API shall offer a **case status** read (`GET /cases/{docket}/status`, scope `status:read`): status, dates and the support arranged, for the calling system's own cases only, and never a score, band, urgency, indicator or staff detail (task N.3). | M |
+| FR-DEMO-01 | The demo input layer shall be **public** and offer three inputs (type a message, speak, play a recording) from the home page; each goes through the integration API with the demo key; the page shows only that input was received, the scripted emergency options when raised, and at the end the docket ID (task N.7). | M |
+| FR-DEMO-02 | A public **track a case** page shall show, for a docket ID of a demo case, the case status and the support arranged, through FR-API-06, and nothing diagnostic (task N.8). | M |
+| FR-DEMO-03 | The public demo shall be limited: a kill switch, same-site posts only, per-visitor and daily rate limits, a signed cookie so a browser reaches only its own cases, trimmed responses, one live microphone call at a time (task N.4, plan §7). | M |
 
 ### 3.16 Audit and accountability (FR-AUD)
 | ID | Requirement | Priority |
@@ -308,7 +312,7 @@ Long-term monitoring after the complaint is filed is covered by the sister probl
 ### 4.5 Accessibility and usability (NFR-ACC)
 | ID | Requirement | Priority |
 |---|---|---|
-| NFR-ACC-01 | Staff screens and the demo pages shall meet **WCAG 2.1 AA** (contrast, keyboard navigation, screen-reader labels). Victim-facing screens belong to the calling system. | M |
+| NFR-ACC-01 | Staff screens and the public pages (home, demo, track, login) shall meet **WCAG 2.1 AA** (contrast, keyboard navigation, screen-reader labels). Victim-facing screens of NHAA's own systems belong to the calling system. | M |
 | NFR-ACC-02 | ~~Low-literacy victim screens~~ *Removed 16 Nov 2026: the calling system's interface.* | – |
 | NFR-ACC-03 | ~~Victim flow on a low-end phone~~ *Removed 16 Nov 2026: the calling system's interface.* | – |
 | NFR-ACC-04 | Text the module returns for the person and the operator's suggested questions shall be written at a simple reading level and reviewed by native speakers per language. | S |

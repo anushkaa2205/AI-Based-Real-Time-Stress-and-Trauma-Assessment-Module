@@ -21,7 +21,8 @@ Update this table as work finishes.
 | 9. Evaluation, hardening, deployment, demo | M6 Demo-ready | In progress: 9.1–9.7 done (see docs/EVALUATION_REPORT.md; band accuracy 79% and text p95 3.43 s just miss targets); 9.8 needs volunteers; 9.9–9.11 deferred until the project is finished |
 | E. Evaluation set (runs alongside phases 2–9) | all | In progress: 62 draft scenarios (E.3 needs a second reviewer); E.4 voice recordings by the team not done |
 | F. Victim-facing frontend (homepage, unified input) | – | **Stopped 16 Nov 2026** after F.2 (`PRODUCT_VISION.md`): the victim website is not part of the product. F.0–F.2 done; F.3–F.6 cancelled; the F.2 pages are removed in M.2 |
-| M. Module contract and demo input layer | M6 Demo-ready | In progress: M.1–M.14 done (16 Nov 2026): module-only, text and voice, no questionnaire; answers read with their question; two-voice audio separated; indicators with evidence for authorised callers; input method and contract version; all four demo modes through the integration API, cases marked Demo. Open: AI-mode evaluation re-run; native review of regional rules and questions; speaker separation on real recordings; voice-window latency re-run |
+| N. Public site, public demo, tracking and the Nivara UI (`NIVARA_FLOW_AND_UI_PLAN.md`) | M6 Demo-ready | **Done 16 Nov 2026 (N.1–N.11):** public home page with the demo starter, three public demo inputs ending in a docket ID, tracking page, `GET /cases/{docket}/status` (contract 1.2), public safeguards, login restyled, Nivara design foundation and staff portals restyled, generated text removed, e2e rewritten. Open: N.12 deployment prep (plan §12), library recordings (plan §13.1), native review of `track.*` strings |
+| M. Module contract and demo input layer | M6 Demo-ready | Done: M.1–M.14 done (16 Nov 2026): module-only, text and voice, no questionnaire; answers read with their question; two-voice audio separated; indicators with evidence for authorised callers; input method and contract version; all four demo modes through the integration API, cases marked Demo. Open: AI-mode evaluation re-run; native review of regional rules and questions; speaker separation on real recordings; voice-window latency re-run |
 
 ---
 
@@ -61,13 +62,13 @@ Update this table as work finishes.
 | # | Decision | Needed before | Default if not decided |
 |---|---|---|---|
 | D1 | Deadline and team size | Now | Follow milestone order; cut at the line in §1 |
-| D2 | Project name | Phase 3 (UI text) | Placeholder "NHAA Assist" in one config constant |
+| D2 | ~~Project name~~ **Decided (16 Nov 2026, Phase N):** Nivara | — | — |
 | D3 | ~~LLM provider~~ **Decided:** Groq `openai/gpt-oss-120b` (development: `gpt-oss-20b`), Gemini Flash free tier as overflow | — | Behind one interface in `analysis-service/app/text/llm.py` |
 | D4 | ~~Speech-to-text~~ **Decided:** Groq Whisper for Hindi/English/Hinglish; self-hosted AI4Bharat IndicConformer for Marathi/Tamil/Bengali; Bhashini as backup | — | Confirm laptop speed and RAM in the Phase 7 spike |
 | D5 | Three regional languages | Phase 8 | Marathi, Tamil, Bengali (as proposed in FR-LANG-01) |
 | D6 | ~~Local MongoDB~~ **Decided:** Atlas Free for development and demo (no Docker) | — | — |
 | D7 | ~~Hosting~~ **Decided:** web on Vercel Hobby; analysis service on a team laptop behind a Cloudflare Quick Tunnel; no separate worker (jobs run inside requests) | — | See `TOOLS_AND_COSTS.md` |
-| D8 | ~~Front door~~ **Decided (15 Nov 2026):** the public home page `/` is a calm victim-facing entry point; the victim intake pages live under `/portal/<locale>`. The NHAA simulator planned earlier is dropped (code, cases and spec removed) | — | See `FRONTEND_UX_PRODUCT_BRIEF.md`, `checklist.md` *Superseded 16 Nov 2026 by PRODUCT_VISION.md: no victim website; `/` redirects to `/login`.* |
+| D8 | ~~Front door~~ **Decided (15 Nov 2026):** the public home page `/` is a calm victim-facing entry point; the victim intake pages live under `/portal/<locale>`. The NHAA simulator planned earlier is dropped (code, cases and spec removed) | — | See `FRONTEND_UX_PRODUCT_BRIEF.md`, `checklist.md` *Superseded 16 Nov 2026 by PRODUCT_VISION.md (no victim website) and again by `NIVARA_FLOW_AND_UI_PLAN.md` (Phase N): `/` is the public home page of the demo input layer with the demo starter and a Staff login button.* |
 
 ---
 
@@ -323,7 +324,7 @@ Update this table as work finishes.
 - [x] **M.10 Speaker separation in audio (replaces V8).** Label each transcript sentence `OPERATOR` or `CALLER`, score only the caller's words, take voice features from the caller's segments only. Until this is built, every assessment from two-voice audio is marked limited confidence. (FR-VOI-10, AC-VOI-08) *Done 16 Nov 2026: `analysis-service/app/audio/speakers.py` (Silero VAD stretches + CAM++ voice fingerprints, first voice = operator unless `firstSpeaker`); `audioSource` and `firstSpeaker` on `/audio`; fingerprints round-trip encrypted (`speakerStateEnc`); operator words stored as `OPERATOR` turns; one voice so far = the caller's, limited for that window; unseparated or ambiguous audio marks the call `voiceUnseparated` (limited); a life-safety statement labelled as the operator's is scored as the caller's. Tested on a synthetic two-voice TTS fixture (pytest and e2e). Open: real recordings not tested; the 5 s voice-window e2e budget failed on 16 Nov with slow Atlas round trips (66–693 ms) and needs a re-run.*
 - [x] **M.11 Demo input: live text.** Chat-style page representing NHAA's chatbot; sends `/messages` one message at a time (questions as `OPERATOR` turns) with the demo key. Visibly marked synthetic / demonstration. *Done 16 Nov 2026: `/demo/text` (supervisors, `DEMO_ENABLED`); chatbot questions from `operatorQuestions.*`; a library scenario's text version replays line by line; results view (PRODUCT_VISION §7) read through the staff API.*
 - [x] **M.12 Demo input: live microphone.** The kept recorder (`components/audio/`) sends 5 s windows to `/audio` with the demo key, the caller's voice only. One live call at a time (free tier). *Done 16 Nov 2026: `/demo/live-call`; windows relayed as CALLER_ONLY, LIVE_AUDIO; a new live call ends any older one. e2e with Edge's fake microphone.*
-- [x] **M.13 Demo input: generated text (V5).** An LLM writes a synthetic conversation from chosen options (category, language, length) on the free Groq quota; output labelled synthetic and sent through `/messages`. Audio is never generated. *Done 16 Nov 2026: `/demo/generated`; analysis service `POST /v1/demo/generate` (synthetic, non-graphic; chatbot lines must be NHAA's scripted questions word for word; contact details dropped); shown before sending, then played through `/messages`. Own circuit breaker, so demo failures never affect real analysis.*
+- [x] ~~**M.13 Demo input: generated text (V5).**~~ *Removed 16 Nov 2026 in N.2 (decision N-D6): three demo inputs remain.* An LLM writes a synthetic conversation from chosen options (category, language, length) on the free Groq quota; output labelled synthetic and sent through `/messages`. Audio is never generated. *Done 16 Nov 2026: `/demo/generated`; analysis service `POST /v1/demo/generate` (synthetic, non-graphic; chatbot lines must be NHAA's scripted questions word for word; contact details dropped); shown before sending, then played through `/messages`. Own circuit breaker, so demo failures never affect real analysis.*
 - [x] **M.14 Demo input: pre-recorded audio library.** Team recordings with stable scenario IDs, cut into windows by M.8 and sent through `/audio`. Expected results are test metadata, never sent to the module. *Done 16 Nov 2026: `/demo/recorded`; `demo/library/library.json` points at 10 evaluation scenarios (script and expected label from `evaluation/scenarios`); recordings go in the git-ignored `demo/library/audio/`, plus a WAV upload. Open: the team has not recorded any yet.*
 
 **Done when:** the items in `PRODUCT_VISION.md` §12 are true; type-check, lint, unit and Playwright tests pass with the demo switched off; no rule in `CLAUDE.md` is broken.
@@ -396,3 +397,22 @@ A change to the lexicon, the prompt or the weights is not finished until the eva
 | NFR-REL | 4 |
 | NFR-ACC | 9 (staff pages), M (demo pages) |
 | NFR-MNT | 0, 2 |
+
+---
+
+## Phase N. Public site, public demo, tracking and the Nivara UI
+
+Spec: `NIVARA_FLOW_AND_UI_PLAN.md` (wins over older documents on the website flow, the demo and the look). Done 16 Nov 2026 unless marked.
+
+- [x] **N.1 Docs to the new spec.**
+- [x] **N.2 Remove generated text.** Web app and analysis service.
+- [x] **N.3 Case status endpoint.** `GET /api/v1/integration/cases/{docket}/status`, scope `status:read`, contract 1.2.
+- [x] **N.4 Public demo API.** `core/demo/guard.ts` + `public.ts`: kill switch, same-site, per-visitor and daily limits, own-cases cookie, trimmed replies, district on start, busy line with supervisor takeover, `/api/demo/track`.
+- [x] **N.5 Design foundation.** Tokens, Fraunces + IBM Plex, `navy` → `brand`, shared parts.
+- [x] **N.6 Public shell and home page.**
+- [x] **N.7 Public demo pages.** `/demo/text`, `/demo/call`, `/demo/recording`; results view and staff-side chooser removed.
+- [x] **N.8 Track page.** `/track`, `/track/[docket]`; `track.*` in all five message files (non-English drafts).
+- [x] **N.9 Login.**
+- [x] **N.10 Staff portals restyle.**
+- [x] **N.11 Tests and checks.** `demo.spec.ts`, `demo-live.spec.ts`, `accessibility.spec.ts` rewritten for the public flow; unit tests for the safeguards and the status contract.
+- [ ] **N.12 Deployment prep.** Plan §12: Vercel variables, demo key with `status:read`, seed, tunnel, rehearsal.

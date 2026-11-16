@@ -1,7 +1,7 @@
 # Product Vision and Demo Architecture (updated)
 ## AI-Based Real-Time Stress and Trauma Assessment Module (SIH26093)
 
-**Status:** updated 16 November 2026 from the team's product vision brief, checked against the repository. Where this document and an older document disagree about *what the product is*, this one wins. The older documents are brought into line in §11. Items marked **OPEN** need a team decision.
+**Status:** updated 16 November 2026 from the team's product vision brief, checked against the repository; **amended the same day by `NIVARA_FLOW_AND_UI_PLAN.md` (Phase N)**, which decides the public site, the demo and the look and wins over this document on those topics. Where this document and an older document disagree about *what the product is*, this one wins. The older documents are brought into line in §11.
 
 ---
 
@@ -13,7 +13,7 @@ A **channel-independent, plug-in assessment module** that NHAA's existing system
 
 ## 2. What the product is not
 
-- Not a new chatbot, helpline, IVRS, mobile app or complaint portal for NHAA to adopt.
+- Not a new chatbot, helpline, IVRS, mobile app or complaint portal for NHAA to adopt. (The public site at `/` is part of the demo input layer: it explains the module and starts the demo; it is not a channel NHAA adopts.)
 - **Not a quiz.** The module does not question the person. It analyses what they already said or wrote in NHAA's own channel (§5).
 - Not a clinical diagnosis tool, and not a replacement for human review.
 
@@ -49,14 +49,16 @@ A **channel-independent, plug-in assessment module** that NHAA's existing system
          (case workflow, authorised human review, referrals)
 
 
-  SEPARATE: DEMO INPUT LAYER (detachable)
-  Live text | Live microphone | Recorded audio library | Generated text
+  SEPARATE: DEMO INPUT LAYER (detachable, public)
+  Home page -> Type a message | Speak | Play a recording
                               |
                  same integration API, a demo API key
                               |
                     CORE ASSESSMENT MODULE
                               |
-                     Demo results view
+          "Case registered" + docket ID -> Track a case (status only)
+                              |
+                    Staff portals (the assessment)
 ```
 
 ## 4. What already exists in the repository
@@ -71,7 +73,7 @@ A **channel-independent, plug-in assessment module** that NHAA's existing system
 | Audio path | `/audio` accepts 5-second windows (limit 6 s, 200 KB each): speech-to-text, pauses, pitch, energy, voice emotion, then the transcript goes through the text pipeline | Built for live windows. A whole recorded file must be cut into windows first (§8). |
 | Consent, privacy, audit, human approval | Consent state required on integration start; PII redaction; encryption; audit chain; recommendations are proposals | Built. Stays unchanged. |
 | Staff dashboards | `(staff)` pages: operator console, counsellor queue and case detail, approvals, district, police, welfare, analytics, admin | Built. **Kept** as the reference consuming system: every demo case appears on the right staff dashboards (§7). |
-| Victim-facing website | `/` homepage (built 15 Nov, task F.2), `/portal/<lang>` start, consent, chat with questions, IVRS keypad page | Built, but not part of the product. **Decided: delete** (homepage, `/portal` pages, keypad page). |
+| Victim-facing website | The old `/portal` pages and keypad page were deleted (M.2). Since Phase N, `/` is a **public home page of the demo input layer** with the three demo inputs, a tracking page and the staff login button (`NIVARA_FLOW_AND_UI_PLAN.md` §5–§6). | Public site built (N.6–N.9). It belongs to the demo layer; the module still has no victim website. |
 
 ## 5. Two inputs only: text and voice. No quiz, no structured answers
 
@@ -96,39 +98,26 @@ There is no third input. The module never asks questions, has no questionnaire, 
 
 ## 6. The demo input layer
 
-A separate set of pages for presenters and testers, with **four input modes**. These modes are demo inputs, not module features: the module only sees API calls. Audio is never generated; voice comes from the live microphone or the team's own recordings. It calls the module **only through the integration API** with its own demo API key, exactly as an NHAA system would. The module must work with the demo switched off.
+A separate, **public** set of pages (no sign-in; `NIVARA_FLOW_AND_UI_PLAN.md` §6–§7), with **three input modes**. These modes are demo inputs, not module features: the module only sees API calls. Audio is never generated; voice comes from the live microphone or the team's own recordings. It calls the module **only through the integration API** with its own demo API key, exactly as an NHAA system would. The module must work with the demo switched off. The generated-text mode was removed in Phase N (decision N-D6).
 
 | # | Mode | Represents | Data path | What is needed |
 |---|---|---|---|---|
 | 1 | **Live text** | Chatbot | `/messages`, one message at a time | Chat-style page. Small build. |
 | 2 | **Live microphone** | Helpline call | `/audio`, 5 s windows | The existing recorder is moved from the victim pages into the demo. Free-tier limit: one live call at a time. |
 | 3 | **Recorded audio library** | Repeatable helpline cases | `/audio` | Team recordings with stable scenario IDs; a step that cuts each file into 5 s windows. The real audio is sent, never a prewritten transcript. |
-| 4 | **Generated text** | Synthetic chatbot conversations | `/messages` | An LLM writes a synthetic conversation from chosen options (category, language, length). Uses the free Groq quota; output labelled synthetic. |
 
 Rules for every mode:
 - One module, one scoring implementation. No mode has its own scoring.
 - A scenario's label and expected result are test metadata. They are never sent to the module and never shown as if the module produced them.
-- If audio could not be fully analysed, the result says so ("transcript-based" or "limited confidence"). Nothing is faked.
 - Everything is visibly marked **synthetic / demonstration**.
+- A demo page shows **nothing about the assessment**: only that each input was received, the scripted emergency options when the module raises them (the one allowed risk signal, rule 1), and at the end "your case is registered" with the docket ID. A public **track a case** page shows the case status and the support arranged, through `GET /integration/cases/{docket}/status`.
+- Public safeguards (plan §7): kill switch, same-site posts only, per-visitor and daily limits, a signed cookie so a browser reaches only its own cases, trimmed responses, one live call at a time with a "line busy" message.
 
 ## 7. Demo results view and staff dashboards
 
 Every demo case is a normal case inside the module, so it also shows up where it belongs in the existing staff dashboards, with the same server-side role rules: the counsellor queue in risk order with live alerts, the approvals inbox, and after approval the police, welfare and district views (referral only for police and welfare). Demo cases carry a visible "demo" mark.
 
-The results view below is the presenter's quick look at one case.
-
-One consistent view for all four modes, built only from what the module returned:
-
-1. Input summary: mode, simulated source channel, scenario ID, language.
-2. Processing timeline: received, validated, transcribed (audio), analysed, done or failed.
-3. Transcript or text.
-4. Assessment: SVI, band, explanation, overrides fired, limited-confidence flag.
-5. Indicators with their evidence: exact quotes for text, time positions for voice.
-6. Proposed support and the human-review flag.
-7. Technical details: request ID, duration, model and scoring versions, errors.
-8. Kept visually apart: **expected** annotations of the scenario, for comparison only.
-
-This view is for presenters and reviewers. A victim-facing screen in an NHAA system must still never show scores, bands or indicators (`CLAUDE.md` rule 1).
+**The demo results view was removed in Phase N (decision N-D4).** The staff case screens are the only place results appear: the presenter files a case on the public site, then signs in as a counsellor to show the score, band, warning signs with their exact words, and the proposed support. A victim-facing screen, the demo pages included, never shows scores, bands or indicators (`CLAUDE.md` rule 1). Scenario `expected` labels stay on the server as test metadata.
 
 ## 8. Gaps between the vision and the code
 
@@ -160,6 +149,7 @@ This view is for presenters and reviewers. A victim-facing screen in an NHAA sys
 | Q3 | The victim website is deleted. |
 | Q4 | No generated audio. Voice input is live microphone or pre-recorded files only. |
 | Q5 | The old simulator cases are not brought back. |
+| N-D1…N-D10 | **Phase N (16 Nov 2026, `NIVARA_FLOW_AND_UI_PLAN.md` §2):** `/` is a public home page with the demo in the hero; a Staff login button in the navbar; the demo is public, shows no result and ends with a docket ID; a public tracking page shows status and support arranged; three demo inputs (generated text removed); one login page, a portal per role; the assessment is shown only in the staff portals; the UI is redesigned; the product is named **Nivara**. |
 
 ## 11. What happens to the existing documents
 
@@ -178,10 +168,10 @@ This view is for presenters and reviewers. A victim-facing screen in an NHAA sys
 - [ ] Input and output contracts are documented and versioned; source channel and input method are separate.
 - [ ] The result contract carries indicators and evidence for authorised callers.
 - [ ] No questionnaire is asked by the module or the demo.
-- [ ] All four demo modes go through the integration API to the same module.
+- [ ] All three demo inputs go through the integration API to the same module, from the public site.
 - [ ] Recorded audio goes through the real audio path.
 - [ ] Each demo case appears on the right staff dashboards, marked as demo.
-- [ ] The results view shows only real module output, apart from clearly separated expected annotations.
+- [ ] A demo page shows nothing about the assessment; a visitor gets a docket ID and can track the case status.
 - [ ] Consent, privacy, audit and human-review controls are unchanged.
 - [ ] Every document says the module is the product.
 

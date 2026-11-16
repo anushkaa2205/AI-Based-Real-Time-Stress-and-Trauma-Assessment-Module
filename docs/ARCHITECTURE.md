@@ -567,7 +567,7 @@ flowchart LR
 │   ├── messages/                       # emergency options + operator questions: en hi mr ta bn
 │   ├── src/
 │   │   ├── app/
-│   │   │   ├── page.tsx                # redirects to /login (no victim website)
+│   │   │   ├── (public)/               # Phase N: home page (demo starter hero), demo/{text,call,recording}, track/[docket]
 │   │   │   ├── (staff)/
 │   │   │   │   ├── operator/           # live call console
 │   │   │   │   ├── counsellor/         # queue, case/[id]
@@ -576,8 +576,8 @@ flowchart LR
 │   │   │   │   ├── welfare/
 │   │   │   │   ├── analytics/          # state + ministry
 │   │   │   │   ├── admin/              # users, scoring configs, audit
-│   │   │   │   └── demo/               # demo input layer (M.11–M.14): text/, live-call/, recorded/, generated/; off unless DEMO_ENABLED
-│   │   │   ├── api/demo/…              # demo proxy: calls /api/v1/integration with DEMO_API_KEY (API_CONTRACTS §6.5)
+│   │   │   │   (no demo pages here since Phase N: the demo is the public site)
+│   │   │   ├── api/demo/…              # public demo relay: calls /api/v1/integration with DEMO_API_KEY behind the plan §7 safeguards (API_CONTRACTS §6.5)
 │   │   │   └── api/v1/
 │   │   │       ├── integration/…       # API-key API: the module's only input
 │   │   │       ├── staff/…             # Auth.js session API
@@ -593,8 +593,8 @@ flowchart LR
 │   │   │   ├── privacy/                # redact.ts crypto.ts
 │   │   │   ├── policies/               # rbac.ts serializers.ts
 │   │   │   ├── analysis-client/
-│   │   │   └── demo/                   # demo layer only: wav.ts (cut a recording into 5 s windows, M.8), library, client
-│   │   ├── components/                 # staff/, ui/, audio/ (live recorder kept for the demo), demo/ (results view)
+│   │   │   └── demo/                   # demo layer only: wav.ts (M.8), library, client, guard + public (N.4 safeguards), districts
+│   │   ├── components/                 # public/ (navbar, footer, track), demo/ (three inputs, consent, confirmation), staff/, ui/, audio/
 │   │   ├── contracts/                  # Zod schemas = API contracts
 │   │   ├── lib/                        # db.ts (cached Mongoose connection), realtime.ts, ratelimit.ts
 │   │   └── models/                     # Mongoose models (one file per collection)
@@ -634,4 +634,4 @@ flowchart LR
 | NFR-PERF | §5 latency budget, §6.2 window budget |
 | NFR-REL | §10.3 |
 | NFR-MNT | ADR-2, ADR-4, repository structure, tests |
-| NFR-ACC | Staff UI and (later) demo pages: WCAG 2.1 AA components (shadcn/Radix), checked with axe in the e2e suite. Victim-facing screens belong to the calling system. |
+| NFR-ACC | Staff UI and the public pages (home, demo, track, login): WCAG 2.1 AA, checked with axe in the e2e suite. Victim-facing screens of NHAA's systems belong to the calling system. |
