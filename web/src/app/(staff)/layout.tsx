@@ -2,10 +2,11 @@
 import { redirect } from "next/navigation";
 import { AlertBanner } from "@/components/staff/alert-banner";
 import { RealtimeProvider, type RealtimeConfig } from "@/components/realtime/realtime-provider";
+import { demoEnabled } from "@/core/demo/client";
 import { access } from "@/core/policies/rbac";
 import { env } from "@/lib/env";
 import { ONCALL, SUPERVISORS, roleChannel } from "@/lib/realtime/channels";
-import { ROLE_LABEL, canOpen, navFor } from "@/lib/staff-nav";
+import { ROLE_LABEL, STAFF_PAGES, canOpen, navFor } from "@/lib/staff-nav";
 import { currentStaff } from "@/lib/staff-session";
 import { DutyToggle } from "./duty-toggle";
 import { SignOutButton } from "./sign-out-button";
@@ -40,7 +41,7 @@ export default async function StaffLayout({ children }: { children: React.ReactN
             </div>
           </div>
           <nav aria-label="Staff">
-            <StaffNavLinks items={navFor(user.role)} />
+            <StaffNavLinks items={navFor(user.role).filter((p) => p.href !== STAFF_PAGES.demo.href || demoEnabled())} />
           </nav>
           <div className="flex flex-col gap-3 border-t border-white/15 pt-3 md:mt-auto">
             {(user.role === "COUNSELLOR" || user.role === "OPERATOR") && <DutyToggle initial={user.isOnDuty} />}

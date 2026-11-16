@@ -22,6 +22,8 @@ export const STAFF_PAGES = {
   analytics: { href: "/analytics", label: "Analytics", roles: rolesFor("analytics.read") },
   admin: { href: "/admin", label: "Administration", roles: rolesFor("admin.users") },
   audit: { href: "/admin/audit", label: "Audit log", roles: rolesFor("audit.read") },
+  // Demo input layer (M.11, M.14): listed only when DEMO_ENABLED (see the staff layout)
+  demo: { href: "/demo", label: "Demo input layer", roles: rolesFor("demo.use") },
 } as const satisfies Record<string, StaffPage>;
 
 export type StaffPageKey = keyof typeof STAFF_PAGES;

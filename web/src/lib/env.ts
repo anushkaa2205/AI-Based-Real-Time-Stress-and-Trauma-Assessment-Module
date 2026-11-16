@@ -52,6 +52,10 @@ const EnvSchema = z
     PUSHER_SECRET: z.string().optional(),
     PUSHER_CLUSTER: z.string().optional(),
     JOBS_SECRET: secret,
+    /** Demo input layer (PRODUCT_VISION.md §6): off unless "true"; the module never depends on it */
+    DEMO_ENABLED: z.enum(["true", "false"]).default("false"),
+    /** The demo layer's own integration key (server-only); `npm run api:client -- --demo` writes it */
+    DEMO_API_KEY: z.string().optional(),
   })
   .superRefine((env, ctx) => {
     if (!(env.ENCRYPTION_ACTIVE_KEY in env.ENCRYPTION_KEYS)) {
@@ -61,6 +65,9 @@ const EnvSchema = z
       for (const k of ["PUSHER_APP_ID", "PUSHER_KEY", "PUSHER_SECRET", "PUSHER_CLUSTER"] as const) {
         if (!env[k]) ctx.addIssue({ code: "custom", path: [k], message: "required when REALTIME_DRIVER=pusher" });
       }
+    }
+    if (env.DEMO_ENABLED === "true" && !/^nhaa_[a-f0-9]{12}\.[A-Za-z0-9_-]{20,100}$/.test(env.DEMO_API_KEY ?? "")) {
+      ctx.addIssue({ code: "custom", path: ["DEMO_API_KEY"], message: "required when DEMO_ENABLED=true (run npm run api:client -- --demo)" });
     }
     // SSE cannot work on serverless hosting (ADR-6); it is fine for a local production build.
     if (env.VERCEL === "1" && env.REALTIME_DRIVER === "sse") {

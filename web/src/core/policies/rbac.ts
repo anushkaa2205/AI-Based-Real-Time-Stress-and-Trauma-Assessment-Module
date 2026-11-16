@@ -25,6 +25,7 @@ export const ACTIONS = [
   "scoringConfig.write",
   "admin.users", // users and API clients
   "audit.read", // audit logs and chain verify
+  "demo.use", // demo input layer pages and /api/demo (task M.11, M.14; only when DEMO_ENABLED)
 ] as const;
 export type Action = (typeof ACTIONS)[number];
 
@@ -162,6 +163,8 @@ const MATRIX: Record<Action, Partial<Record<Role, Rule>>> = {
   "scoringConfig.write": { SYS_ADMIN: full },
   "admin.users": { SYS_ADMIN: full },
   "audit.read": { AUDITOR: full },
+  // Presenters sign in as a supervisor: the results view reads case data through the staff API.
+  "demo.use": { NHAA_SUPERVISOR: full },
 };
 
 /** "full", "reduced" (fewer fields) or null (forbidden). */

@@ -60,3 +60,6 @@ desktop.ini
 
 # Analysis service model-answer cache (task 4.5)
 analysis-service/.cache/
+
+# Demo library recordings: the team's own voices, never committed (task M.14)
+demo/library/audio/
