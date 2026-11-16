@@ -88,59 +88,75 @@ export function RecordedAudioDemo({ library }: { library: LibraryScenario[] }) {
     setSession(s);
     note({ label: "Call started", detail: `${audioSource === "MIXED" ? "both voices on one track" : "caller's channel only"}`, state: "ok", requestId: started.call.requestId, ms: started.call.ms });
 
-    let res: Response;
-    if (source === "library" && scenario) {
-      res = await fetch(`/api/demo/interactions/${s.interactionId}/recording`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ scenarioId: scenario.id }) });
-    } else {
-      const form = new FormData();
-      form.set("file", upload.file!);
-      form.set("audioSource", upload.audioSource);
-      form.set("firstSpeaker", upload.firstSpeaker);
-      res = await fetch(`/api/demo/interactions/${s.interactionId}/recording`, { method: "POST", body: form });
-    }
-    if (!res.ok || !res.body) {
-      const p = (await res.json().catch(() => null)) as { detail?: string; title?: string } | null;
-      setRun((r) => (r ? { ...r, state: "failed", error: p?.detail ?? p?.title ?? `HTTP ${res.status}` } : r));
-      note({ label: "Recording refused", detail: p?.detail ?? String(res.status), state: "error" });
-      return;
-    }
-    setRun((r) => (r ? { ...r, state: "playing" } : r));
+    // Each request stops before the hosting time limit and says where to continue ("more").
+    let fromWindow = 0;
+    let analysedTotal = 0;
+    for (let part = 0; part < 200; part++) {
+      let res: Response;
+      if (source === "library" && scenario) {
+        res = await fetch(`/api/demo/interactions/${s.interactionId}/recording`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ scenarioId: scenario.id, fromWindow }),
+        });
+      } else {
+        const form = new FormData();
+        form.set("file", upload.file!);
+        form.set("audioSource", upload.audioSource);
+        form.set("firstSpeaker", upload.firstSpeaker);
+        form.set("fromWindow", String(fromWindow));
+        res = await fetch(`/api/demo/interactions/${s.interactionId}/recording`, { method: "POST", body: form });
+      }
+      if (!res.ok || !res.body) {
+        const p = (await res.json().catch(() => null)) as { detail?: string; title?: string } | null;
+        setRun((r) => (r ? { ...r, state: "failed", error: p?.detail ?? p?.title ?? `HTTP ${res.status}` } : r));
+        note({ label: "Recording refused", detail: p?.detail ?? String(res.status), state: "error" });
+        return;
+      }
+      setRun((r) => (r ? { ...r, state: "playing" } : r));
 
-    // NDJSON: one event per line, as each window comes back from the module.
-    const reader = res.body.getReader();
-    const dec = new TextDecoder();
-    let buf = "";
-    for (;;) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      buf += dec.decode(value, { stream: true });
-      let nl: number;
-      while ((nl = buf.indexOf("\n")) >= 0) {
-        const line = buf.slice(0, nl).trim();
-        buf = buf.slice(nl + 1);
-        if (!line) continue;
-        const ev = JSON.parse(line) as RecordingEvent;
-        if (ev.type === "start") {
-          setRun((r) => (r ? { ...r, total: ev.windows, durationMs: ev.durationMs } : r));
-          note({ label: "Recording cut into windows", detail: `${ev.windows} × 5 s, ${clock(ev.durationMs)} in all`, state: "ok" });
-        } else if (ev.type === "window") {
-          setRun((r) => (r ? { ...r, windows: [...r.windows, ev] } : r));
-          note({
-            label: `Window ${ev.windowIndex + 1} (${clock(ev.startMs)}–${clock(ev.endMs)})`,
-            detail: ev.error ? `failed: ${ev.error}` : ev.analysed ? `${ev.status} · transcribed and analysed` : `${ev.status} · not analysed`,
-            state: ev.error ? "error" : ev.analysed ? "ok" : "warn",
-            requestId: ev.call.requestId,
-            ms: ev.call.ms,
-          });
-          void refresh();
-        } else if (ev.type === "done") {
-          setRun((r) => (r ? { ...r, state: "done" } : r));
-          note({ label: "Recording finished", detail: `${ev.analysed} of ${ev.windows} windows analysed`, state: ev.analysed === ev.windows ? "ok" : "warn" });
-        } else if (ev.type === "error") {
-          setRun((r) => (r ? { ...r, state: "failed", error: ev.message } : r));
-          note({ label: "Stopped", detail: ev.message, state: "error" });
+      // NDJSON: one event per line, as each window comes back from the module.
+      const reader = res.body.getReader();
+      const dec = new TextDecoder();
+      let buf = "";
+      let next: number | null = null;
+      for (;;) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buf += dec.decode(value, { stream: true });
+        let nl: number;
+        while ((nl = buf.indexOf("\n")) >= 0) {
+          const line = buf.slice(0, nl).trim();
+          buf = buf.slice(nl + 1);
+          if (!line) continue;
+          const ev = JSON.parse(line) as RecordingEvent;
+          if (ev.type === "start") {
+            setRun((r) => (r ? { ...r, total: ev.windows, durationMs: ev.durationMs } : r));
+            if (ev.fromWindow === 0) note({ label: "Recording cut into windows", detail: `${ev.windows} × 5 s, ${clock(ev.durationMs)} in all`, state: "ok" });
+          } else if (ev.type === "window") {
+            if (ev.analysed) analysedTotal += 1;
+            setRun((r) => (r ? { ...r, windows: [...r.windows, ev] } : r));
+            note({
+              label: `Window ${ev.windowIndex + 1} (${clock(ev.startMs)}–${clock(ev.endMs)})`,
+              detail: ev.error ? `failed: ${ev.error}` : ev.analysed ? `${ev.status} · transcribed and analysed` : `${ev.status} · not analysed`,
+              state: ev.error ? "error" : ev.analysed ? "ok" : "warn",
+              requestId: ev.call.requestId,
+              ms: ev.call.ms,
+            });
+            void refresh();
+          } else if (ev.type === "more") {
+            next = ev.nextWindow;
+          } else if (ev.type === "done") {
+            setRun((r) => (r ? { ...r, state: "done" } : r));
+            note({ label: "Recording finished", detail: `${analysedTotal} of ${ev.windows} windows analysed`, state: analysedTotal === ev.windows ? "ok" : "warn" });
+          } else if (ev.type === "error") {
+            setRun((r) => (r ? { ...r, state: "failed", error: ev.message } : r));
+            note({ label: "Stopped", detail: ev.message, state: "error" });
+          }
         }
       }
+      if (next === null) break;
+      fromWindow = next;
     }
     void refresh();
   }

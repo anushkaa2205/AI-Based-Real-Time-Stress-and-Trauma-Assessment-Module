@@ -28,11 +28,15 @@ export const DemoMessage = z.object({
   sender: z.enum(["VICTIM", "OPERATOR"]),
 });
 
-export const DemoRecordingJson = z.object({ scenarioId: z.string().regex(/^S\d{3}$/) });
+/** `fromWindow`: continue a recording where the previous request stopped (each request stays under the hosting time limit). */
+const FromWindow = z.coerce.number().int().min(0).max(1_000).default(0);
+
+export const DemoRecordingJson = z.object({ scenarioId: z.string().regex(/^S\d{3}$/), fromWindow: FromWindow });
 
 export const RecordingFields = z.object({
   audioSource: z.enum(["CALLER_ONLY", "MIXED"]).default("MIXED"),
   firstSpeaker: z.enum(["OPERATOR", "CALLER"]).default("OPERATOR"),
+  fromWindow: FromWindow,
 });
 
 /** Uploads go through the hosting body limit (Vercel: 4.5 MB); about 2 minutes of 16 kHz WAV. */
@@ -45,7 +49,7 @@ export interface DemoCall {
 
 /** One NDJSON line of the recording stream. */
 export type RecordingEvent =
-  | { type: "start"; windows: number; durationMs: number; source: "library" | "upload"; scenarioId: string | null }
+  | { type: "start"; windows: number; durationMs: number; source: "library" | "upload"; scenarioId: string | null; fromWindow: number }
   | {
       type: "window";
       windowIndex: number;
@@ -58,6 +62,8 @@ export type RecordingEvent =
       call: DemoCall;
     }
   | { type: "done"; windows: number; analysed: number }
+  /** This request used its time; send the same recording again with `fromWindow: nextWindow` */
+  | { type: "more"; nextWindow: number; windows: number }
   | { type: "error"; code: string; message: string };
 
 /** Task M.13: options for a generated synthetic conversation (the analysis service checks them again). */
