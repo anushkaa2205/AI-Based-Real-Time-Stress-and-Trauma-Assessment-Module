@@ -12,6 +12,12 @@
  * (FR-NLP-11). The two voice fingerprints round-trip encrypted (`speakerStateEnc`). If a MIXED window
  * cannot be separated with confidence, the interaction is marked `voiceUnseparated` and every later
  * assessment is limited confidence.
+ *
+ * The labels rest on who speaks first, so they are anchored by the call's first window. If that
+ * window was never analysed (lost, or the analysis timed out), nothing tells the two voices apart
+ * reliably: the first voice heard could be the caller's. Then every later window is analysed as the
+ * caller's own audio, so no word of the caller's is ever dropped (CLAUDE.md rule 4), and the call
+ * is marked `voiceUnseparated` (limited confidence).
  */
 import { randomUUID } from "node:crypto";
 import { after } from "next/server";
@@ -68,6 +74,9 @@ export async function handleAudioChunk(req: Request, interactionId: string, lang
   // A retried chunk is answered from what we already have, without analysing it again.
   if (await VoiceWindow.exists({ interactionId: interaction._id, windowIndex })) return reply(true, null, await currentShow(), { "Idempotent-Replay": "true" });
 
+  // No speaker state after the first window: the first window was never analysed, so nothing anchors
+  // who is who. Analyse this window as the caller's own audio (nothing dropped) and mark the call limited.
+  const anchorLost = audioSource === "MIXED" && !interaction.speakerStateEnc && windowIndex > 0;
   const audio = new Uint8Array(await file.arrayBuffer());
   const r = await analyzeAudio({
     requestId: randomUUID(),
@@ -75,9 +84,9 @@ export async function handleAudioChunk(req: Request, interactionId: string, lang
     startMs,
     languageHint: interaction.uiLanguage,
     baseline: (interaction.voiceBaseline as Record<string, number> | null) ?? null,
-    audioSource,
+    audioSource: anchorLost ? "CALLER_ONLY" : audioSource,
     firstSpeaker,
-    speakerState: interaction.speakerStateEnc ? decrypt(interaction.speakerStateEnc) : null,
+    speakerState: interaction.speakerStateEnc && !anchorLost ? decrypt(interaction.speakerStateEnc) : null,
     audio,
     mimeType,
   });
@@ -98,12 +107,12 @@ export async function handleAudioChunk(req: Request, interactionId: string, lang
     callerText = `${callerText} ${operatorText}`.trim();
     operatorText = "";
   }
-  const separated = audioSource === "MIXED" && sp?.separated === true && sp.confident === true && !mislabelSuspected;
+  const separated = audioSource === "MIXED" && !anchorLost && sp?.separated === true && sp.confident === true && !mislabelSuspected;
   // Only one voice heard so far (normal at the start of a call): everything was scored as the caller's,
   // and this window's assessment is limited confidence, without marking the whole call.
-  const singleVoice = audioSource === "MIXED" && sp?.singleVoice === true && !mislabelSuspected;
+  const singleVoice = audioSource === "MIXED" && !anchorLost && sp?.singleVoice === true && !mislabelSuspected;
   const update: Record<string, unknown> = {};
-  if (sp?.state) update.speakerStateEnc = encrypt(sp.state);
+  if (sp?.state && !anchorLost) update.speakerStateEnc = encrypt(sp.state); // without an anchor no state is kept, so later windows stay unseparated
   if (audioSource === "MIXED" && !separated && !singleVoice) update.voiceUnseparated = true; // FR-VOI-10: limited from now on
   if (Object.keys(update).length) await Interaction.updateOne({ _id: interaction._id }, { $set: update });
   // The operator's words go in first, as the question the caller's words answer (FR-NLP-11).

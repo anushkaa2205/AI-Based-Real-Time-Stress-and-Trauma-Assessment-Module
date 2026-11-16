@@ -165,6 +165,33 @@ test("a two-voice call is separated: only the caller's words are scored (AC-VOI-
   });
 });
 
+test("a two-voice call whose first window never arrived: no anchor, so nothing is dropped and the call is limited (FR-VOI-10, rule 4)", async ({ request }) => {
+  test.setTimeout(240_000);
+  // Without window 0 (the operator's greeting) the first voice heard is the caller's. Labelling it as the
+  // operator would drop the caller's words, so the module must score all speech as the caller's.
+  const v = await integrationSession(request, { channel: "VOICE_CALL", consent: { voiceAnalysis: true } });
+  const windows = wavWindows(TWO_VOICES);
+  const transcripts: string[] = [];
+  for (const [i, wav] of windows.entries()) {
+    if (i === 0) continue;
+    const r = await request.post(`${v.base}/audio`, {
+      headers: v.headers,
+      multipart: { audio: { name: `w${i}.wav`, mimeType: "audio/wav", buffer: wav }, windowIndex: String(i), startMs: String(i * WINDOW_S * 1000), audioSource: "MIXED" },
+    });
+    expect(r.status()).toBe(202);
+    transcripts.push((await r.json()).transcript ?? "");
+  }
+  const all = transcripts.join(" ");
+  expect(all).toMatch(/sister/i); // the caller's words are kept…
+  expect(all).toMatch(/are you safe/i); // …and so is everything else, scored as the caller's
+  await v.call("/end", { reason: "COMPLETED" });
+  await withDb(async (db) => {
+    const iid = new (await import("mongoose")).Types.ObjectId(v.interactionId);
+    expect(await db.collection("messages").countDocuments({ interactionId: iid, sender: "OPERATOR", modality: "VOICE_TRANSCRIPT" })).toBe(0);
+    expect((await db.collection("interactions").findOne({ _id: iid }))?.voiceUnseparated).toBe(true);
+  });
+});
+
 test("voice without voice consent is refused before any analysis (FR-CON-02)", async ({ request }) => {
   const v = await integrationSession(request, { consent: { voiceAnalysis: false, shareWithCounsellor: false } });
   const r = await request.post(`${v.base}/audio`, {
