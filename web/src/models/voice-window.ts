@@ -1,6 +1,7 @@
 /** `voice_windows` collection (split from docs/models.ts, task 1.2). */
 import { Schema } from "mongoose";
 import { getModel, ObjectId, appendOnly } from "./_shared";
+import { INPUT_METHODS } from "./enums";
 
 const AudioEventSchema = new Schema(
   {
@@ -46,6 +47,7 @@ const VoiceWindowSchema = new Schema(
     // Task M.10 (FR-VOI-10): where the audio came from and how the two voices were separated.
     // Features above come from the caller's speech only; nothing identifying the voice is stored here.
     audioSource: { type: String, enum: ["CALLER_ONLY", "MIXED"], default: "MIXED" },
+    inputMethod: { type: String, enum: INPUT_METHODS }, // M.6: LIVE_AUDIO or RECORDED_AUDIO
     speakers: {
       separated: Boolean,
       confident: Boolean,

@@ -386,6 +386,7 @@ export function RecordedAudioDemo({ library }: { library: LibraryScenario[] }) {
           onRefresh={session ? () => void refresh() : undefined}
           summary={{
             mode: run?.source === "upload" ? "Recorded audio (upload)" : "Recorded audio library",
+            inputMethod: "RECORDED_AUDIO",
             channel: session?.channel ?? "VOICE_CALL",
             language: run?.language ?? "en",
             scenarioId: run?.scenario?.id ?? null,

@@ -25,6 +25,9 @@ export const CONSENT_ACTIONS = ["GRANTED", "UPDATED", "WITHDRAWN"] as const;
 export const MESSAGE_SENDERS = ["VICTIM", "SYSTEM", "OPERATOR"] as const;
 /** IVR_KEYPRESS removed 16 Nov 2026: the module accepts text and voice only (FR-CH-01). */
 export const MESSAGE_MODALITIES = ["TEXT", "VOICE_TRANSCRIPT"] as const;
+/** How the input reached the calling system (task M.6, gap V2); separate from `channel` and `modality` */
+export const INPUT_METHODS = ["TEXT", "TRANSCRIPT", "LIVE_AUDIO", "RECORDED_AUDIO"] as const;
+export type InputMethod = (typeof INPUT_METHODS)[number];
 
 /** The eight risk dimensions (FR-IND-01) */
 export const DIMENSIONS = [

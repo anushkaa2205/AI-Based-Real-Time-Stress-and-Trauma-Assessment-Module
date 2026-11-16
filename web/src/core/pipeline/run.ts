@@ -31,7 +31,7 @@ import { db } from "@/lib/db";
 import { ApiError } from "@/lib/problem";
 import { interactionChannel, type OutboundEvent } from "@/lib/realtime/channels";
 import { publish } from "@/lib/realtime/publish";
-import { Case, Indicator, Interaction, Job, Message, VoiceWindow, type AssessmentMode } from "@/models";
+import { Case, Indicator, Interaction, Job, Message, VoiceWindow, type AssessmentMode, type InputMethod } from "@/models";
 import { scoreInteraction, type Trigger } from "./score";
 
 export type { Trigger };
@@ -39,10 +39,10 @@ export type { Trigger };
 export interface RunInput {
   interactionId: string;
   trigger: "TEXT_MESSAGE" | "CONTEXT_UPDATE" | "VOICE_WINDOW";
-  message?: { text: string; idempotencyKey?: string };
+  message?: { text: string; idempotencyKey?: string; inputMethod?: InputMethod };
   context?: CaseContextInput;
   /** One analysed voice window (task 7.5); its transcript, if any, is `message`. */
-  voice?: { windowIndex: number; startMs: number; analysis: AnalyzeAudioResponse | null; audioSource?: "CALLER_ONLY" | "MIXED" };
+  voice?: { windowIndex: number; startMs: number; analysis: AnalyzeAudioResponse | null; audioSource?: "CALLER_ONLY" | "MIXED"; inputMethod?: InputMethod };
   /** Whole-turn AI budget override. */
   aiBudgetMs?: number;
   /**
@@ -173,6 +173,7 @@ export async function runPipeline(input: RunInput): Promise<RunResult> {
                 seq: interaction.messageSeq,
                 sender: "VICTIM",
                 modality: input.voice ? "VOICE_TRANSCRIPT" : "TEXT",
+                inputMethod: input.message.inputMethod,
                 textEnc: textEnc ?? undefined,
                 translationEnc: ai?.translationEnc ?? undefined,
                 language,
@@ -233,6 +234,7 @@ export async function runPipeline(input: RunInput): Promise<RunResult> {
                 emotion: a.emotion,
                 fusedEmotion: fused ?? undefined,
                 audioSource: input.voice.audioSource ?? "MIXED",
+                inputMethod: input.voice.inputMethod,
                 ...(a.speakers
                   ? { speakers: { separated: a.speakers.separated, confident: a.speakers.confident, callerMs: a.speakers.callerMs, operatorMs: a.speakers.operatorMs } }
                   : {}),

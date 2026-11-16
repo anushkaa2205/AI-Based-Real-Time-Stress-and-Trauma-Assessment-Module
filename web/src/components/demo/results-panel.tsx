@@ -23,6 +23,8 @@ export interface TimelineEvent {
 export interface InputSummary {
   mode: string;
   channel: string;
+  /** M.6: how the input reached the (simulated) NHAA system */
+  inputMethod: string;
   language: string;
   scenarioId: string | null;
   docketNumber: string | null;
@@ -147,6 +149,8 @@ export function ResultsPanel({
           <dd>
             {lower(summary.channel)} <span className="text-muted-foreground">(simulated)</span>
           </dd>
+          <dt className="text-muted-foreground">Input method</dt>
+          <dd className="font-mono text-[0.8rem]">{summary.inputMethod}</dd>
           <dt className="text-muted-foreground">Language</dt>
           <dd>{LANGUAGE_LABEL[summary.language] ?? summary.language}</dd>
           <dt className="text-muted-foreground">Scenario</dt>

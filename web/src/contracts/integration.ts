@@ -14,9 +14,17 @@ export const IntegrationStart = z.object({
   consent: ConsentRequest,
 });
 
+/**
+ * Version of the integration contract, sent as `X-Contract-Version` on every integration response
+ * (task M.6, gap V2). 1.1: `inputMethod`, `GET …/indicators` (M.5).
+ */
+export const INTEGRATION_CONTRACT_VERSION = "1.1";
+
 export const IntegrationMessage = z.object({
   text: z.string().trim().min(1).max(2000),
   sender: z.enum(["VICTIM", "OPERATOR"]).default("VICTIM"),
+  /** M.6: TEXT (typed) or TRANSCRIPT (the calling system's own speech-to-text); default TEXT */
+  inputMethod: z.enum(["TEXT", "TRANSCRIPT"]).default("TEXT"),
 });
 
 export const IntegrationEnd = z.object({ reason: z.enum(["COMPLETED", "TIMEOUT"]).default("COMPLETED") });

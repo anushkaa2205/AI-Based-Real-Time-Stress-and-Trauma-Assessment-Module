@@ -11,6 +11,6 @@ import { ApiError } from "@/lib/problem";
 export const POST = demoRoute({ body: DemoMessage }, async ({ req, params, body }) => {
   const id = String(params.id);
   if (!/^[a-f0-9]{24}$/.test(id)) throw new ApiError("NOT_FOUND");
-  const r = await callModule(originOf(req), `/interactions/${id}/messages`, { json: { text: body.text, sender: body.sender } });
+  const r = await callModule(originOf(req), `/interactions/${id}/messages`, { json: { text: body.text, sender: body.sender, inputMethod: "TEXT" } });
   return { status: r.status, body: r.body, call: r.call };
 });

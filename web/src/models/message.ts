@@ -1,7 +1,7 @@
 /** `messages` collection (split from docs/models.ts, task 1.2). */
 import { Schema } from "mongoose";
 import { getModel, ObjectId, appendOnly } from "./_shared";
-import { MESSAGE_SENDERS, MESSAGE_MODALITIES } from "./enums";
+import { INPUT_METHODS, MESSAGE_SENDERS, MESSAGE_MODALITIES } from "./enums";
 
 const MessageSchema = new Schema(
   {
@@ -9,6 +9,7 @@ const MessageSchema = new Schema(
     seq: { type: Number, required: true },
     sender: { type: String, enum: MESSAGE_SENDERS, required: true },
     modality: { type: String, enum: MESSAGE_MODALITIES, required: true },
+    inputMethod: { type: String, enum: INPUT_METHODS }, // M.6: as the calling system said (absent before M.6)
     textEnc: { type: String, required: true },
     translationEnc: String, // EN/HI for responders (FR-LANG-06)
     // Added in task 4.8 (not yet in DATABASE.md): text emotion for the emotion timeline (FR-EMO-01/03)

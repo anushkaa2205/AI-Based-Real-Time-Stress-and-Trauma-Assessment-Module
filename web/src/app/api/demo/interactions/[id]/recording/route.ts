@@ -73,6 +73,7 @@ export const POST = demoRoute({}, async ({ req, params }) => {
           form.set("startMs", String(w.startMs));
           form.set("audioSource", src.audioSource);
           form.set("firstSpeaker", src.firstSpeaker);
+          form.set("inputMethod", "RECORDED_AUDIO"); // M.6
           let r = await callModule<AudioReply>(origin, `/interactions/${id}/audio`, { form });
           // A window the module could not analyse (e.g. a timeout) is not stored, so it can be sent again.
           // Retrying once matters most for window 0, which anchors who is the operator (API_CONTRACTS §6.3).

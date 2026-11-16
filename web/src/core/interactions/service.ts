@@ -14,7 +14,7 @@ import { isMinor, type CaseContextInput } from "@/core/scoring/context";
 import { db } from "@/lib/db";
 import { ApiError } from "@/lib/problem";
 import { encrypt } from "@/core/privacy/crypto";
-import { Case, District, Interaction, Message, State, StoredAudio, Subject, type Channel } from "@/models";
+import { Case, District, Interaction, Message, State, StoredAudio, Subject, type Channel, type InputMethod } from "@/models";
 
 /** Who is acting: an integrating system (API key). */
 export type ServiceActor = { type: "API_CLIENT"; id: string };
@@ -165,7 +165,7 @@ export async function withdrawConsent(id: string, actor: ServiceActor) {
 export async function addOperatorTurn(
   id: string,
   text: string,
-  opts: { modality?: "TEXT" | "VOICE_TRANSCRIPT"; idempotencyKey?: string } = {},
+  opts: { modality?: "TEXT" | "VOICE_TRANSCRIPT"; idempotencyKey?: string; inputMethod?: InputMethod } = {},
 ): Promise<string> {
   await db();
   if (opts.idempotencyKey) {
@@ -179,6 +179,7 @@ export async function addOperatorTurn(
     seq: i.messageSeq,
     sender: "OPERATOR",
     modality: opts.modality ?? "TEXT",
+    inputMethod: opts.inputMethod,
     textEnc: encrypt(text),
     idempotencyKey: opts.idempotencyKey,
   });

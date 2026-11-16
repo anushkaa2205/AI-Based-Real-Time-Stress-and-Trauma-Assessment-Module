@@ -18,11 +18,11 @@ export const POST = route({ auth: "api", scope: "interactions:write", body: Inte
   const idempotencyKey = req.headers.get("idempotency-key")?.slice(0, 100) || undefined;
 
   if (body.sender === "OPERATOR") {
-    const messageId = await addOperatorTurn(own.id, body.text, { idempotencyKey });
+    const messageId = await addOperatorTurn(own.id, body.text, { idempotencyKey, inputMethod: body.inputMethod });
     return Response.json({ messageId, showEmergencyPanel: false, emergency: null }, { status: 201 });
   }
 
-  const run = await runPipeline({ interactionId: own.id, trigger: "TEXT_MESSAGE", message: { text: body.text, idempotencyKey } });
+  const run = await runPipeline({ interactionId: own.id, trigger: "TEXT_MESSAGE", message: { text: body.text, idempotencyKey, inputMethod: body.inputMethod } });
   return Response.json(
     { messageId: run.messageId, showEmergencyPanel: run.showEmergencyPanel, emergency: run.showEmergencyPanel ? emergencyPanel(own.lang) : null },
     { status: run.replayed ? 200 : 201, headers: run.replayed ? { "Idempotent-Replay": "true" } : {} },

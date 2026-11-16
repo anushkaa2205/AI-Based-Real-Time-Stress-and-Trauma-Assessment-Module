@@ -389,6 +389,7 @@ export function LiveTextDemo({ scenarios, questions }: { scenarios: TextScenario
           onRefresh={session ? () => void refresh() : undefined}
           summary={{
             mode: "Live text",
+            inputMethod: "TEXT",
             channel: session?.channel ?? "CHATBOT",
             language: scenario?.language ?? language,
             scenarioId: scenario?.id ?? null,

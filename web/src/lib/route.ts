@@ -10,6 +10,7 @@
 import { randomBytes } from "node:crypto";
 import type { NextRequest } from "next/server";
 import { z } from "zod";
+import { INTEGRATION_CONTRACT_VERSION } from "@/contracts/integration";
 import { parseAuthorization, secretMatches, type Scope } from "@/core/integration/apikey";
 import { access, type Access, type Action, type PolicyResource } from "@/core/policies/rbac";
 import { ForbiddenError } from "@/core/policies/serializers";
@@ -137,7 +138,7 @@ export function route<A extends AuthMode, B extends z.ZodType = z.ZodUndefined, 
   opts: RouteOptions<A, B, Q>,
   handler: (ctx: RouteContext<A, B, Q>) => Promise<unknown>,
 ) {
-  return async (req: NextRequest, segment: { params: Promise<Params> }): Promise<Response> => {
+  const handle = async (req: NextRequest, segment: { params: Promise<Params> }): Promise<Response> => {
     const requestId = newRequestId();
     const instance = req.nextUrl.pathname;
     let headers: Record<string, string> = {};
@@ -208,5 +209,12 @@ export function route<A extends AuthMode, B extends z.ZodType = z.ZodUndefined, 
       }
       return problemResponse(new ApiError("INTERNAL"), instance, requestId);
     }
+  };
+  if (opts.auth !== "api") return handle;
+  // Task M.6 (gap V2): every integration response, errors included, states the contract version.
+  return async (req: NextRequest, segment: { params: Promise<Params> }): Promise<Response> => {
+    const res = await handle(req, segment);
+    res.headers.set("X-Contract-Version", INTEGRATION_CONTRACT_VERSION);
+    return res;
   };
 }

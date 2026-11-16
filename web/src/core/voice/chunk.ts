@@ -55,9 +55,10 @@ export async function handleAudioChunk(req: Request, interactionId: string, lang
     startMs: form.get("startMs"),
     audioSource: form.get("audioSource") ?? undefined,
     firstSpeaker: form.get("firstSpeaker") ?? undefined,
+    inputMethod: form.get("inputMethod") ?? undefined,
   });
   if (!fields.success) throw new ApiError("VALIDATION_FAILED", "windowIndex and startMs are required; audioSource is CALLER_ONLY or MIXED");
-  const { windowIndex, startMs, audioSource, firstSpeaker } = fields.data;
+  const { windowIndex, startMs, audioSource, firstSpeaker, inputMethod } = fields.data;
 
   const interaction = await Interaction.findById(interactionId).select("mode status consents.action uiLanguage voiceBaseline caseId +speakerStateEnc").lean();
   if (!interaction) throw new ApiError("NOT_FOUND");
@@ -116,14 +117,14 @@ export async function handleAudioChunk(req: Request, interactionId: string, lang
   if (audioSource === "MIXED" && !separated && !singleVoice) update.voiceUnseparated = true; // FR-VOI-10: limited from now on
   if (Object.keys(update).length) await Interaction.updateOne({ _id: interaction._id }, { $set: update });
   // The operator's words go in first, as the question the caller's words answer (FR-NLP-11).
-  if (operatorText) await addOperatorTurn(interactionId, operatorText.slice(0, 2000), { modality: "VOICE_TRANSCRIPT", idempotencyKey: `voice-op:${windowIndex}` });
+  if (operatorText) await addOperatorTurn(interactionId, operatorText.slice(0, 2000), { modality: "VOICE_TRANSCRIPT", idempotencyKey: `voice-op:${windowIndex}`, inputMethod });
 
   const text = callerText;
   const run = await runPipeline({
     interactionId,
     trigger: "VOICE_WINDOW",
-    message: text ? { text: text.slice(0, 2000), idempotencyKey: `voice:${windowIndex}` } : undefined,
-    voice: { windowIndex, startMs, analysis: r.result, audioSource },
+    message: text ? { text: text.slice(0, 2000), idempotencyKey: `voice:${windowIndex}`, inputMethod } : undefined,
+    voice: { windowIndex, startMs, analysis: r.result, audioSource, inputMethod },
     voiceLimited: singleVoice,
     deferAi: true,
   });

@@ -85,6 +85,8 @@ export const AudioFields = z.object({
   audioSource: z.enum(["CALLER_ONLY", "MIXED"]).default("MIXED"),
   /** Which voice speaks first in a MIXED call; the helpline usually answers first */
   firstSpeaker: z.enum(["OPERATOR", "CALLER"]).default("OPERATOR"),
+  /** Task M.6: LIVE_AUDIO (during the call, default) or RECORDED_AUDIO (a recording cut into windows) */
+  inputMethod: z.enum(["LIVE_AUDIO", "RECORDED_AUDIO"]).default("LIVE_AUDIO"),
 });
 
 /** 202 for a voice window: the transcript back, and only the emergency signal (rule 1). */
