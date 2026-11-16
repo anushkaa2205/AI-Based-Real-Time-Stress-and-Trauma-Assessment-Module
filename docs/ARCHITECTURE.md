@@ -576,7 +576,7 @@ flowchart LR
 │   │   │   │   ├── welfare/
 │   │   │   │   ├── analytics/          # state + ministry
 │   │   │   │   ├── admin/              # users, scoring configs, audit
-│   │   │   │   └── demo/               # demo input layer (M.11, M.14): text/, recorded/; off unless DEMO_ENABLED
+│   │   │   │   └── demo/               # demo input layer (M.11–M.14): text/, live-call/, recorded/, generated/; off unless DEMO_ENABLED
 │   │   │   ├── api/demo/…              # demo proxy: calls /api/v1/integration with DEMO_API_KEY (API_CONTRACTS §6.5)
 │   │   │   └── api/v1/
 │   │   │       ├── integration/…       # API-key API: the module's only input

@@ -486,11 +486,13 @@ The demo calls the module **only through this integration API**, over HTTP, with
 
 | Method | Path | Request → Response |
 |---|---|---|
-| `POST` | `/api/demo/interactions` | `{ mode: "LIVE_TEXT" \| "RECORDED_AUDIO", language, consent: ConsentRequest, scenarioId? }` → `201 { interactionId, docketNumber, caseId, mode, call }`. Calls `POST /integration/interactions` with channel `CHATBOT` (live text) or `VOICE_CALL` (recorded audio). |
+| `POST` | `/api/demo/interactions` | `{ mode: "LIVE_TEXT" \| "RECORDED_AUDIO" \| "LIVE_AUDIO" \| "GENERATED_TEXT", language, consent: ConsentRequest, scenarioId? }` → `201 { interactionId, docketNumber, caseId, mode, call }`. Calls `POST /integration/interactions` with channel `CHATBOT` (live or generated text) or `VOICE_CALL` (recorded audio, live microphone). `LIVE_AUDIO` first ends any other active live microphone call: one at a time on the free tier (TOOLS_AND_COSTS). |
 | `POST` | `/api/demo/interactions/{id}/messages` | `{ text, sender }` → `200 { status, call, body }`: the module's status and body unchanged, plus `call = { requestId, ms }` |
 | `POST` | `/api/demo/interactions/{id}/recording` | Either JSON `{ scenarioId }` (a library file on the server) or `multipart/form-data` with one WAV `file` (≤ 4 MB), plus `audioSource`, `firstSpeaker`. The server cuts the WAV into 5 s windows (M.8) and sends them to `POST /integration/…/audio` in order. **Response: `application/x-ndjson`**, one line per event: `{ type: "start", windows, durationMs }`, then per window `{ type: "window", windowIndex, startMs, endMs, status, analysed, transcript, call }`, then `{ type: "done" }` or `{ type: "error", code }`. |
 | `POST` | `/api/demo/interactions/{id}/end` | → `200`; calls `POST /integration/…/end` |
 | `GET` | `/api/demo/library` | `{ items: DemoScenario[] }`: the scenario library (below), each with `recordingAvailable` |
+| `POST` | `/api/demo/interactions/{id}/audio` | One live-microphone window (task M.12): multipart `audio`, `windowIndex`, `startMs`, relayed to `POST /integration/…/audio` as `audioSource: CALLER_ONLY`, `inputMethod: LIVE_AUDIO`. The module's status and body come back unchanged; `X-Module-Request-Id` and `X-Module-Ms` carry the call details. Nothing is stored. |
+| `POST` | `/api/demo/generate` | `{ category, language, length: "short" \| "medium" \| "long", tone: "calm" \| "worried" \| "distressed" }` → `200 { turns: [{ speaker: "CHATBOT" \| "PERSON", text }], synthetic: true, modelVersion }` (task M.13). Calls the analysis service's `POST /v1/demo/generate` (§8.3a) with NHAA's scripted questions in that language; `503 ANALYSIS_DEGRADED` if it cannot. The page shows the result labelled synthetic and only then plays it through `/messages`. |
 
 **Recorded audio (M.8).** Library files and uploads must be PCM WAV (16-bit, mono or stereo, any sample rate; convert with Audacity, which is free). Each window is a standalone WAV of at most 5 s; a final piece under 1 s is dropped. Windows are sent one at a time, never in parallel, with `startMs` = window × 5000. The real audio goes through the real audio path; a prewritten transcript is never sent.
 
@@ -616,6 +618,9 @@ The first windows (until 20–30 s of speech) return `baselineUpdate` instead of
 
 ### 8.3 `POST /v1/summarize`
 `{ requestId, messages: [{ sender, text }], language }` → `{ summary, summaryEn, modelVersion }`: neutral, factual, no diagnosis (FR-NLP-09).
+
+### 8.3a `POST /v1/demo/generate` (demo input layer only, task M.13)
+`{ requestId, category, language, length, tone, questions: string[] }` → `{ turns: [{ speaker, text }], synthetic: true, modelVersion }`. The LLM writes SYNTHETIC test data, never anything a person sees, and scores nothing (CLAUDE.md rules 2 and 3). Guardrails applied to whatever the model returns: chatbot lines are kept only if they are one of `questions` word for word; lines with a link, phone-like number or e-mail are dropped; at most 4, 8 or 12 lines. No caching. `422` for unknown options or nothing usable, `503 MODEL_UNAVAILABLE` if the LLM fails.
 
 ### 8.4 `GET /v1/health`
 `{ status: "ok", models: { stt: "loaded", ser: "loaded", nlp: "reachable" } }`
