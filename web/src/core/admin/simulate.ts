@@ -56,12 +56,13 @@ export function simulate(scenarios: readonly Scenario[], config: ScoringConfig):
 }
 
 /** The evaluation scenarios next to the web app (`../evaluation/scenarios`). */
-export function loadScenarios(dir = resolve(process.cwd(), "../evaluation/scenarios")): Scenario[] {
-  return readdirSync(dir)
+export function loadScenarios(dir = resolve(/*turbopackIgnore: true*/ process.cwd(), "../evaluation/scenarios")): Scenario[] {
+  // The scenario files are listed in next.config.ts (outputFileTracingIncludes), so the build need not trace the whole project.
+  return readdirSync(/*turbopackIgnore: true*/ dir)
     .filter((f) => f.endsWith(".json"))
     .sort()
     .flatMap((f) => {
-      const parsed = ScenarioSchema.safeParse(JSON.parse(readFileSync(join(dir, f), "utf8")));
+      const parsed = ScenarioSchema.safeParse(JSON.parse(readFileSync(/*turbopackIgnore: true*/ join(dir, f), "utf8")));
       return parsed.success ? [parsed.data] : [];
     });
 }

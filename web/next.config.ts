@@ -1,3 +1,4 @@
+import { resolve } from "node:path";
 import type { NextConfig } from "next";
 
 const isDev = process.env.NODE_ENV !== "production";
@@ -31,8 +32,22 @@ const securityHeaders = [
   { key: "Permissions-Policy", value: "camera=(), geolocation=(), microphone=(self)" },
 ];
 
+/**
+ * Files outside `web/` that server code reads at run time (the demo scenario library, task M.14, and the
+ * evaluation scenarios the demo and the admin "simulate" feature use). Without this they would not be
+ * packaged into Vercel's serverless functions. Needs "Include files outside the Root Directory" on in the
+ * Vercel project (the default for new projects) and Root Directory = web.
+ */
+const outsideFiles = ["../demo/library/library.json", "../evaluation/scenarios/*.json"];
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  outputFileTracingRoot: resolve(process.cwd(), ".."),
+  outputFileTracingIncludes: {
+    "/demo/**": outsideFiles,
+    "/api/demo/**": outsideFiles,
+    "/api/v1/staff/admin/scoring-configs/**": ["../evaluation/scenarios/*.json"],
+  },
   experimental: {
     authInterrupts: true, // forbidden() / unauthorized() for staff pages
   },
