@@ -24,5 +24,33 @@
     "onGuard": "In the past month, because of what happened, have you: Felt constantly on guard, watchful or easily startled?",
     "numb": "In the past month, because of what happened, have you: Felt numb or cut off from people, activities or your surroundings?",
     "guilt": "In the past month, because of what happened, have you: Felt guilty, or unable to stop blaming yourself or others?"
+  },
+  "track": {
+    "title": "Track your case",
+    "lead": "Enter the docket ID you were given. You will see where the case stands and the support arranged, nothing diagnostic.",
+    "registeredOn": "Registered",
+    "updatedOn": "Last updated",
+    "supportTitle": "Support arranged",
+    "noSupport": "No support has been arranged yet. Helpline staff are reviewing the case.",
+    "notFound": "No demo case found with this number. Check the docket ID and try again.",
+    "unavailable": "The case could not be looked up right now. Please try again.",
+    "another": "Track another case",
+    "status": {
+      "NEW": "Registered",
+      "UNDER_REVIEW": "Being reviewed by helpline staff",
+      "ACTION_TAKEN": "Support arranged",
+      "FOLLOW_UP_SCHEDULED": "Follow-up planned",
+      "CLOSED": "Closed"
+    },
+    "support": {
+      "COUNSELLING": "Counselling has been arranged",
+      "LEGAL_AID": "Legal aid has been arranged",
+      "MEDICAL_ASSISTANCE": "Medical assistance has been arranged",
+      "POLICE_INTERVENTION": "The police have been asked to act",
+      "WITNESS_PROTECTION": "Protection has been arranged",
+      "EMERGENCY_SUPPORT": "Emergency support has been sent",
+      "REHABILITATION_RELIEF": "Rehabilitation and relief have been arranged",
+      "INFORMATION": "Information has been shared with you"
+    }
   }
 }
