@@ -25,6 +25,11 @@ describe("staff navigation (task 1.11)", () => {
     }
   });
 
+  it("offers the demo input layer to supervisors only (M.11, M.14)", () => {
+    expect(STAFF_PAGES.demo.roles).toEqual(["NHAA_SUPERVISOR"]);
+    for (const role of ["POLICE_LIAISON", "WELFARE_OFFICER", "COUNSELLOR", "OPERATOR", "DISTRICT_OFFICER"] as const) expect(canOpen(role, "demo")).toBe(false);
+  });
+
   it("gives each analytics role the analytics page", () => {
     expect(STAFF_PAGES.analytics.roles).toEqual(
       expect.arrayContaining(["STATE_ADMIN", "MINISTRY_ADMIN", "NHAA_SUPERVISOR", "DISTRICT_OFFICER"]),

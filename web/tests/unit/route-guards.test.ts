@@ -45,6 +45,13 @@ describe("every API route is guarded (task 9.5)", () => {
         expect(f.src).toMatch(/currentStaff|staffCanSubscribe|auth: "staff"/);
         return;
       }
+      if (f.path.startsWith("demo/")) {
+        // Demo input layer (API_CONTRACTS §6.5): every handler goes through demoRoute (checked below).
+        const exported = [...f.src.matchAll(/export const (GET|POST|PUT|PATCH|DELETE) = (\w+)\(/g)];
+        expect(exported.length, "exports a handler").toBeGreaterThan(0);
+        for (const m of exported) expect(m[2], `${m[1]}: demoRoute`).toBe("demoRoute");
+        return;
+      }
       const hs = handlers(f.src);
       expect(hs.length, "uses the route() helper").toBeGreaterThan(0);
       for (const h of hs) {
@@ -61,6 +68,12 @@ describe("every API route is guarded (task 9.5)", () => {
       }
     });
   }
+
+  it("demoRoute answers 404 when the demo is off and otherwise needs a staff session with demo.use", () => {
+    const src = readFileSync(resolve(__dirname, "../../src/core/demo/route.ts"), "utf8");
+    expect(src).toMatch(/if \(!demoEnabled\(\)\) return problemResponse\(new ApiError\("NOT_FOUND"\)/);
+    expect(src).toMatch(/auth: "staff", action: "demo.use"/);
+  });
 
   it("has no victim API and no endpoint for structured answers (FR-CH-01, FR-API-05, AC-CH-07)", () => {
     expect(files.filter((f) => f.path.startsWith("v1/victim/")).map((f) => f.path)).toEqual([]);

@@ -51,4 +51,12 @@ describe("parseEnv (task 0.5)", () => {
   it("requires Pusher keys when the driver is pusher", () => {
     expect(() => parseEnv({ ...valid, REALTIME_DRIVER: "pusher" })).toThrowError(/PUSHER_KEY/);
   });
+
+  it("keeps the demo input layer off by default and needs its key when switched on (M.11, M.14)", () => {
+    expect(parseEnv(valid).DEMO_ENABLED).toBe("false");
+    expect(() => parseEnv({ ...valid, DEMO_ENABLED: "true" })).toThrowError(/DEMO_API_KEY/);
+    expect(() => parseEnv({ ...valid, DEMO_ENABLED: "true", DEMO_API_KEY: "not-a-key" })).toThrowError(/DEMO_API_KEY/);
+    const key = `nhaa_${"a".repeat(12)}.${"b".repeat(43)}`;
+    expect(parseEnv({ ...valid, DEMO_ENABLED: "true", DEMO_API_KEY: key }).DEMO_API_KEY).toBe(key);
+  });
 });
