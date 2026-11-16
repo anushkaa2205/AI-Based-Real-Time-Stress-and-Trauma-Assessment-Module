@@ -1,5 +1,7 @@
-/** GET /api/demo/library (API_CONTRACTS §6.5, task M.14): the scenario library and which recordings exist. */
+/** GET /api/demo/library (task N.4): the scenario library, without its expected labels (test metadata never reaches a visitor). */
 import { loadLibrary } from "@/core/demo/library";
-import { demoRoute } from "@/core/demo/route";
+import { publicDemoRoute } from "@/core/demo/public";
 
-export const GET = demoRoute({}, async () => ({ items: loadLibrary() }));
+export const GET = publicDemoRoute({ limit: "other" }, async () => ({
+  items: loadLibrary().map((s) => ({ id: s.id, title: s.title, languageTag: s.languageTag, language: s.language, audioSource: s.audioSource, firstSpeaker: s.firstSpeaker, script: s.script, recordingAvailable: s.recordingAvailable })),
+}));

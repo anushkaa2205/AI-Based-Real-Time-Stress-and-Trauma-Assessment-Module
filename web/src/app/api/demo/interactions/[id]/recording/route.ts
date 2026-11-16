@@ -3,15 +3,17 @@
  * A recorded WAV (a library file on this server, or an upload) is cut into 5 s windows on the
  * server and sent to `POST /api/v1/integration/…/audio` one at a time, in order, with the demo
  * key: the real audio through the real audio path, never a prewritten transcript.
- * Streams one NDJSON line per window so the presenter sees each window land. Each request stops
- * after ~45 s (hosting limit: 60 s on Vercel Hobby) with a `more` event; the page then sends the
- * same recording again from `nextWindow`, so any length of recording works.
+ * Streams one NDJSON line per window so the visitor sees progress. Each request stops after ~45 s
+ * (hosting limit: 60 s on Vercel Hobby) with a `more` event; the page then sends the same recording
+ * again from `nextWindow`, so any length works. Public (task N.4): only this browser's own cases,
+ * and no transcript, request id or timing leaves (plan §7).
  */
 import { readFileSync, statSync } from "node:fs";
-import { DemoRecordingJson, MAX_UPLOAD_BYTES, RecordingFields, type RecordingEvent } from "@/contracts/demo";
+import { DemoRecordingJson, MAX_UPLOAD_BYTES, RecordingFields, type DemoReceipt, type RecordingEvent } from "@/contracts/demo";
 import { callModule } from "@/core/demo/client";
 import { findScenario, MAX_LIBRARY_FILE_BYTES, recordingPath } from "@/core/demo/library";
-import { demoRoute, originOf } from "@/core/demo/route";
+import { publicDemoRoute } from "@/core/demo/public";
+import { originOf } from "@/core/demo/route";
 import { cutWav, WavError } from "@/core/demo/wav";
 import { ApiError } from "@/lib/problem";
 
@@ -21,9 +23,9 @@ export const maxDuration = 60;
 const BUDGET_MS = Math.min(50_000, Math.max(1_000, Number(process.env.DEMO_RECORDING_BUDGET_MS) || 45_000));
 
 interface AudioReply {
-  transcript?: string | null;
   analysed?: boolean;
-  title?: string;
+  showEmergencyPanel?: boolean;
+  emergency?: DemoReceipt["emergency"];
   code?: string;
 }
 
@@ -56,10 +58,9 @@ async function readSource(req: Request): Promise<{
   return { bytes: new Uint8Array(await file.arrayBuffer()), ...fields, source: "upload", scenarioId: null };
 }
 
-export const POST = demoRoute({}, async ({ req, params }) => {
+export const POST = publicDemoRoute({ limit: "recording", owned: true }, async ({ req, params }) => {
   const t0 = Date.now();
   const id = String(params.id);
-  if (!/^[a-f0-9]{24}$/.test(id)) throw new ApiError("NOT_FOUND");
   const src = await readSource(req);
   let cut: ReturnType<typeof cutWav>;
   try {
@@ -75,8 +76,10 @@ export const POST = demoRoute({}, async ({ req, params }) => {
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       const send = (e: RecordingEvent) => controller.enqueue(enc.encode(`${JSON.stringify(e)}\n`));
-      send({ type: "start", windows: cut.windows.length, durationMs: cut.info.durationMs, source: src.source, scenarioId: src.scenarioId, fromWindow: src.fromWindow });
+      send({ type: "start", windows: cut.windows.length, durationMs: cut.info.durationMs, fromWindow: src.fromWindow });
       let analysed = 0;
+      let showEmergencyPanel = false;
+      let emergency: DemoReceipt["emergency"] = null;
       try {
         for (const w of cut.windows) {
           if (w.windowIndex < src.fromWindow) continue; // sent by an earlier request
@@ -102,6 +105,10 @@ export const POST = demoRoute({}, async ({ req, params }) => {
           w.wav.fill(0);
           const ok = r.status === 202 || r.status === 200;
           if (ok && r.body?.analysed) analysed += 1;
+          if (ok && r.body?.showEmergencyPanel) {
+            showEmergencyPanel = true;
+            emergency = r.body.emergency ?? emergency;
+          }
           send({
             type: "window",
             windowIndex: w.windowIndex,
@@ -109,13 +116,11 @@ export const POST = demoRoute({}, async ({ req, params }) => {
             endMs: w.endMs,
             status: r.status,
             analysed: ok && r.body?.analysed === true,
-            transcript: ok ? (r.body?.transcript ?? null) : null,
-            error: ok ? null : (r.body?.code ?? r.body?.title ?? `HTTP ${r.status}`),
-            call: r.call,
+            error: ok ? null : (r.body?.code ?? `HTTP ${r.status}`),
           });
           if (r.status === 409 || r.status === 404) break; // consent missing or the interaction ended: later windows would fail the same way
         }
-        send({ type: "done", windows: cut.windows.length, analysed });
+        send({ type: "done", windows: cut.windows.length, analysed, showEmergencyPanel, emergency });
       } catch {
         send({ type: "error", code: "UNREACHABLE", message: "The module could not be reached" });
       } finally {

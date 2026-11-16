@@ -1,11 +1,11 @@
-/** POST /api/demo/interactions/{id}/end (API_CONTRACTS §6.5): ends the demo interaction through the integration API. */
+/** POST /api/demo/interactions/{id}/end (task N.4): ends the case and reveals its docket number (plan §6.3 step 3). */
 import { callModule } from "@/core/demo/client";
-import { demoRoute, originOf } from "@/core/demo/route";
+import { publicDemoRoute } from "@/core/demo/public";
+import { originOf } from "@/core/demo/route";
 import { ApiError } from "@/lib/problem";
 
-export const POST = demoRoute({}, async ({ req, params }) => {
-  const id = String(params.id);
-  if (!/^[a-f0-9]{24}$/.test(id)) throw new ApiError("NOT_FOUND");
-  const r = await callModule(originOf(req), `/interactions/${id}/end`, { json: { reason: "COMPLETED" } });
-  return { status: r.status, body: r.body, call: r.call };
+export const POST = publicDemoRoute({ limit: "other", owned: true }, async ({ req, params }) => {
+  const r = await callModule<{ docketNumber?: string }>(originOf(req), `/interactions/${String(params.id)}/end`, { json: { reason: "COMPLETED" } });
+  if (r.status !== 200 || !r.body?.docketNumber) throw new ApiError("ANALYSIS_DEGRADED", "The case could not be closed");
+  return { docketNumber: r.body.docketNumber };
 });
