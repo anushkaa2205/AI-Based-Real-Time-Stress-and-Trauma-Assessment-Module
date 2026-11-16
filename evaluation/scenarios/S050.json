@@ -8,13 +8,15 @@
     "ageGroup": "UNDER_18",
     "offenceCategory": "SEXUAL_VIOLENCE"
   },
-  "screeners": [
-    {
-      "itemCode": "SAFETY_SAFE_NOW",
-      "value": 1
-    }
-  ],
   "messages": [
+    {
+      "sender": "OPERATOR",
+      "text": "Are you in a safe place right now?"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "Yes"
+    },
     "I am scared to go to school."
   ],
   "expected": {

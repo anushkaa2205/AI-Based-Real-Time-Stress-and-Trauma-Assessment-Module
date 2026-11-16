@@ -5,13 +5,15 @@
   "gender": "M",
   "summary": "Told to withdraw the complaint or face consequences",
   "context": {},
-  "screeners": [
-    {
-      "itemCode": "SAFETY_SAFE_NOW",
-      "value": 1
-    }
-  ],
   "messages": [
+    {
+      "sender": "OPERATOR",
+      "text": "तुम्ही आत्ता सुरक्षित ठिकाणी आहात का?"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "हो"
+    },
     "तक्रार मागे घे नाहीतर बघून घेऊ असे म्हणतात."
   ],
   "expected": {

@@ -5,16 +5,22 @@
   "gender": "F",
   "summary": "Family boycotted by the village; low mood",
   "messages": [
-    "Since the complaint, our family has been boycotted. We are not allowed to take water from the village tap. I feel sad most days."
-  ],
-  "screeners": [
+    "Since the complaint, our family has been boycotted. We are not allowed to take water from the village tap. I feel sad most days.",
     {
-      "itemCode": "PHQ2_1",
-      "value": 2
+      "sender": "OPERATOR",
+      "text": "Over the last 2 weeks, how often have you been bothered by: Little interest or pleasure in doing things"
     },
     {
-      "itemCode": "PHQ2_2",
-      "value": 2
+      "sender": "VICTIM",
+      "text": "More than half the days"
+    },
+    {
+      "sender": "OPERATOR",
+      "text": "Over the last 2 weeks, how often have you been bothered by: Feeling down or hopeless"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "More than half the days"
     }
   ],
   "expected": {
@@ -27,5 +33,8 @@
       "REHABILITATION_RELIEF",
       "COUNSELLING"
     ]
-  }
+  },
+  "tags": [
+    "short-answer"
+  ]
 }

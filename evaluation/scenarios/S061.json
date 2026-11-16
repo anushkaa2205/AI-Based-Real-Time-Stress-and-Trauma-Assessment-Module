@@ -5,13 +5,15 @@
   "gender": "F",
   "summary": "Calm; asks about compensation",
   "context": {},
-  "screeners": [
-    {
-      "itemCode": "SAFETY_SAFE_NOW",
-      "value": 1
-    }
-  ],
   "messages": [
+    {
+      "sender": "OPERATOR",
+      "text": "আপনি কি এই মুহূর্তে নিরাপদ জায়গায় আছেন?"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "হ্যাঁ"
+    },
     "এখন সব শান্ত, শুধু ক্ষতিপূরণের খবর জানতে চাই।"
   ],
   "expected": {

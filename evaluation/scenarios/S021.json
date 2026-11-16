@@ -5,17 +5,23 @@
   "gender": "F",
   "summary": "Accused standing outside the house now; not safe",
   "messages": [
-    "ते लोक आत्ता इथे आहेत, घराबाहेर उभे आहेत. मला खूप भीती वाटते."
-  ],
-  "screeners": [
     {
-      "itemCode": "SAFETY_SAFE_NOW",
-      "value": 0
+      "sender": "OPERATOR",
+      "text": "तुम्ही आत्ता सुरक्षित ठिकाणी आहात का?"
     },
     {
-      "itemCode": "SAFETY_ACCUSED_NEARBY",
-      "value": 1
-    }
+      "sender": "VICTIM",
+      "text": "नाही"
+    },
+    {
+      "sender": "OPERATOR",
+      "text": "ज्या व्यक्तीने तुम्हाला त्रास दिला ती आत्ता तुमच्या जवळ आहे का?"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "हो"
+    },
+    "ते लोक आत्ता इथे आहेत, घराबाहेर उभे आहेत. मला खूप भीती वाटते."
   ],
   "expected": {
     "band": "CRITICAL",
@@ -28,6 +34,8 @@
     ]
   },
   "context": {},
-  "tags": [],
+  "tags": [
+    "short-answer"
+  ],
   "reviewedBy": []
 }

@@ -5,16 +5,22 @@
   "gender": "F",
   "summary": "Complaint refused by police; worried and unsure where to go",
   "messages": [
-    "पुलिस ने शिकायत नहीं ली। क्या करूँ, कुछ समझ नहीं आ रहा।"
-  ],
-  "screeners": [
+    "पुलिस ने शिकायत नहीं ली। क्या करूँ, कुछ समझ नहीं आ रहा।",
     {
-      "itemCode": "GAD2_1",
-      "value": 2
+      "sender": "OPERATOR",
+      "text": "पिछले 2 हफ़्तों में, आपको कितनी बार यह परेशानी हुई: घबराहट, चिंता या बेचैनी महसूस करना"
     },
     {
-      "itemCode": "GAD2_2",
-      "value": 1
+      "sender": "VICTIM",
+      "text": "आधे से ज़्यादा दिन"
+    },
+    {
+      "sender": "OPERATOR",
+      "text": "पिछले 2 हफ़्तों में, आपको कितनी बार यह परेशानी हुई: चिंता करना रोक न पाना"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "कुछ दिन"
     }
   ],
   "expected": {
@@ -26,5 +32,8 @@
       "LEGAL_AID",
       "COUNSELLING"
     ]
-  }
+  },
+  "tags": [
+    "short-answer"
+  ]
 }

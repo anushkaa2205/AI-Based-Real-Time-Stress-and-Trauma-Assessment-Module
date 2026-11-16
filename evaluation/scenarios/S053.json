@@ -3,19 +3,26 @@
   "language": "en",
   "channel": "IVRS",
   "gender": "M",
-  "summary": "Keypad only: accused nearby now",
+  "summary": "Short spoken answers only: not safe, accused nearby now",
   "context": {},
-  "screeners": [
+  "messages": [
     {
-      "itemCode": "SAFETY_SAFE_NOW",
-      "value": 0
+      "sender": "OPERATOR",
+      "text": "Are you in a safe place right now?"
     },
     {
-      "itemCode": "SAFETY_ACCUSED_NEARBY",
-      "value": 1
+      "sender": "VICTIM",
+      "text": "No"
+    },
+    {
+      "sender": "OPERATOR",
+      "text": "Is the person who harmed you near you right now?"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "Yes"
     }
   ],
-  "messages": [],
   "expected": {
     "band": "CRITICAL",
     "indicators": [
@@ -27,7 +34,7 @@
     ]
   },
   "tags": [
-    "screener-only"
+    "short-answer"
   ],
   "reviewedBy": []
 }

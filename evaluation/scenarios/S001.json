@@ -5,20 +5,30 @@
   "gender": "F",
   "summary": "Asks about complaint status; no current distress",
   "messages": [
-    "I only want to know the status of my complaint. Nothing new has happened since then."
-  ],
-  "screeners": [
     {
-      "itemCode": "SAFETY_SAFE_NOW",
-      "value": 1
+      "sender": "OPERATOR",
+      "text": "Are you in a safe place right now?"
     },
     {
-      "itemCode": "PHQ2_1",
-      "value": 0
+      "sender": "VICTIM",
+      "text": "Yes"
+    },
+    "I only want to know the status of my complaint. Nothing new has happened since then.",
+    {
+      "sender": "OPERATOR",
+      "text": "Over the last 2 weeks, how often have you been bothered by: Little interest or pleasure in doing things"
     },
     {
-      "itemCode": "PHQ2_2",
-      "value": 0
+      "sender": "VICTIM",
+      "text": "Not at all"
+    },
+    {
+      "sender": "OPERATOR",
+      "text": "Over the last 2 weeks, how often have you been bothered by: Feeling down or hopeless"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "Not at all"
     }
   ],
   "expected": {
@@ -27,5 +37,6 @@
     "recommendations": [
       "INFORMATION"
     ]
-  }
+  },
+  "tags": []
 }

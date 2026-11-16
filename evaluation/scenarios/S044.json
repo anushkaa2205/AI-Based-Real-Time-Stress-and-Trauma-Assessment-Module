@@ -5,13 +5,15 @@
   "gender": "M",
   "summary": "Past trouble, now settled and fine",
   "context": {},
-  "screeners": [
-    {
-      "itemCode": "SAFETY_SAFE_NOW",
-      "value": 1
-    }
-  ],
   "messages": [
+    {
+      "sender": "OPERATOR",
+      "text": "Are you in a safe place right now?"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "Yes"
+    },
     "Two years ago there was trouble, but the case was settled in court and we are fine now."
   ],
   "expected": {

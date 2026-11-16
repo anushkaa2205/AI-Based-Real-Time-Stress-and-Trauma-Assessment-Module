@@ -1,12 +1,12 @@
 /**
  * Simulate a scoring config against the evaluation set (task 8.6, FR-SVI-06, API_CONTRACTS §5.9).
- * Rules only (safety lexicon on the person's turns, case context), the same code path as fallback mode, so it is
+ * Rules only (safety lexicon on the person's turns read with the question before them, case context), the same code path as fallback mode, so it is
  * deterministic and needs no AI calls. Nothing is written. Synthetic scenarios only.
  */
 import { readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { ScenarioSchema, victimTexts, type Scenario } from "@/contracts/evaluation";
-import { lexiconSignals } from "@/core/safety-lexicon/engine";
+import { ScenarioSchema, scenarioTurns, type Scenario } from "@/contracts/evaluation";
+import { conversationSignals } from "@/core/safety-lexicon/conversation";
 import { assess } from "@/core/scoring/assess";
 import { contextSignals, type CaseContextInput } from "@/core/scoring/context";
 import type { IndicatorInput, ScoringConfig } from "@/core/scoring/types";
@@ -37,7 +37,7 @@ function toContext(raw: Scenario["context"]): CaseContextInput {
 export function simulate(scenarios: readonly Scenario[], config: ScoringConfig): Simulation {
   const rows = scenarios.map((s) => {
     const indicators: IndicatorInput[] = [];
-    for (const m of victimTexts(s)) indicators.push(...lexiconSignals(m).indicators);
+    for (const t of conversationSignals(scenarioTurns(s))) indicators.push(...t.indicators);
     indicators.push(...contextSignals(toContext(s.context)).indicators);
     const d = assess({ indicators, config, limitedConfidence: true });
     return { expected: s.expected, band: d.band, suicidal: (d.dimensions.SUICIDAL_IDEATION?.score ?? 0) >= DETECT };

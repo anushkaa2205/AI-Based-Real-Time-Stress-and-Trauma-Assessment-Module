@@ -5,17 +5,23 @@
   "gender": "F",
   "summary": "Not safe at home; fears they will return at night",
   "context": {},
-  "screeners": [
+  "messages": [
     {
-      "itemCode": "SAFETY_SAFE_NOW",
-      "value": 0
+      "sender": "OPERATOR",
+      "text": "क्या आप अभी किसी सुरक्षित जगह पर हैं?"
     },
     {
-      "itemCode": "SAFETY_ACCUSED_NEARBY",
-      "value": 0
-    }
-  ],
-  "messages": [
+      "sender": "VICTIM",
+      "text": "नहीं"
+    },
+    {
+      "sender": "OPERATOR",
+      "text": "क्या आपको नुकसान पहुँचाने वाला व्यक्ति अभी आपके पास है?"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "नहीं"
+    },
     "रात को डर लगता है कि वे फिर आएँगे।"
   ],
   "expected": {
@@ -27,6 +33,8 @@
       "COUNSELLING"
     ]
   },
-  "tags": [],
+  "tags": [
+    "short-answer"
+  ],
   "reviewedBy": []
 }

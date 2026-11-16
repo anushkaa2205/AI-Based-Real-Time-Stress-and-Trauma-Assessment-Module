@@ -5,17 +5,23 @@
   "gender": "F",
   "summary": "Family driven out of the village after the complaint",
   "messages": [
-    "অভিযোগ করার পর আমাদের গ্রাম থেকে তাড়িয়ে দিয়েছে। এখন আত্মীয়ের বাড়িতে আছি।"
-  ],
-  "screeners": [
     {
-      "itemCode": "SAFETY_SAFE_NOW",
-      "value": 1
+      "sender": "OPERATOR",
+      "text": "আপনি কি এই মুহূর্তে নিরাপদ জায়গায় আছেন?"
     },
     {
-      "itemCode": "SAFETY_ACCUSED_NEARBY",
-      "value": 0
-    }
+      "sender": "VICTIM",
+      "text": "হ্যাঁ"
+    },
+    {
+      "sender": "OPERATOR",
+      "text": "যে ব্যক্তি আপনার ক্ষতি করেছে সে কি এখন আপনার কাছাকাছি আছে?"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "না"
+    },
+    "অভিযোগ করার পর আমাদের গ্রাম থেকে তাড়িয়ে দিয়েছে। এখন আত্মীয়ের বাড়িতে আছি।"
   ],
   "expected": {
     "band": "MODERATE",

@@ -57,7 +57,7 @@ export const ScenarioSchema = z
 
 export type Scenario = z.infer<typeof ScenarioSchema>;
 
-/** The person's own words, in order: the only text that is scored (operator turns are context). */
-export function victimTexts(s: Pick<Scenario, "messages">): string[] {
-  return s.messages.flatMap((m) => (typeof m === "string" ? [m] : m.sender === "VICTIM" ? [m.text] : []));
+/** Every turn with its sender (a plain string is the person's turn). */
+export function scenarioTurns(s: Pick<Scenario, "messages">): { sender: "VICTIM" | "OPERATOR"; text: string }[] {
+  return s.messages.map((m) => (typeof m === "string" ? { sender: "VICTIM" as const, text: m } : m));
 }

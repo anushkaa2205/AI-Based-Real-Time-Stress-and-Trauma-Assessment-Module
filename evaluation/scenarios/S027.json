@@ -5,13 +5,15 @@
   "gender": "F",
   "summary": "Denies any intent; only wants the hearing date",
   "context": {},
-  "screeners": [
-    {
-      "itemCode": "SAFETY_SAFE_NOW",
-      "value": 1
-    }
-  ],
   "messages": [
+    {
+      "sender": "OPERATOR",
+      "text": "क्या आप अभी किसी सुरक्षित जगह पर हैं?"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "हाँ"
+    },
     "मरने का कोई इरादा नहीं है, बस केस की अगली तारीख जाननी है।"
   ],
   "expected": {

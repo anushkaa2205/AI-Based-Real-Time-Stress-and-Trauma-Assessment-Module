@@ -13,9 +13,9 @@ import { resolve } from "node:path";
 import "./load-env";
 import mongoose from "mongoose";
 import { capacity, summarise, type StatRow } from "@/core/analytics/aggregate";
-import { victimTexts } from "@/contracts/evaluation";
+import { scenarioTurns } from "@/contracts/evaluation";
+import { conversationSignals } from "@/core/safety-lexicon/conversation";
 import { loadScenarios } from "@/core/admin/simulate";
-import { lexiconSignals } from "@/core/safety-lexicon/engine";
 import { assess } from "@/core/scoring/assess";
 import { contextSignals, type CaseContextInput } from "@/core/scoring/context";
 import { DEFAULT_CONFIG } from "@/core/scoring/defaultConfig";
@@ -57,7 +57,7 @@ export function simulateQueue(jobs: Job[], pick: (waiting: Job[]) => Job): Map<s
 
 function bandOf(s: ReturnType<typeof loadScenarios>[number]) {
   const indicators: IndicatorInput[] = [];
-  for (const m of victimTexts(s)) indicators.push(...lexiconSignals(m).indicators);
+  for (const t of conversationSignals(scenarioTurns(s))) indicators.push(...t.indicators);
   const ctx = { ...s.context } as Record<string, unknown>;
   if (s.context.offenceCategory) ctx.isSexualOffence = s.context.offenceCategory === "SEXUAL_VIOLENCE";
   if (s.context.ageGroup) ctx.isMinor = s.context.ageGroup === "UNDER_18";

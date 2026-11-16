@@ -5,17 +5,23 @@
   "gender": "F",
   "summary": "Pressured with threats to withdraw the complaint",
   "messages": [
-    "புகாரை திரும்பப் பெறச் சொல்லி தினமும் மிரட்டுகிறார்கள்."
-  ],
-  "screeners": [
     {
-      "itemCode": "SAFETY_SAFE_NOW",
-      "value": 1
+      "sender": "OPERATOR",
+      "text": "நீங்கள் இப்போது பாதுகாப்பான இடத்தில் இருக்கிறீர்களா?"
     },
     {
-      "itemCode": "SAFETY_ACCUSED_NEARBY",
-      "value": 0
-    }
+      "sender": "VICTIM",
+      "text": "ஆம்"
+    },
+    {
+      "sender": "OPERATOR",
+      "text": "உங்களைத் துன்புறுத்தியவர் இப்போது உங்கள் அருகில் இருக்கிறாரா?"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "இல்லை"
+    },
+    "புகாரை திரும்பப் பெறச் சொல்லி தினமும் மிரட்டுகிறார்கள்."
   ],
   "expected": {
     "band": "HIGH",

@@ -3,18 +3,24 @@
   "language": "en",
   "channel": "CHATBOT",
   "gender": "M",
-  "summary": "Safety check: suicidal thoughts with intent",
-  "screeners": [
+  "summary": "Short answers to the chatbot's suicide questions: yes to thoughts and to intent",
+  "messages": [
     {
-      "itemCode": "SAFETY_SUICIDAL_THOUGHTS",
-      "value": 1
+      "sender": "OPERATOR",
+      "text": "Are you having thoughts of ending your life?"
     },
     {
-      "itemCode": "SAFETY_SUICIDAL_INTENT",
-      "value": 1
-    }
-  ],
-  "messages": [
+      "sender": "VICTIM",
+      "text": "Yes"
+    },
+    {
+      "sender": "OPERATOR",
+      "text": "Are you thinking of acting on these thoughts, or have you made a plan?"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "Yes"
+    },
     "I do not see any way forward."
   ],
   "expected": {
@@ -28,7 +34,7 @@
     ]
   },
   "tags": [
-    "screener-only",
-    "indirect"
+    "indirect",
+    "short-answer"
   ]
 }

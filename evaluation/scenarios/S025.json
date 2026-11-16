@@ -5,13 +5,15 @@
   "gender": "M",
   "summary": "States intent to end life today",
   "messages": [
-    "আর পারছি না। আমি আজ আত্মহত্যা করব।"
-  ],
-  "screeners": [
     {
-      "itemCode": "SAFETY_SAFE_NOW",
-      "value": 1
-    }
+      "sender": "OPERATOR",
+      "text": "আপনি কি এই মুহূর্তে নিরাপদ জায়গায় আছেন?"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "হ্যাঁ"
+    },
+    "আর পারছি না। আমি আজ আত্মহত্যা করব।"
   ],
   "expected": {
     "band": "CRITICAL",

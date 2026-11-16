@@ -3,32 +3,50 @@
   "language": "hi",
   "channel": "VOICE_CALL",
   "gender": "F",
-  "summary": "Poor sleep and constant fear; screeners positive",
+  "summary": "Poor sleep and constant fear; when asked, worried on more than half the days",
   "context": {},
-  "screeners": [
-    {
-      "itemCode": "SAFETY_SAFE_NOW",
-      "value": 1
-    },
-    {
-      "itemCode": "GAD2_1",
-      "value": 2
-    },
-    {
-      "itemCode": "GAD2_2",
-      "value": 2
-    },
-    {
-      "itemCode": "PHQ2_1",
-      "value": 1
-    },
-    {
-      "itemCode": "PHQ2_2",
-      "value": 1
-    }
-  ],
   "messages": [
-    "रात को नींद नहीं आती, हर समय डर लगता है।"
+    {
+      "sender": "OPERATOR",
+      "text": "क्या आप अभी किसी सुरक्षित जगह पर हैं?"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "हाँ"
+    },
+    "रात को नींद नहीं आती, हर समय डर लगता है।",
+    {
+      "sender": "OPERATOR",
+      "text": "पिछले 2 हफ़्तों में, आपको कितनी बार यह परेशानी हुई: घबराहट, चिंता या बेचैनी महसूस करना"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "आधे से ज़्यादा दिन"
+    },
+    {
+      "sender": "OPERATOR",
+      "text": "पिछले 2 हफ़्तों में, आपको कितनी बार यह परेशानी हुई: चिंता करना रोक न पाना"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "आधे से ज़्यादा दिन"
+    },
+    {
+      "sender": "OPERATOR",
+      "text": "पिछले 2 हफ़्तों में, आपको कितनी बार यह परेशानी हुई: किसी भी काम में मन न लगना या खुशी न मिलना"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "कुछ दिन"
+    },
+    {
+      "sender": "OPERATOR",
+      "text": "पिछले 2 हफ़्तों में, आपको कितनी बार यह परेशानी हुई: उदास या निराश महसूस करना"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "कुछ दिन"
+    }
   ],
   "expected": {
     "band": "MODERATE",
@@ -39,6 +57,8 @@
       "COUNSELLING"
     ]
   },
-  "tags": [],
+  "tags": [
+    "short-answer"
+  ],
   "reviewedBy": []
 }

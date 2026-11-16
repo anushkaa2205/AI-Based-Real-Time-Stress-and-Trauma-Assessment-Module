@@ -5,16 +5,22 @@
   "gender": "M",
   "summary": "Constant fear and poor sleep; case running for years",
   "messages": [
-    "घटना के बाद से मुझे नींद नहीं आती और हर समय डर लगा रहता है। सालों से केस चल रहा है।"
-  ],
-  "screeners": [
+    "घटना के बाद से मुझे नींद नहीं आती और हर समय डर लगा रहता है। सालों से केस चल रहा है।",
     {
-      "itemCode": "GAD2_1",
-      "value": 2
+      "sender": "OPERATOR",
+      "text": "पिछले 2 हफ़्तों में, आपको कितनी बार यह परेशानी हुई: घबराहट, चिंता या बेचैनी महसूस करना"
     },
     {
-      "itemCode": "GAD2_2",
-      "value": 2
+      "sender": "VICTIM",
+      "text": "आधे से ज़्यादा दिन"
+    },
+    {
+      "sender": "OPERATOR",
+      "text": "पिछले 2 हफ़्तों में, आपको कितनी बार यह परेशानी हुई: चिंता करना रोक न पाना"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "आधे से ज़्यादा दिन"
     }
   ],
   "expected": {
@@ -26,5 +32,8 @@
       "COUNSELLING",
       "LEGAL_AID"
     ]
-  }
+  },
+  "tags": [
+    "short-answer"
+  ]
 }

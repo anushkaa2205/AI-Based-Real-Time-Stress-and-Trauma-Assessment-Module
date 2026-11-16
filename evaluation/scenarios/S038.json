@@ -3,24 +3,34 @@
   "language": "hi-Latn",
   "channel": "CHATBOT",
   "gender": "OTHER",
-  "summary": "Constant tension, cannot sleep; screeners positive",
+  "summary": "Constant tension, cannot sleep; when asked, worried on more than half the days",
   "context": {},
-  "screeners": [
-    {
-      "itemCode": "SAFETY_SAFE_NOW",
-      "value": 1
-    },
-    {
-      "itemCode": "GAD2_1",
-      "value": 2
-    },
-    {
-      "itemCode": "GAD2_2",
-      "value": 2
-    }
-  ],
   "messages": [
-    "bahut tension rehti hai, neend nahi aati, bachchon ki fikar hai"
+    {
+      "sender": "OPERATOR",
+      "text": "क्या आप अभी किसी सुरक्षित जगह पर हैं?"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "haan"
+    },
+    "bahut tension rehti hai, neend nahi aati, bachchon ki fikar hai",
+    {
+      "sender": "OPERATOR",
+      "text": "पिछले 2 हफ़्तों में, आपको कितनी बार यह परेशानी हुई: घबराहट, चिंता या बेचैनी महसूस करना"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "aadhe se zyada din"
+    },
+    {
+      "sender": "OPERATOR",
+      "text": "पिछले 2 हफ़्तों में, आपको कितनी बार यह परेशानी हुई: चिंता करना रोक न पाना"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "aadhe se zyada din"
+    }
   ],
   "expected": {
     "band": "MODERATE",
@@ -32,7 +42,8 @@
     ]
   },
   "tags": [
-    "dialect"
+    "dialect",
+    "short-answer"
   ],
   "reviewedBy": []
 }

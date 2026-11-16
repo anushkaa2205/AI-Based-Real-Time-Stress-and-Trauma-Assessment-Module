@@ -27,9 +27,34 @@ Raw outputs: `evaluation/reports/` (`with-ai.md/json`, `rules-only-baseline.md/j
 | Text: SVI within 3 s, p95 of 50 runs (AC-SVI-02) | ≤ 3.0 s | p50 **1.79 s**, p95 **3.43 s**, max 4.11 s | — | ✗ 0.43 s over — see §5 |
 | Voice: SVI within 5 s per window (AC-SVI-02) | ≤ 5 s | **2.3–4.5 s** at normal latency; first window of a call 5.2–5.6 s on a slow-network day | — | ◐ |
 
+## 1a. Re-run without structured answers (Phase M, 16 November 2026)
+
+The module no longer has a questionnaire (`PRODUCT_VISION.md` §5, task M.4). The 49 scenarios that used safety-check or screener answers were rewritten as conversations: the chatbot's or operator's question (an `OPERATOR` turn, in the old screener wording and the scenario's language), then the person's reply using the exact answer they had picked ("Yes", "No", or a scale label such as "More than half the days"). Expected bands, indicators and recommendations were **not changed**. Only the person's turns are scored. Rules only (`npm run eval`), scoring config v3; the AI run (`--mode=ai`) has not been repeated yet.
+
+| Criterion | Target | Before: config v2, with screener answers (15 Nov) | After M.4 only: conversations, short answers read alone | After M.9: short answers read with their question |
+|---|---|---|---|---|
+| Band accuracy (AC-RISK-01) | ≥ 80% | 77% (48/62) | 73% (45/62) | **77% (48/62)** |
+| Critical scenarios placed below High | 0 | 0 | 2 (S019, S053) | **0** |
+| Suicidal-ideation recall (AC-NLP-01) | 100% | 100% (8/8) | 88% (7/8; miss S019) | **100% (8/8)** |
+| Immediate-danger recall (AC-NLP-02) | 100% | 100% (10/10) | 90% (9/10; miss S053) | **100% (10/10)** |
+| Expected recommendations produced (AC-REC-01) | ≥ 85% | 90% (83/92) | 76% (70/92) | **82% (75/92)** ✗ |
+| Fear/anxiety recall (detected ≥ 0.5) | — | 7/8 | — | **1/8** |
+| Severe-trauma recall | — | 5/5 | — | **3/5** |
+| Depression recall | — | 1/1 | — | **0/1** |
+| Intimidation recall | — | 15/16 | — | **16/16** |
+
+**What happened, honestly:**
+- **Reading answers alone failed the safety targets.** With the answers turned into plain "Yes"/"No" turns, three scenarios whose risk lay only in short answers dropped to Low: S019 (yes to suicidal thoughts and intent), S053 (not safe; accused nearby) and S032 (not safe). This is gap V7.
+- **M.9 restores them.** A short reply that starts with yes/no is now read with the safety question asked just before it (four safety questions, six languages, `core/safety-lexicon/answers.ts`), with the old safety check's meaning: "no" to "safe right now" → OV-9; "yes" to "accused nearby" → OV-2; "yes" to suicidal thoughts → OV-6; "yes" to intent or plan → OV-1. A "no" to the other questions adds nothing. Suicide and immediate-danger recall are back to 100%, band accuracy back to 77%.
+- **Recommendations fell from 90% to 82% (below the 85% target).** In rules-only mode, fear/anxiety, low mood and trauma came almost entirely from the PHQ-2, GAD-2 and PC-PTSD-5 totals. Without a questionnaire they must come from the person's own words and voice, which the rules alone rarely catch, so trauma-informed **counselling** is missing in 10 scenarios (S006, S007, S009, S010, S030, S038, S046, S047, S058; S046 also misses legal aid as before). This is the trade-off `PRODUCT_VISION.md` §5 accepts. The scale answers are deliberately **not** scored by rules, because that would rebuild the questionnaire. The AI path is where these signals should come from; re-run `npm run eval -- --mode=ai` (the model now also receives the previous question) before drawing conclusions.
+- **One gain:** S023 (Tamil, pressure to withdraw) now gets the police-intervention recommendation it lacked.
+- **Limits:** short-answer reading covers yes/no to the four safety questions only, and only the turn directly after the question. Voice calls with both speakers in one recording are not covered until speaker separation exists (task M.10); until then such assessments must be marked limited confidence. Labels are still single-author drafts.
+
+The section 1 table above is the 15 November baseline and is kept for comparison.
+
 ## 2. Data set (E.3)
 
-62 synthetic scenarios: **17 Low, 15 Moderate, 15 High, 15 Critical**; English 19, Hindi 15, Romanised Hindi 13, Marathi 5, Tamil 5, Bengali 5; 11 negation or indirect cases; channels chatbot, portal, voice call and IVRS; context-only and screener-only cases included. Respectful and non-graphic (C-DAT-01/03). Labels state what a counsellor would expect, not what the engine produces.
+62 synthetic scenarios: **17 Low, 15 Moderate, 15 High, 15 Critical**; English 19, Hindi 15, Romanised Hindi 13, Marathi 5, Tamil 5, Bengali 5; 11 negation or indirect cases; channels chatbot, portal, voice call and IVRS; context-only and screener-only cases included (since 16 Nov 2026 the screener-only cases are conversations with short answers, tag `short-answer`; §1a). Respectful and non-graphic (C-DAT-01/03). Labels state what a counsellor would expect, not what the engine produces.
 
 ## 3. Results in detail (with AI)
 

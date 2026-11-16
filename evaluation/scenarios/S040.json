@@ -5,13 +5,15 @@
   "gender": "F",
   "summary": "Passive wish to die",
   "context": {},
-  "screeners": [
-    {
-      "itemCode": "SAFETY_SAFE_NOW",
-      "value": 1
-    }
-  ],
   "messages": [
+    {
+      "sender": "OPERATOR",
+      "text": "क्या आप अभी किसी सुरक्षित जगह पर हैं?"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "haan"
+    },
     "kabhi kabhi lagta hai mar jaun toh accha"
   ],
   "expected": {

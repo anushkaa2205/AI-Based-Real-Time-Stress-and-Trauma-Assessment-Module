@@ -5,13 +5,15 @@
   "gender": "F",
   "summary": "Quoted question; denies any threats since",
   "context": {},
-  "screeners": [
-    {
-      "itemCode": "SAFETY_SAFE_NOW",
-      "value": 1
-    }
-  ],
   "messages": [
+    {
+      "sender": "OPERATOR",
+      "text": "Are you in a safe place right now?"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "Yes"
+    },
     "The police asked me 'are they threatening you?' and I said no, nobody has threatened me since."
   ],
   "expected": {

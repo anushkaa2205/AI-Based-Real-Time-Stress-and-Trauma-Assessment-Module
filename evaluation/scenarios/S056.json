@@ -5,13 +5,15 @@
   "gender": "F",
   "summary": "No more threats; all fine",
   "context": {},
-  "screeners": [
-    {
-      "itemCode": "SAFETY_SAFE_NOW",
-      "value": 1
-    }
-  ],
   "messages": [
+    {
+      "sender": "OPERATOR",
+      "text": "तुम्ही आत्ता सुरक्षित ठिकाणी आहात का?"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "हो"
+    },
     "आता कोणी धमकी देत नाही, सगळे ठीक आहे."
   ],
   "expected": {

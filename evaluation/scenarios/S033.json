@@ -5,13 +5,15 @@
   "gender": "F",
   "summary": "Locked in a room, not allowed out",
   "context": {},
-  "screeners": [
-    {
-      "itemCode": "SAFETY_SAFE_NOW",
-      "value": 1
-    }
-  ],
   "messages": [
+    {
+      "sender": "OPERATOR",
+      "text": "क्या आप अभी किसी सुरक्षित जगह पर हैं?"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "हाँ"
+    },
     "उन्होंने मुझे कमरे में बंद करके रखा है, बाहर जाने नहीं दे रहे।"
   ],
   "expected": {

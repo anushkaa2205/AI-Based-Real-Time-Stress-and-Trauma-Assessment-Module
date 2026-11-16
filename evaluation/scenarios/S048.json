@@ -5,13 +5,15 @@
   "gender": "F",
   "summary": "Barred from the common well",
   "context": {},
-  "screeners": [
-    {
-      "itemCode": "SAFETY_SAFE_NOW",
-      "value": 1
-    }
-  ],
   "messages": [
+    {
+      "sender": "OPERATOR",
+      "text": "Are you in a safe place right now?"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "Yes"
+    },
     "We are not allowed to take water from the common well anymore."
   ],
   "expected": {

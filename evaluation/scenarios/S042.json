@@ -5,13 +5,15 @@
   "gender": "F",
   "summary": "States intent to take poison tonight",
   "context": {},
-  "screeners": [
-    {
-      "itemCode": "SAFETY_SAFE_NOW",
-      "value": 1
-    }
-  ],
   "messages": [
+    {
+      "sender": "OPERATOR",
+      "text": "क्या आप अभी किसी सुरक्षित जगह पर हैं?"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "haan"
+    },
     "aaj raat zeher kha lungi, ab aur nahi sah sakti"
   ],
   "expected": {

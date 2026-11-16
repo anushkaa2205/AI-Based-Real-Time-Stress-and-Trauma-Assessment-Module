@@ -5,13 +5,15 @@
   "gender": "F",
   "summary": "Current head injury, bleeding",
   "context": {},
-  "screeners": [
-    {
-      "itemCode": "SAFETY_SAFE_NOW",
-      "value": 1
-    }
-  ],
   "messages": [
+    {
+      "sender": "OPERATOR",
+      "text": "আপনি কি এই মুহূর্তে নিরাপদ জায়গায় আছেন?"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "হ্যাঁ"
+    },
     "এখনই মাথায় আঘাত লেগেছে, রক্ত পড়ছে।"
   ],
   "expected": {

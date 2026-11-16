@@ -3,24 +3,34 @@
   "language": "ta",
   "channel": "VOICE_CALL",
   "gender": "M",
-  "summary": "Always afraid, cannot sleep; screeners positive",
+  "summary": "Always afraid, cannot sleep; when asked, worried on more than half the days",
   "context": {},
-  "screeners": [
-    {
-      "itemCode": "SAFETY_SAFE_NOW",
-      "value": 1
-    },
-    {
-      "itemCode": "GAD2_1",
-      "value": 2
-    },
-    {
-      "itemCode": "GAD2_2",
-      "value": 2
-    }
-  ],
   "messages": [
-    "எப்போதும் பயமாக இருக்கிறது, தூக்கம் வரவில்லை."
+    {
+      "sender": "OPERATOR",
+      "text": "நீங்கள் இப்போது பாதுகாப்பான இடத்தில் இருக்கிறீர்களா?"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "ஆம்"
+    },
+    "எப்போதும் பயமாக இருக்கிறது, தூக்கம் வரவில்லை.",
+    {
+      "sender": "OPERATOR",
+      "text": "கடந்த 2 வாரங்களில், பின்வருவது உங்களை எவ்வளவு அடிக்கடி தொந்தரவு செய்தது: பதற்றம், கவலை அல்லது அமைதியின்மை"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "பாதி நாட்களுக்கு மேல்"
+    },
+    {
+      "sender": "OPERATOR",
+      "text": "கடந்த 2 வாரங்களில், பின்வருவது உங்களை எவ்வளவு அடிக்கடி தொந்தரவு செய்தது: கவலைப்படுவதை நிறுத்த முடியாமல் இருப்பது"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "பாதி நாட்களுக்கு மேல்"
+    }
   ],
   "expected": {
     "band": "MODERATE",
@@ -31,6 +41,8 @@
       "COUNSELLING"
     ]
   },
-  "tags": [],
+  "tags": [
+    "short-answer"
+  ],
   "reviewedBy": []
 }

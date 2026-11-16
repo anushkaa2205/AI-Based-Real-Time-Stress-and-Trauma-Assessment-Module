@@ -5,13 +5,15 @@
   "gender": "F",
   "summary": "Pills ready, will take them tonight",
   "context": {},
-  "screeners": [
-    {
-      "itemCode": "SAFETY_SAFE_NOW",
-      "value": 1
-    }
-  ],
   "messages": [
+    {
+      "sender": "OPERATOR",
+      "text": "Are you in a safe place right now?"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "Yes"
+    },
     "I have the pills ready and I will take them tonight."
   ],
   "expected": {

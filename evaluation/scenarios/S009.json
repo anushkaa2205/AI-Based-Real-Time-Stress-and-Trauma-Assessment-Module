@@ -5,28 +5,46 @@
   "gender": "M",
   "summary": "Trauma symptoms (bad dreams, avoidance) without danger",
   "messages": [
-    "I keep having bad dreams about that day and I avoid going near the market."
-  ],
-  "screeners": [
+    "I keep having bad dreams about that day and I avoid going near the market.",
     {
-      "itemCode": "PCPTSD5_1",
-      "value": 1
+      "sender": "OPERATOR",
+      "text": "In the past month, because of what happened, have you: Had bad dreams about it, or thought about it when you did not want to?"
     },
     {
-      "itemCode": "PCPTSD5_2",
-      "value": 1
+      "sender": "VICTIM",
+      "text": "Yes"
     },
     {
-      "itemCode": "PCPTSD5_3",
-      "value": 1
+      "sender": "OPERATOR",
+      "text": "In the past month, because of what happened, have you: Tried hard not to think about it, or stayed away from things that remind you of it?"
     },
     {
-      "itemCode": "PCPTSD5_4",
-      "value": 0
+      "sender": "VICTIM",
+      "text": "Yes"
     },
     {
-      "itemCode": "PCPTSD5_5",
-      "value": 0
+      "sender": "OPERATOR",
+      "text": "In the past month, because of what happened, have you: Felt constantly on guard, watchful or easily startled?"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "Yes"
+    },
+    {
+      "sender": "OPERATOR",
+      "text": "In the past month, because of what happened, have you: Felt numb or cut off from people, activities or your surroundings?"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "No"
+    },
+    {
+      "sender": "OPERATOR",
+      "text": "In the past month, because of what happened, have you: Felt guilty, or unable to stop blaming yourself or others?"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "No"
     }
   ],
   "expected": {
@@ -37,5 +55,8 @@
     "recommendations": [
       "COUNSELLING"
     ]
-  }
+  },
+  "tags": [
+    "short-answer"
+  ]
 }

@@ -5,22 +5,32 @@
   "gender": "F",
   "summary": "Complaint not registered, unsure of rights, anxious",
   "context": {},
-  "screeners": [
-    {
-      "itemCode": "SAFETY_SAFE_NOW",
-      "value": 1
-    },
-    {
-      "itemCode": "GAD2_1",
-      "value": 1
-    },
-    {
-      "itemCode": "GAD2_2",
-      "value": 2
-    }
-  ],
   "messages": [
-    "The police have not registered my complaint and I don't know what my rights are. I feel anxious all the time."
+    {
+      "sender": "OPERATOR",
+      "text": "Are you in a safe place right now?"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "Yes"
+    },
+    "The police have not registered my complaint and I don't know what my rights are. I feel anxious all the time.",
+    {
+      "sender": "OPERATOR",
+      "text": "Over the last 2 weeks, how often have you been bothered by: Feeling nervous, worried or on edge"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "Several days"
+    },
+    {
+      "sender": "OPERATOR",
+      "text": "Over the last 2 weeks, how often have you been bothered by: Not being able to stop worrying"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "More than half the days"
+    }
   ],
   "expected": {
     "band": "MODERATE",
@@ -32,6 +42,8 @@
       "COUNSELLING"
     ]
   },
-  "tags": [],
+  "tags": [
+    "short-answer"
+  ],
   "reviewedBy": []
 }

@@ -5,13 +5,15 @@
   "gender": "F",
   "summary": "Village boycott, nobody talks to them",
   "context": {},
-  "screeners": [
-    {
-      "itemCode": "SAFETY_SAFE_NOW",
-      "value": 1
-    }
-  ],
   "messages": [
+    {
+      "sender": "OPERATOR",
+      "text": "तुम्ही आत्ता सुरक्षित ठिकाणी आहात का?"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "हो"
+    },
     "गावाने बहिष्कार टाकला आहे, आमच्याशी कोणी बोलत नाही."
   ],
   "expected": {

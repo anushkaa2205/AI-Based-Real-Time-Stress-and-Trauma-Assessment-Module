@@ -5,13 +5,15 @@
   "gender": "M",
   "summary": "Threat to a family member's life if they go to court",
   "context": {},
-  "screeners": [
-    {
-      "itemCode": "SAFETY_SAFE_NOW",
-      "value": 1
-    }
-  ],
   "messages": [
+    {
+      "sender": "OPERATOR",
+      "text": "Are you in a safe place right now?"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "Yes"
+    },
     "They told my brother he will not live long if we go to court."
   ],
   "expected": {

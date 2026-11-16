@@ -5,13 +5,15 @@
   "gender": "UNDISCLOSED",
   "summary": "How to get a copy of a statement",
   "context": {},
-  "screeners": [
-    {
-      "itemCode": "SAFETY_SAFE_NOW",
-      "value": 1
-    }
-  ],
   "messages": [
+    {
+      "sender": "OPERATOR",
+      "text": "Are you in a safe place right now?"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "Yes"
+    },
     "How do I get a copy of my statement?"
   ],
   "expected": {

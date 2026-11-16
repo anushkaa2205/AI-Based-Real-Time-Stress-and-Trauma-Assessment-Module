@@ -5,20 +5,30 @@
   "gender": "M",
   "summary": "Asks about complaint status; no current distress",
   "messages": [
-    "माझ्या तक्रारीची सद्यस्थिती जाणून घ्यायची आहे. त्यानंतर काही नवीन घडलेले नाही."
-  ],
-  "screeners": [
     {
-      "itemCode": "SAFETY_SAFE_NOW",
-      "value": 1
+      "sender": "OPERATOR",
+      "text": "तुम्ही आत्ता सुरक्षित ठिकाणी आहात का?"
     },
     {
-      "itemCode": "PHQ2_1",
-      "value": 0
+      "sender": "VICTIM",
+      "text": "हो"
+    },
+    "माझ्या तक्रारीची सद्यस्थिती जाणून घ्यायची आहे. त्यानंतर काही नवीन घडलेले नाही.",
+    {
+      "sender": "OPERATOR",
+      "text": "गेल्या 2 आठवड्यांत, खालील गोष्टींचा तुम्हाला किती वेळा त्रास झाला: कोणत्याही गोष्टीत रस किंवा आनंद न वाटणे"
     },
     {
-      "itemCode": "PHQ2_2",
-      "value": 0
+      "sender": "VICTIM",
+      "text": "अजिबात नाही"
+    },
+    {
+      "sender": "OPERATOR",
+      "text": "गेल्या 2 आठवड्यांत, खालील गोष्टींचा तुम्हाला किती वेळा त्रास झाला: उदास किंवा निराश वाटणे"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "अजिबात नाही"
     }
   ],
   "expected": {

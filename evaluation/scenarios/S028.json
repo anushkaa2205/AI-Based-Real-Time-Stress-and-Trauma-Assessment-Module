@@ -5,13 +5,15 @@
   "gender": "M",
   "summary": "Says threats have stopped; village calm",
   "context": {},
-  "screeners": [
-    {
-      "itemCode": "SAFETY_SAFE_NOW",
-      "value": 1
-    }
-  ],
   "messages": [
+    {
+      "sender": "OPERATOR",
+      "text": "क्या आप अभी किसी सुरक्षित जगह पर हैं?"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "हाँ"
+    },
     "अब कोई धमकी नहीं देता, गाँव में सब शांत है।"
   ],
   "expected": {

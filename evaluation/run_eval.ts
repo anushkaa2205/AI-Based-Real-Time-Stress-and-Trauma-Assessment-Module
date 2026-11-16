@@ -4,8 +4,8 @@
  *   npm run eval                 rules only (lexicon + context), like fallback mode
  *
  * Scenarios are conversations: only the person's turns are scored; operator questions are
- * context (FR-CH-02, task M.4). In AI mode the previous operator turn is not yet passed to the
- * model (gap V7, task M.9).
+ * context (FR-CH-02, task M.4). Short answers are read with the operator question just before them,
+ * by the lexicon's answer rules and, in AI mode, by passing the question to the model (task M.9).
  *   npm run eval -- --mode=ai    adds the analysis service (needs it running; answers are cached)
  *
  * Same scoring code as the pipeline, without the database. Writes
@@ -19,12 +19,12 @@ import { analyzeText, defaultDeps } from "@/core/analysis-client/client";
 import { checkAnalysis } from "@/core/analysis-client/guardrails";
 import { redact } from "@/core/privacy/redact";
 import { evaluateRecommendations } from "@/core/recommendations/evaluate";
-import { lexiconSignals } from "@/core/safety-lexicon/engine";
 import { assess } from "@/core/scoring/assess";
 import { contextSignals, type CaseContextInput } from "@/core/scoring/context";
 import { DEFAULT_CONFIG } from "@/core/scoring/defaultConfig";
 import type { CaseFact, IndicatorInput } from "@/core/scoring/types";
-import { ScenarioSchema, victimTexts, type Scenario } from "@/contracts/evaluation";
+import { ScenarioSchema, scenarioTurns, type Scenario } from "@/contracts/evaluation";
+import { conversationSignals } from "@/core/safety-lexicon/conversation";
 
 const ROOT = dirname(fileURLToPath(import.meta.url));
 const BANDS = ["LOW", "MODERATE", "HIGH", "CRITICAL"] as const;
@@ -46,14 +46,17 @@ async function run(s: Scenario) {
   const t0 = performance.now();
   const indicators: IndicatorInput[] = [];
   const facts = new Set<CaseFact>();
-  for (const m of victimTexts(s)) {
-    const lx = lexiconSignals(m);
+  for (const lx of conversationSignals(scenarioTurns(s))) {
+    const m = lx.text;
     indicators.push(...lx.indicators);
     lx.facts.forEach((f) => facts.add(f));
     if (MODE === "ai") {
       const redacted = redact(m).text;
       aiCalls++;
-      const r = await analyzeText({ requestId: `eval-${s.id}`, text: redacted, languageHint: s.language }, { ...defaultDeps(), timeoutMs: 60_000 });
+      const r = await analyzeText(
+        { requestId: `eval-${s.id}`, text: redacted, languageHint: s.language, ...(lx.question ? { previousQuestion: redact(lx.question).text } : {}) },
+        { ...defaultDeps(), timeoutMs: 60_000 },
+      );
       if (r.degraded) aiDegraded++;
       else {
         const checked = checkAnalysis(r.result, m, redacted);

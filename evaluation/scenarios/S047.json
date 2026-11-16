@@ -5,34 +5,56 @@
   "gender": "M",
   "summary": "Nightmares and startle after the attack",
   "context": {},
-  "screeners": [
-    {
-      "itemCode": "SAFETY_SAFE_NOW",
-      "value": 1
-    },
-    {
-      "itemCode": "PCPTSD5_1",
-      "value": 1
-    },
-    {
-      "itemCode": "PCPTSD5_2",
-      "value": 1
-    },
-    {
-      "itemCode": "PCPTSD5_3",
-      "value": 1
-    },
-    {
-      "itemCode": "PCPTSD5_4",
-      "value": 0
-    },
-    {
-      "itemCode": "PCPTSD5_5",
-      "value": 0
-    }
-  ],
   "messages": [
-    "Since the attack I keep having bad dreams and I jump at every sound."
+    {
+      "sender": "OPERATOR",
+      "text": "Are you in a safe place right now?"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "Yes"
+    },
+    "Since the attack I keep having bad dreams and I jump at every sound.",
+    {
+      "sender": "OPERATOR",
+      "text": "In the past month, because of what happened, have you: Had bad dreams about it, or thought about it when you did not want to?"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "Yes"
+    },
+    {
+      "sender": "OPERATOR",
+      "text": "In the past month, because of what happened, have you: Tried hard not to think about it, or stayed away from things that remind you of it?"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "Yes"
+    },
+    {
+      "sender": "OPERATOR",
+      "text": "In the past month, because of what happened, have you: Felt constantly on guard, watchful or easily startled?"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "Yes"
+    },
+    {
+      "sender": "OPERATOR",
+      "text": "In the past month, because of what happened, have you: Felt numb or cut off from people, activities or your surroundings?"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "No"
+    },
+    {
+      "sender": "OPERATOR",
+      "text": "In the past month, because of what happened, have you: Felt guilty, or unable to stop blaming yourself or others?"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "No"
+    }
   ],
   "expected": {
     "band": "MODERATE",
@@ -43,6 +65,8 @@
       "COUNSELLING"
     ]
   },
-  "tags": [],
+  "tags": [
+    "short-answer"
+  ],
   "reviewedBy": []
 }

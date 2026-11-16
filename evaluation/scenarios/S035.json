@@ -5,13 +5,15 @@
   "gender": "M",
   "summary": "No threats; wants FIR copy",
   "context": {},
-  "screeners": [
-    {
-      "itemCode": "SAFETY_SAFE_NOW",
-      "value": 1
-    }
-  ],
   "messages": [
+    {
+      "sender": "OPERATOR",
+      "text": "क्या आप अभी किसी सुरक्षित जगह पर हैं?"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "haan"
+    },
     "mujhe koi dhamki nahi mili, bas FIR ki copy chahiye"
   ],
   "expected": {

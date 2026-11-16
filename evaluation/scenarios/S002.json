@@ -5,13 +5,15 @@
   "gender": "M",
   "summary": "Follow-up on a complaint; says things are fine now",
   "messages": [
-    "मुझे बस यह जानना है कि मेरी शिकायत पर क्या हुआ। अभी सब ठीक है।"
-  ],
-  "screeners": [
     {
-      "itemCode": "SAFETY_SAFE_NOW",
-      "value": 1
-    }
+      "sender": "OPERATOR",
+      "text": "क्या आप अभी किसी सुरक्षित जगह पर हैं?"
+    },
+    {
+      "sender": "VICTIM",
+      "text": "हाँ"
+    },
+    "मुझे बस यह जानना है कि मेरी शिकायत पर क्या हुआ। अभी सब ठीक है।"
   ],
   "expected": {
     "band": "LOW",
@@ -19,5 +21,6 @@
     "recommendations": [
       "INFORMATION"
     ]
-  }
+  },
+  "tags": []
 }
