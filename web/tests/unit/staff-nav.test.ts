@@ -25,9 +25,9 @@ describe("staff navigation (task 1.11)", () => {
     }
   });
 
-  it("offers the demo input layer to supervisors only (M.11, M.14)", () => {
-    expect(STAFF_PAGES.demo.roles).toEqual(["NHAA_SUPERVISOR"]);
-    for (const role of ["POLICE_LIAISON", "WELFARE_OFFICER", "COUNSELLOR", "OPERATOR", "DISTRICT_OFFICER"] as const) expect(canOpen(role, "demo")).toBe(false);
+  it("lists no demo page in the staff menu: the demo is the public site (plan N.7)", () => {
+    expect(Object.keys(STAFF_PAGES)).not.toContain("demo");
+    expect(Object.values(STAFF_PAGES).some((p) => p.href.startsWith("/demo"))).toBe(false);
   });
 
   it("gives each analytics role the analytics page", () => {

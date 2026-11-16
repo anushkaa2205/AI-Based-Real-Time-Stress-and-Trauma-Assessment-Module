@@ -46,10 +46,12 @@ describe("every API route is guarded (task 9.5)", () => {
         return;
       }
       if (f.path.startsWith("demo/")) {
-        // Demo input layer (API_CONTRACTS §6.5): every handler goes through demoRoute (checked below).
+        // Public demo (plan §7, task N.4): every handler goes through publicDemoRoute (checked below),
+        // and a route under /interactions/{id}/ must be limited to the browser's own cases.
         const exported = [...f.src.matchAll(/export const (GET|POST|PUT|PATCH|DELETE) = (\w+)\(/g)];
         expect(exported.length, "exports a handler").toBeGreaterThan(0);
-        for (const m of exported) expect(m[2], `${m[1]}: demoRoute`).toBe("demoRoute");
+        for (const m of exported) expect(m[2], `${m[1]}: publicDemoRoute`).toBe("publicDemoRoute");
+        if (f.path.startsWith("demo/interactions/[id]/")) expect(f.src, `${f.path}: owned`).toMatch(/owned: true/);
         return;
       }
       const hs = handlers(f.src);
@@ -69,10 +71,12 @@ describe("every API route is guarded (task 9.5)", () => {
     });
   }
 
-  it("demoRoute answers 404 when the demo is off and otherwise needs a staff session with demo.use", () => {
-    const src = readFileSync(resolve(__dirname, "../../src/core/demo/route.ts"), "utf8");
+  it("publicDemoRoute answers 404 when the demo is off, refuses cross-site posts and limits every visitor (plan §7)", () => {
+    const src = readFileSync(resolve(__dirname, "../../src/core/demo/public.ts"), "utf8");
     expect(src).toMatch(/if \(!demoEnabled\(\)\) return problemResponse\(new ApiError\("NOT_FOUND"\)/);
-    expect(src).toMatch(/auth: "staff", action: "demo.use"/);
+    expect(src).toMatch(/!sameSite\(req\.headers\)/);
+    expect(src).toMatch(/rateLimit: \{ limit: DEMO_LIMITS\[opts\.limit\]/);
+    expect(src).toMatch(/if \(opts\.owned\) assertOwned/);
   });
 
   it("has no victim API and no endpoint for structured answers (FR-CH-01, FR-API-05, AC-CH-07)", () => {

@@ -1,10 +1,11 @@
 "use client";
 
 /**
- * Live microphone recorder (task 7.1, FR-CH-03, C-TEC-04, NFR-REL-02). Kept for the demo input
- * layer (task M.12); not used by any page yet. It knows nothing about the module's API: the
- * caller passes `send`, which delivers one window (the demo relays it server-side with its own
- * API key, so no key ever reaches the browser) and returns the HTTP response.
+ * Live microphone recorder (task 7.1, FR-CH-03, C-TEC-04, NFR-REL-02), used by the public demo's
+ * Speak page (tasks M.12, N.7). It knows nothing about the module's API: the caller passes `send`,
+ * which delivers one window (the demo relays it server-side with its own API key, so no key ever
+ * reaches the browser) and returns the HTTP response. It shows no transcript: a person sees only
+ * that they are being heard, plus the emergency options (CLAUDE.md rule 1).
  *
  * Records in 5-second windows. Each window is a complete, separately decodable file
  * (the recorder is restarted every 5 s, because MediaRecorder timeslices after the
@@ -14,6 +15,7 @@
  * failing, it stops and calls `onFallback`. Nothing about risk is shown except the
  * emergency options (CLAUDE.md rule 1).
  */
+import { Mic, MicOff, Square } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { EmergencyPanel } from "@/contracts/interaction";
 
@@ -23,8 +25,6 @@ const RETRIES = [500, 1_500];
 const MAX_UNANALYSED = 2;
 
 interface AudioReply {
-  windowIndex: number;
-  transcript: string | null;
   analysed: boolean;
   showEmergencyPanel: boolean;
   emergency: EmergencyPanel | null;
@@ -70,7 +70,6 @@ export interface RecorderLabels {
   recording: string;
   muted: string;
   sending: string;
-  heard: string;
   mute: string;
   unmute: string;
   stop: string;
@@ -81,7 +80,6 @@ const ENGLISH: RecorderLabels = {
   recording: "Recording",
   muted: "Muted",
   sending: "Sending…",
-  heard: "What we heard",
   mute: "Mute",
   unmute: "Unmute",
   stop: "Stop",
@@ -94,6 +92,7 @@ export function LiveRecorder({
   onFinished,
   onFallback,
   labels = ENGLISH,
+  maxSeconds,
 }: {
   /** Used only to keep window numbers unique across recordings of one interaction. */
   interactionId: string;
@@ -103,12 +102,13 @@ export function LiveRecorder({
   onFinished: () => Promise<void>;
   onFallback: (reason: "micRefused" | "unavailable" | "needsConsent") => void;
   labels?: RecorderLabels;
+  /** Stops by itself after this many seconds (the public demo caps a call at three minutes). */
+  maxSeconds?: number;
 }) {
   const t = (k: keyof RecorderLabels) => labels[k];
   const [phase, setPhase] = useState<"idle" | "recording" | "finishing">("idle");
   const [muted, setMuted] = useState(false);
   const [elapsed, setElapsed] = useState(0);
-  const [heard, setHeard] = useState<string[]>([]);
 
   const stream = useRef<MediaStream | null>(null);
   const recorder = useRef<MediaRecorder | null>(null);
@@ -142,9 +142,8 @@ export function LiveRecorder({
     form.append("startMs", String(startMs));
     for (let attempt = 0; ; attempt++) {
       const res = await send(form).catch(() => null);
-      if (res?.status === 202) {
+      if (res?.status === 202 || res?.status === 200) {
         const r = (await res.json()) as AudioReply;
-        if (r.transcript) setHeard((h) => [...h, r.transcript!]);
         if (r.showEmergencyPanel && r.emergency) onEmergency(r.emergency);
         unanalysed.current = r.analysed ? 0 : unanalysed.current + 1;
         if (unanalysed.current >= MAX_UNANALYSED) {
@@ -208,13 +207,17 @@ export function LiveRecorder({
     clock.current = clockFor(interactionId);
     unanalysed.current = 0;
     running.current = true;
-    setHeard([]);
     setElapsed(0);
     setPhase("recording");
     const t0 = Date.now();
     const tick = () => {
       if (!running.current) return;
-      setElapsed(Math.floor((Date.now() - t0) / 1000));
+      const s = Math.floor((Date.now() - t0) / 1000);
+      setElapsed(s);
+      if (maxSeconds && s >= maxSeconds) {
+        void stop();
+        return;
+      }
       timers.current.push(window.setTimeout(tick, 1000));
     };
     tick();
@@ -245,33 +248,32 @@ export function LiveRecorder({
 
   if (phase === "idle") {
     return (
-      <button type="button" onClick={start} className="btn btn-secondary btn-lg border-brand text-ink" data-testid="voice-start">
-        🎤 {t("speak")}
+      <button type="button" onClick={start} className="btn btn-primary btn-lg w-full sm:w-auto" data-testid="voice-start">
+        <Mic className="size-5" aria-hidden /> {t("speak")}
       </button>
     );
   }
 
+  const mm = Math.floor(elapsed / 60);
+  const ss = String(elapsed % 60).padStart(2, "0");
   return (
-    <div className="card flex flex-col gap-3 border-l-[6px] border-l-danger p-4" data-testid="voice-recorder">
-      <p role="status" aria-live="polite" className="flex items-center gap-2 text-lg font-semibold">
-        <span aria-hidden className={`inline-block size-3 rounded-[2px] ${muted ? "bg-muted-foreground" : "animate-pulse bg-danger"}`} />
-        {phase === "finishing" ? t("sending") : muted ? t("muted") : t("recording")}
-        <span className="font-mono text-base">
-          {Math.floor(elapsed / 60)}:{String(elapsed % 60).padStart(2, "0")}
+    <div className="card flex flex-col items-center gap-5 p-6" data-testid="voice-recorder">
+      <span className={`grid size-20 place-items-center rounded-full ${muted ? "bg-surface-2 text-ink-3" : "listening bg-brand text-white"}`} aria-hidden>
+        {muted ? <MicOff className="size-8" /> : <Mic className="size-8" />}
+      </span>
+      <p role="status" aria-live="polite" className="flex flex-col items-center gap-1">
+        <span className="text-lg font-semibold">{phase === "finishing" ? t("sending") : muted ? t("muted") : t("recording")}</span>
+        <span className="num text-2xl text-ink-2">
+          {mm}:{ss}
+          {maxSeconds ? <span className="text-sm text-ink-3"> / {Math.floor(maxSeconds / 60)}:00</span> : null}
         </span>
       </p>
-      {heard.length > 0 && (
-        <div className="text-base">
-          <p className="section-title">{t("heard")}</p>
-          <p data-testid="voice-heard">{heard.join(" ")}</p>
-        </div>
-      )}
-      <div className="flex gap-3">
-        <button type="button" onClick={toggleMute} disabled={phase !== "recording"} className="btn btn-secondary min-h-12 flex-1 text-lg">
-          {muted ? t("unmute") : t("mute")}
+      <div className="flex w-full gap-3 sm:w-auto">
+        <button type="button" onClick={toggleMute} disabled={phase !== "recording"} className="btn btn-secondary min-h-12 flex-1 px-6">
+          {muted ? <Mic className="size-4" aria-hidden /> : <MicOff className="size-4" aria-hidden />} {muted ? t("unmute") : t("mute")}
         </button>
-        <button type="button" onClick={stop} disabled={phase !== "recording"} className="btn btn-primary min-h-12 flex-1 text-lg" data-testid="voice-stop">
-          {t("stop")}
+        <button type="button" onClick={stop} disabled={phase !== "recording"} className="btn btn-primary min-h-12 flex-1 px-6" data-testid="voice-stop">
+          <Square className="size-4" aria-hidden /> {t("stop")}
         </button>
       </div>
     </div>
