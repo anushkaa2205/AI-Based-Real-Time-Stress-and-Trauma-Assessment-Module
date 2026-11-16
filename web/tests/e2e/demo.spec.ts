@@ -3,6 +3,7 @@
  * DEMO_API_KEY (`npm run api:client -- --demo`); skipped otherwise. The recorded-audio test also needs
  * the analysis service. All text and audio are synthetic: the audio is the two-voice TTS test fixture.
  */
+import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { expect, test } from "@playwright/test";
 import mongoose from "mongoose";
@@ -143,6 +144,42 @@ test("recorded audio page: an uploaded two-voice WAV is cut into windows and pla
     expect(i?.channel).toBe("VOICE_CALL");
     expect(await db.collection("voice_windows").countDocuments({ interactionId: i?._id })).toBe(analysed); // what the page said
     expect(await db.collection("stored_audio").countDocuments({ interactionId: i?._id })).toBe(0); // no audio kept
+  });
+  await page.getByTestId("end").click();
+});
+
+test("generated text: a synthetic conversation is shown first, uses only NHAA's scripted questions, then plays through /messages (M.13)", async ({ page }) => {
+  test.setTimeout(240_000);
+  await staffLogin(page, "NHAA_SUPERVISOR");
+  const gen = await page.request.post("/api/demo/generate", { data: { category: "PRESSURE_TO_WITHDRAW", language: "en", length: "short", tone: "worried" } });
+  test.skip(gen.status() === 503, "the generator (analysis service + Groq) is unavailable");
+  expect(gen.status()).toBe(200);
+  const g = (await gen.json()) as { turns: { speaker: string; text: string }[]; synthetic: boolean; modelVersion: string };
+  expect(g.synthetic).toBe(true);
+  expect(g.turns.length).toBeGreaterThan(0);
+  expect(g.turns.length).toBeLessThanOrEqual(4);
+  const scripted = Object.values((JSON.parse(readFileSync(resolve(__dirname, "../../messages/en.json"), "utf8")) as { operatorQuestions: Record<string, string> }).operatorQuestions);
+  for (const t of g.turns.filter((x) => x.speaker === "CHATBOT")) expect(scripted).toContain(t.text);
+
+  // Through the page: nothing is sent until Play; then every line goes in order.
+  await page.goto("/demo/generated");
+  await page.getByTestId("generate").click();
+  const generated = page.getByTestId("generated");
+  await expect(generated).toBeVisible({ timeout: 60_000 });
+  await expect(generated).toContainText("Synthetic");
+  await expect(page.getByTestId("case-link")).toHaveCount(0); // no interaction yet
+  await page.getByTestId("play-generated").click();
+  await expect(page.getByTestId("end")).toBeVisible({ timeout: 150_000 }); // shown once every line was sent
+  const shown = await page.getByTestId("generated-chat").locator("li").count();
+  await expect(page.getByTestId("timeline")).toContainText(`Line ${shown}:`);
+
+  const docket = (await page.getByTestId("case-link").textContent())?.trim() ?? "";
+  await withDb(async (db) => {
+    const c = await db.collection("cases").findOne({ docketNumber: docket });
+    expect(c?.isDemo).toBe(true);
+    const i = await db.collection("interactions").findOne({ caseId: c?._id });
+    expect(i?.channel).toBe("CHATBOT");
+    expect(await db.collection("messages").countDocuments({ interactionId: i?._id })).toBe(shown);
   });
   await page.getByTestId("end").click();
 });
