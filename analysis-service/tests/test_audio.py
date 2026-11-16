@@ -19,6 +19,7 @@ from fastapi.testclient import TestClient
 
 from app.audio import emotion as ser
 from app.audio import features as fx
+from app.audio import speakers as spk
 from app.audio import stt
 from app.audio.decode import SAMPLE_RATE, BadAudio, decode
 from app.config import Settings
@@ -191,6 +192,8 @@ def client(monkeypatch, tmp_path):
     monkeypatch.setattr(stt, "whisper", fake_whisper)
     # Keep the unit tests fast and offline: the rule-based emotion path.
     monkeypatch.setattr(ser, "_load", lambda: None)
+    # One fixed voice fingerprint: one voice, so MIXED audio is all the caller's (M.10).
+    monkeypatch.setattr(spk, "_embed", lambda samples: np.ones(4, dtype=np.float32) / 2)
     yield TestClient(app)
     app.dependency_overrides.clear()
 
@@ -273,3 +276,34 @@ def test_endpoint_security_and_errors(client, speech):
         client.post("/v1/analyze/audio", content=odd, headers=signed(odd, octype)).status_code
         == 422
     )
+
+
+def test_endpoint_reports_speakers_for_mixed_and_caller_only_audio(client, speech):
+    """Task M.10 (FR-VOI-10): MIXED is the default; one voice so far is all the caller's."""
+    audio = to_webm(speech[: 5 * SAMPLE_RATE])
+    body, ctype = multipart({"windowIndex": 0, "startMs": 0, "languageHint": "en"}, audio)
+    j = client.post("/v1/analyze/audio", content=body, headers=signed(body, ctype)).json()
+    sp = j["speakers"]
+    assert sp["audioSource"] == "MIXED" and sp["singleVoice"] is True
+    assert (
+        sp["separated"] is False and sp["confident"] is False
+    )  # limited confidence for this window
+    assert j["transcript"]["text"].startswith("the village")  # nothing discarded
+    assert json.loads(sp["state"])["voices"]  # fingerprints only, for the next window
+    assert j["modelVersion"]["speakers"] == spk.SPK_VERSION
+
+    body, ctype = multipart(
+        {"windowIndex": 1, "startMs": 5000, "languageHint": "en", "audioSource": "CALLER_ONLY"},
+        audio,
+    )
+    sp = client.post("/v1/analyze/audio", content=body, headers=signed(body, ctype)).json()[
+        "speakers"
+    ]
+    assert sp == {
+        **sp,
+        "audioSource": "CALLER_ONLY",
+        "separated": False,
+        "confident": True,
+        "operatorText": None,
+        "state": None,
+    }

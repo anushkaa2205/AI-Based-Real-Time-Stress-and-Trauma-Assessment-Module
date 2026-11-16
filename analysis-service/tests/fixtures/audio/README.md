@@ -1,6 +1,6 @@
 # Audio test fixtures
 
-**Synthetic only.** No recording of any real person is ever stored in this repository (FR-VOI-09, CLAUDE.md rule 11). `.gitignore` blocks all audio files except the one listed below.
+**Synthetic only.** No recording of any real person is ever stored in this repository (FR-VOI-09, CLAUDE.md rule 11). `.gitignore` blocks all audio files except the two listed below.
 
 ## `pauses_en.wav`
 
@@ -35,6 +35,38 @@ $ssml = "<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:la
 $s = New-Object System.Speech.Synthesis.SpeechSynthesizer
 $fmt = New-Object System.Speech.AudioFormat.SpeechAudioFormatInfo(16000, [System.Speech.AudioFormat.AudioBitsPerSample]::Sixteen, [System.Speech.AudioFormat.AudioChannel]::Mono)
 $s.SetOutputToWaveFile("$PWD\pauses_en.wav", $fmt)
+$s.SpeakSsml($ssml)
+$s.Dispose()
+```
+
+## `two_voices_en.wav`
+
+Offline text-to-speech with two Windows voices taking turns, 16 kHz, 16-bit, mono, about 28 s long. It stands in for a helpline call recorded as one mixed track (task M.10, FR-VOI-10, AC-VOI-08).
+
+- **Operator:** "Microsoft David Desktop". **Caller:** "Microsoft Zira Desktop". The operator speaks first.
+- **Content:** six neutral turns (a greeting, a question about a postponed hearing, "are you safe right now?", a calm answer), with a 700 ms break after each turn.
+- **Who speaks when** is listed in `TRUTH` in `tests/test_speakers.py`.
+- **Limit:** two synthetic voices of different genders are much easier to tell apart than two real people on a phone line. The fixture proves the mechanics of separation, not real-world accuracy.
+- **Used by:** `tests/test_speakers.py` (AC-VOI-08, with the real speaker model; skipped if the model is not available offline).
+
+To regenerate it on Windows (PowerShell):
+
+```powershell
+Add-Type -AssemblyName System.Speech
+$turns = @(
+  @("Microsoft David Desktop", "National helpline against atrocities. How can I help you today?"),
+  @("Microsoft Zira Desktop", "I want to ask about my complaint. The hearing was postponed again."),
+  @("Microsoft David Desktop", "I understand. Are you safe right now?"),
+  @("Microsoft Zira Desktop", "Yes, I am at home with my sister."),
+  @("Microsoft David Desktop", "Is there anything else you would like us to know?"),
+  @("Microsoft Zira Desktop", "We have been worried since the meeting in the village.")
+)
+$body = ""
+foreach ($t in $turns) { $body += "<voice name='$($t[0])'>$($t[1])</voice><break time='700ms'/>" }
+$ssml = "<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='en-US'>$body</speak>"
+$s = New-Object System.Speech.Synthesis.SpeechSynthesizer
+$fmt = New-Object System.Speech.AudioFormat.SpeechAudioFormatInfo(16000, [System.Speech.AudioFormat.AudioBitsPerSample]::Sixteen, [System.Speech.AudioFormat.AudioChannel]::Mono)
+$s.SetOutputToWaveFile("$PWD\two_voices_en.wav", $fmt)
 $s.SpeakSsml($ssml)
 $s.Dispose()
 ```
