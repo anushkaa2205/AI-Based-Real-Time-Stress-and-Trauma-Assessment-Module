@@ -385,6 +385,8 @@ data: {"interactionId":"6735a1f0c2a4b1e0f0a1in01","svi":81,"band":"CRITICAL","se
 
 Errors specific to integration: `401 INVALID_API_KEY`, `403 SCOPE_MISSING`, `404` for interactions created by another client, `429 RATE_LIMITED`.
 
+**Contract version (task M.6, gap V2).** Every integration response, errors included, carries `X-Contract-Version` (now `1.1`: `inputMethod` and `GET …/indicators` added to 1.0). The path stays `/api/v1`; additions are backwards compatible, and a breaking change would mean `/api/v2`.
+
 ### 6.1 Consent
 The calling system obtains consent in its own workflow and sends it on start as `consent: ConsentRequest`:
 ```json
@@ -402,7 +404,7 @@ The calling system obtains consent in its own workflow and sends it on start as 
 If every analysis option is `false` → `mode: "SAFETY_ONLY"`: the interaction is recorded and routed, and only the safety lexicon runs (FR-CON-03). For minors without a guardian: `SAFETY_ONLY` (FR-CON-05). `POST /interactions/{id}/consent/withdraw` stops analysis at once, sets `SAFETY_ONLY` and deletes any stored audio (FR-CON-04, AC-CON-04).
 
 ### 6.2 Text messages
-Headers: `Idempotency-Key`. `sender` is `"VICTIM"` (the person, default) or `"OPERATOR"` (NHAA's chatbot or operator, for example the question "Are you safe right now?"). Operator turns are stored as context and never scored (FR-CH-02, AC-CH-07). The person's next message is read with the operator turn just before it (FR-NLP-11, task M.9): question-aware rules score short answers to the four safety questions and to the PHQ-2, GAD-2 and PC-PTSD-5 wellbeing questions (REQUIREMENTS Appendix A, B), and the AI receives the question as `previousQuestion`. The scripted wording of these questions is in `messages/*.json` (`operatorQuestions.*`).
+Headers: `Idempotency-Key`. Optional `inputMethod` (task M.6): `"TEXT"` (typed, default) or `"TRANSCRIPT"` (the calling system's own speech-to-text); stored beside `modality`, separate from `channel`, never scored differently. `sender` is `"VICTIM"` (the person, default) or `"OPERATOR"` (NHAA's chatbot or operator, for example the question "Are you safe right now?"). Operator turns are stored as context and never scored (FR-CH-02, AC-CH-07). The person's next message is read with the operator turn just before it (FR-NLP-11, task M.9): question-aware rules score short answers to the four safety questions and to the PHQ-2, GAD-2 and PC-PTSD-5 wellbeing questions (REQUIREMENTS Appendix A, B), and the AI receives the question as `previousQuestion`. The scripted wording of these questions is in `messages/*.json` (`operatorQuestions.*`).
 
 **201** (person's message):
 ```json
@@ -431,6 +433,7 @@ Headers: `Idempotency-Key`. `sender` is `"VICTIM"` (the person, default) or `"OP
 | `windowIndex` | int | 0, 1, 2… (order and de-duplication) |
 | `startMs` | int | Offset from call start |
 | `audioSource` | `CALLER_ONLY` \| `MIXED` | Optional, default **`MIXED`**. `CALLER_ONLY`: the caller's own channel (call centres usually record agent and caller separately). `MIXED`: both voices in one recording (FR-VOI-10). |
+| `inputMethod` | `LIVE_AUDIO` \| `RECORDED_AUDIO` | Optional, default `LIVE_AUDIO` (task M.6): windows sent during the call, or cut from a recording. Stored with the window and its transcript. |
 | `firstSpeaker` | `OPERATOR` \| `CALLER` | Optional, default `OPERATOR` (the helpline answers first). Only used for `MIXED` audio, to tell which of the two voices is the operator. |
 
 **202 Accepted** `{ "windowIndex": 7, "transcript": "…", "analysed": true, "showEmergencyPanel": false, "emergency": null }`

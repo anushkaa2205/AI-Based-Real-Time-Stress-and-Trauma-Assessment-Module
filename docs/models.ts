@@ -43,6 +43,8 @@ export const CONSENT_ACTIONS = ["GRANTED", "UPDATED", "WITHDRAWN"] as const;
 export const MESSAGE_SENDERS = ["VICTIM", "SYSTEM", "OPERATOR"] as const;
 /** VICTIM is scored; OPERATOR (chatbot or operator turns) is context only; SYSTEM is legacy (no longer written). */
 export const MESSAGE_MODALITIES = ["TEXT", "VOICE_TRANSCRIPT"] as const; // IVR_KEYPRESS removed 16 Nov 2026
+/** How the input reached the calling system (task M.6); separate from channel and modality */
+export const INPUT_METHODS = ["TEXT", "TRANSCRIPT", "LIVE_AUDIO", "RECORDED_AUDIO"] as const;
 
 /** The eight risk dimensions (FR-IND-01) */
 export const DIMENSIONS = [
@@ -330,6 +332,7 @@ const MessageSchema = new Schema(
     seq: { type: Number, required: true },
     sender: { type: String, enum: MESSAGE_SENDERS, required: true },
     modality: { type: String, enum: MESSAGE_MODALITIES, required: true },
+    inputMethod: { type: String, enum: INPUT_METHODS }, // M.6, as the calling system said
     textEnc: { type: String, required: true },
     translationEnc: String, // EN/HI for responders (FR-LANG-06)
     language: String,
@@ -381,6 +384,7 @@ const VoiceWindowSchema = new Schema(
       confidence: Number,
       distribution: { type: Schema.Types.Mixed },
     },
+    inputMethod: { type: String, enum: INPUT_METHODS }, // M.6: LIVE_AUDIO or RECORDED_AUDIO
     modelVersion: { type: String, required: true },
     purgeAt: Date,
   },

@@ -149,6 +149,7 @@ Legend: **🔒** = encrypted field, **TTL** = auto-deleted by MongoDB, **U** = u
 | `interactionId`, `seq` | ObjectId, number | **U** together |
 | `sender` | enum | VICTIM (the person; scored), OPERATOR (NHAA's chatbot or operator; stored as context, never scored), SYSTEM (legacy scripted prompts; no longer written) |
 | `modality` | enum | TEXT, VOICE_TRANSCRIPT (`IVR_KEYPRESS` removed 16 Nov 2026) |
+| `inputMethod` | enum | How the input reached the calling system (task M.6): TEXT, TRANSCRIPT (text messages), LIVE_AUDIO, RECORDED_AUDIO (audio). Separate from `channel` and `modality`; absent on messages from before M.6 |
 | `textEnc` 🔒 | string | Original text or transcript |
 | `translationEnc` 🔒 | string | EN/HI for responders (FR-LANG-06) |
 | `language`, `sttConfidence` | | |
@@ -158,7 +159,7 @@ Legend: **🔒** = encrypted field, **TTL** = auto-deleted by MongoDB, **U** = u
 ### 4.4 `voice_windows`: features only, never raw audio
 `interactionId`, `windowIndex` (**U** together), `startMs`, `endMs`, `messageId` (transcript), `pauses {count, meanMs, maxMs, silenceRatio}`, `pitch {meanHz, stdHz, rangeHz}`, `speechRateWpm`, `energy {meanDb, deltaDb}`, `voiceQuality {jitter, shimmer}`, `events[] {type: CRYING|SOBBING|SIGH|LONG_SILENCE|SHARP_BREATH, startMs, endMs, confidence}`, `baselineDeviation`, `emotion {label, confidence, distribution}`, `modelVersion`, `purgeAt` **TTL**.
 
-Since task M.10: `audioSource` (`CALLER_ONLY` | `MIXED`) and `speakers {separated, confident, callerMs, operatorMs}`. Features are computed from the caller's speech only; nothing identifying the voice is stored per window.
+Since task M.10: `audioSource` (`CALLER_ONLY` | `MIXED`) and `speakers {separated, confident, callerMs, operatorMs}`. Since task M.6: `inputMethod` (`LIVE_AUDIO` | `RECORDED_AUDIO`). Features are computed from the caller's speech only; nothing identifying the voice is stored per window.
 
 ### 4.5 `stored_audio`: only with `audioRetention` consent
 `interactionId`, `storageKey` (encrypted object in S3-compatible storage), `durationMs`, `deleteAfter`. No TTL index: the worker deletes the **object first, then the document**, so no orphaned files remain.
