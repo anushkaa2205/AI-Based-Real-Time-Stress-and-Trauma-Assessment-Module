@@ -9,7 +9,43 @@ import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react
 import { useRealtime } from "@/components/realtime/realtime-provider";
 import { BandBadge } from "./band-badge";
 import { DemoMark } from "./demo-mark";
+import { PageHeader } from "./page-header";
 import { RecommendationActions } from "./recommendation-actions";
+
+/** Appendix A, step 3: 0–29 Low · 30–54 Moderate · 55–74 High · 75–100 Critical */
+const THRESHOLDS = [30, 55, 75];
+const STATUS_LABEL: Record<string, string> = { NEW: "New", UNDER_REVIEW: "Under review", ACTION_TAKEN: "Action taken", FOLLOW_UP_SCHEDULED: "Follow-up scheduled", CLOSED: "Closed" };
+const words = (v: string) => v.replace(/_/g, " ").toLowerCase();
+
+/** The score as a large number on a 0–100 bar marked with the band thresholds (plan §9.6). */
+function ScoreBar({ svi, band }: { svi: number | null; band: string | null }) {
+  const colour = band === "CRITICAL" ? "bg-[#b42318]" : band === "HIGH" ? "bg-[#c4511a]" : band === "MODERATE" ? "bg-[#b7860b]" : "bg-ink-3";
+  return (
+    <div className="flex items-center gap-4">
+      <span className="num text-4xl font-medium leading-none text-ink" data-testid="svi">
+        {svi ?? "–"}
+      </span>
+      <div className="flex-1">
+        <div className="relative h-2.5 overflow-hidden rounded-full bg-surface-2">
+          {svi !== null && <div className={`h-full rounded-full ${colour}`} style={{ width: `${Math.max(2, Math.min(100, svi))}%` }} />}
+          {THRESHOLDS.map((t) => (
+            <span key={t} aria-hidden className="absolute top-0 h-full w-px bg-ink/25" style={{ left: `${t}%` }} />
+          ))}
+        </div>
+        <div className="num relative mt-1 h-4 text-[0.6875rem] text-ink-3">
+          <span className="absolute left-0">0</span>
+          {THRESHOLDS.map((t) => (
+            <span key={t} className="absolute -translate-x-1/2" style={{ left: `${t}%` }}>
+              {t}
+            </span>
+          ))}
+          <span className="absolute right-0">100</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 
 type Json = Record<string, unknown>;
 interface Dim {
@@ -122,7 +158,7 @@ function Highlighted({ text, spans }: { text: string; spans: { start: number; en
     if (s.start < pos) continue; // overlapping span: keep the first
     parts.push(text.slice(pos, s.start));
     parts.push(
-      <mark key={`${s.start}-${s.dim}`} title={`${DIM_LABEL[s.dim] ?? s.dim}${s.negated ? " (negated)" : ""}`} className={s.negated ? "bg-muted line-through" : "bg-[#f6e7b0]"}>
+      <mark key={`${s.start}-${s.dim}`} title={`${DIM_LABEL[s.dim] ?? s.dim}${s.negated ? " (negated)" : ""}`} className={s.negated ? "bg-surface-2 line-through decoration-ink-3" : "rounded-sm bg-[#fbe8b4] px-0.5 text-ink"}>
         {text.slice(s.start, s.end)}
       </mark>,
     );
@@ -140,10 +176,13 @@ function Timeline({ points }: { points: Assessment[] }) {
   const ys = (v: number) => h - 5 - (v / 100) * (h - 10);
   return (
     <svg viewBox={`0 0 ${w} ${h}`} className="h-20 w-full max-w-sm" role="img" aria-label={`SVI over time: ${points.map((p) => p.svi).join(", ")}`}>
-      {[30, 55, 75].map((t) => (
-        <line key={t} x1="0" x2={w} y1={ys(t)} y2={ys(t)} stroke="currentColor" strokeOpacity="0.15" />
+      {THRESHOLDS.map((t) => (
+        <line key={t} x1="0" x2={w} y1={ys(t)} y2={ys(t)} stroke="currentColor" strokeOpacity="0.12" />
       ))}
-      <polyline fill="none" stroke="currentColor" strokeWidth="2" points={points.map((p, i) => `${xs(i)},${ys(p.svi)}`).join(" ")} />
+      <polyline fill="none" stroke="var(--brand)" strokeWidth="2" strokeLinejoin="round" points={points.map((p, i) => `${xs(i)},${ys(p.svi)}`).join(" ")} />
+      {points.map((p, i) => (
+        <circle key={p.id} cx={xs(i)} cy={ys(p.svi)} r="2.5" fill="var(--brand)" />
+      ))}
     </svg>
   );
 }
@@ -263,60 +302,81 @@ export function CaseDetailView({ caseId }: { caseId: string }) {
     void load();
   }
 
-  if (!c) return <p>{msg ?? "Loading…"}</p>;
+  if (!c)
+    return msg ? (
+      <p role="status" className="empty">
+        {msg}
+      </p>
+    ) : (
+      <div className="flex flex-col gap-4" aria-busy="true" aria-label="Loading">
+        <div className="skeleton h-8 w-72" />
+        <div className="skeleton h-24 w-full" />
+        <div className="skeleton h-64 w-full" />
+      </div>
+    );
   const a = c.latestAssessment;
   const dims = Object.entries(a?.dimensions ?? {}).sort((x, y) => y[1].contribution - x[1].contribution);
+  const active = indicators.filter((i) => i.status !== "REJECTED");
 
   return (
     <div className="flex flex-col gap-6">
-      <header className="flex flex-wrap items-center gap-3">
-        <h1 className="font-mono text-[1.375rem] font-bold text-ink">{c.docketNumber}</h1>
+      <PageHeader title={c.docketNumber}>
         <DemoMark show={c.isDemo} />
         <BandBadge band={c.band} />
-        <span className="text-lg" data-testid="svi">
-          SVI <strong>{c.svi ?? "–"}</strong>
-        </span>
-        {c.overrideLockedBand && <span className="tag border-brand bg-accent text-brand">Locked at {c.overrideLockedBand.toLowerCase()}</span>}
-        {a?.limitedConfidence && <span className="tag">Limited AI analysis</span>}
-        <span className="text-sm text-muted-foreground">Status: {c.status.replace(/_/g, " ").toLowerCase()}</span>
-        <span className="text-sm text-muted-foreground">Assigned: {c.assignedTo?.name ?? "nobody"}</span>
-      </header>
+        {c.overrideLockedBand && <span className="tag tag-brand">Locked at {c.overrideLockedBand.toLowerCase()}</span>}
+        {a?.limitedConfidence && <span className="tag tag-warn">Limited AI analysis</span>}
+        <span className="tag">{STATUS_LABEL[c.status] ?? words(c.status)}</span>
+        <span className="text-sm text-ink-2">{c.assignedTo ? `Assigned to ${c.assignedTo.name}` : "Unassigned"}</span>
+      </PageHeader>
       {msg && (
-        <p role="status" data-testid="case-message" className="rounded-[3px] border border-line bg-[#faf9f6] p-2 text-sm">
+        <p role="status" data-testid="case-message" className="rounded-lg border border-line bg-surface px-3 py-2 text-sm text-ink-2">
           {msg}
         </p>
       )}
 
-      <section className="grid gap-4 md:grid-cols-2">
-        <div className="card flex flex-col gap-2 p-4">
-          <h2 className="section-title">Why this band</h2>
-          <p data-testid="explanation">{a?.explanation ?? "No assessment yet."}</p>
-          {!!a?.overridesFired?.length && <p className="text-sm">Safety overrides: {a.overridesFired.join(", ")}</p>}
+      <section className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
+        <div className="card card-pad flex flex-col gap-4">
+          <h2 className="section-title">Stress vulnerability index</h2>
+          <ScoreBar svi={c.svi} band={c.band} />
+          <p className="text-[0.9375rem] leading-relaxed text-ink" data-testid="explanation">
+            {a?.explanation ?? "No assessment yet."}
+          </p>
+          {!!a?.overridesFired?.length && (
+            <p className="flex flex-wrap items-center gap-1.5 text-sm">
+              <span className="text-ink-2">Safety overrides:</span>
+              {a.overridesFired.map((o) => (
+                <span key={o} className="tag tag-danger">
+                  {o}
+                </span>
+              ))}
+            </p>
+          )}
           <Timeline points={timeline} />
           {c.summary && (
-            <>
-              <h3 className="mt-2 font-semibold">Summary</h3>
-              <p className="text-sm">{c.summary}</p>
-              {c.summaryTranslated && c.summaryTranslated !== c.summary && <p className="text-sm text-muted-foreground">{c.summaryTranslated}</p>}
-            </>
+            <div className="border-t border-line pt-3">
+              <h3 className="section-title">Summary</h3>
+              <p className="mt-1 text-sm leading-relaxed">{c.summary}</p>
+              {c.summaryTranslated && c.summaryTranslated !== c.summary && <p className="mt-1 text-sm text-ink-2">{c.summaryTranslated}</p>}
+            </div>
           )}
         </div>
-        <div className="card flex flex-col gap-2 p-4">
-          <h2 className="section-title">SVI breakdown</h2>
+        <div className="card card-pad flex flex-col gap-3">
+          <h2 className="section-title">What drives the score</h2>
+          {dims.length === 0 && <p className="text-sm text-ink-3">No signal yet.</p>}
           {dims.map(([k, d]) => (
             <div key={k} className="text-sm">
-              <div className="flex justify-between">
-                <span>{DIM_LABEL[k] ?? k}</span>
-                <span className="font-mono">
-                  +{d.contribution.toFixed(1)} (score {d.score.toFixed(2)})
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="font-medium text-ink">{DIM_LABEL[k] ?? k}</span>
+                <span className="num text-ink-2">
+                  +{d.contribution.toFixed(1)} <span className="text-ink-3">· {d.score.toFixed(2)}</span>
                 </span>
               </div>
-              <div className="h-2 rounded-[1px] bg-muted">
-                <div className="h-2 rounded-[1px] bg-brand" style={{ width: `${Math.min(100, d.score * 100)}%` }} />
+              <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-surface-2">
+                <div className="h-full rounded-full bg-brand" style={{ width: `${Math.min(100, d.score * 100)}%` }} />
               </div>
-              <div className="text-xs text-muted-foreground">
+              <div className="mt-0.5 text-xs text-ink-3">
                 {Object.entries(d.bySource)
-                  .map(([s, v]) => `${s.toLowerCase().replace("_", " ")} ${v.toFixed(2)}`)
+                  .map(([s, v]) => `${words(s)} ${v.toFixed(2)}`)
                   .join(" · ") || "no signal"}
               </div>
             </div>
@@ -324,106 +384,100 @@ export function CaseDetailView({ caseId }: { caseId: string }) {
         </div>
       </section>
 
-      <section className="card flex flex-col gap-2 p-4">
-        <h2 className="section-title">Indicators</h2>
-        {indicators.length === 0 && <p className="text-sm text-muted-foreground">{noShare ? "Not shared: the person did not consent to sharing with a counsellor." : "No text indicators."}</p>}
-        <ul className="flex flex-col gap-2">
-          {indicators.map((i) => (
-            <li key={i.id} className={`rounded-[3px] border border-line bg-white p-2 text-sm ${i.status === "REJECTED" || i.negated ? "opacity-60" : ""}`} data-testid="indicator">
-              <div className="flex flex-wrap items-center gap-2">
-                <strong>{DIM_LABEL[i.dimension] ?? i.dimension}</strong>
-                <span className="font-mono">{(i.review?.score ?? i.score).toFixed(2)}</span>
-                <span className="text-xs text-muted-foreground">
-                  {i.source.toLowerCase().replace("_", " ")} · confidence {i.confidence.toFixed(2)}
-                  {i.negated ? " · negated (not scored)" : ""} · {i.status.toLowerCase()}
-                </span>
-                {i.flags.length > 0 && <span className="tag bg-danger-soft text-danger">{i.flags.join(", ")}</span>}
-              </div>
-              {i.evidence.quote && <q className="block italic">{i.evidence.quote}</q>}
-              {i.label && <span className="block text-xs text-muted-foreground">{i.label}</span>}
-              {i.review && (
-                <span className="block text-xs">
-                  Reviewed by {i.review.by.name}: {i.review.reason}
-                </span>
-              )}
-              <div className="mt-1 flex gap-2">
-                {(["CONFIRM", "REJECT", "ADJUST"] as const).map((act) => (
-                  <button key={act} type="button" className="btn btn-secondary btn-sm" onClick={() => setReview({ id: i.id, action: act })}>
-                    {act.toLowerCase()}
-                  </button>
-                ))}
-              </div>
-              {review?.id === i.id && (
-                <form onSubmit={submitReview} className="mt-2 flex flex-wrap items-end gap-2">
-                  {review.action === "ADJUST" && (
-                    <label className="flex flex-col text-xs">
-                      New score
-                      <input name="score" type="number" min="0" max="1" step="0.05" required className="field w-20" />
+      <section className="grid gap-4 lg:grid-cols-2">
+        <div className="card card-pad flex flex-col gap-3">
+          <div className="flex items-baseline justify-between">
+            <h2 className="section-title">Warning signs</h2>
+            <span className="text-xs text-ink-3">{active.length} active</span>
+          </div>
+          {indicators.length === 0 && <p className="text-sm text-ink-3">{noShare ? "Not shared: the person did not consent to sharing with a counsellor." : "No warning signs found."}</p>}
+          <ul className="flex flex-col gap-2">
+            {indicators.map((i) => (
+              <li key={i.id} className={`rounded-lg border border-line p-3 text-sm ${i.status === "REJECTED" || i.negated ? "opacity-60" : ""}`} data-testid="indicator">
+                <div className="flex flex-wrap items-center gap-2">
+                  <strong className="text-ink">{DIM_LABEL[i.dimension] ?? i.dimension}</strong>
+                  <span className="num text-ink-2">{(i.review?.score ?? i.score).toFixed(2)}</span>
+                  <span className="text-xs text-ink-3">
+                    {words(i.source)} · confidence {i.confidence.toFixed(2)}
+                    {i.negated ? " · negated (not scored)" : ""} · {i.status.toLowerCase()}
+                  </span>
+                  {i.flags.length > 0 && <span className="tag tag-danger">{i.flags.join(", ")}</span>}
+                </div>
+                {i.evidence.quote && <q className="mt-1.5 block border-l-2 border-[#e9c75a] pl-2.5 italic text-ink">{i.evidence.quote}</q>}
+                {i.label && <span className="mt-1 block text-xs text-ink-3">{i.label}</span>}
+                {i.review && (
+                  <span className="mt-1 block text-xs text-ink-2">
+                    Reviewed by {i.review.by.name}: {i.review.reason}
+                  </span>
+                )}
+                <div className="mt-2 flex gap-2">
+                  {(["CONFIRM", "REJECT", "ADJUST"] as const).map((act) => (
+                    <button key={act} type="button" className="btn btn-secondary btn-sm" onClick={() => setReview({ id: i.id, action: act })}>
+                      {act.toLowerCase()}
+                    </button>
+                  ))}
+                </div>
+                {review?.id === i.id && (
+                  <form onSubmit={submitReview} className="mt-2 flex flex-wrap items-end gap-2">
+                    {review.action === "ADJUST" && (
+                      <label className="flex flex-col text-xs">
+                        New score
+                        <input name="score" type="number" min="0" max="1" step="0.05" required className="field w-20" />
+                      </label>
+                    )}
+                    <label className="flex flex-1 flex-col text-xs">
+                      Reason (required)
+                      <input name="reason" minLength={5} required className="field w-auto" />
                     </label>
-                  )}
-                  <label className="flex flex-1 flex-col text-xs">
-                    Reason (required)
-                    <input name="reason" minLength={5} required className="field w-auto" />
-                  </label>
-                  <button type="submit" className="btn btn-primary btn-sm">
-                    Save {review.action.toLowerCase()}
-                  </button>
-                  <button type="button" className="link text-xs" onClick={() => setReview(null)}>
-                    Cancel
-                  </button>
-                </form>
-              )}
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <section className="card flex flex-col gap-2 p-4">
-        <h2 className="section-title">Transcript</h2>
-        {noShare && <p className="text-sm text-muted-foreground">The person did not consent to sharing their words with a counsellor.</p>}
-        <ol className="flex flex-col gap-3">
-          {messages.map((m) => (
-            <li key={m.id} className="text-sm" data-testid="message">
-              <div className="text-xs text-muted-foreground">
-                #{m.seq} · {m.sender.toLowerCase()} · {m.language ?? ""}
-                {m.emotion ? ` · ${m.emotion.label}` : ""} · {new Date(m.createdAt).toLocaleString()}
-              </div>
-              <p>
-                <Highlighted text={m.text} spans={spansByMessage.get(m.id) ?? []} />
-              </p>
-              {m.translation && m.translation !== m.text && <p className="text-muted-foreground">EN: {m.translation}</p>}
-            </li>
-          ))}
-        </ol>
-      </section>
-
-      <section className="grid gap-4 md:grid-cols-2">
-        <div className="card flex flex-col gap-2 p-4 text-sm">
-          <h2 className="section-title">Consent and context</h2>
-          <p>
-            Text analysis: {c.consent.textAnalysis ? "yes" : "no"} · Voice: {c.consent.voiceAnalysis ? "yes" : "no"} · Share with counsellor:{" "}
-            {c.consent.shareWithCounsellor ? "yes" : "no"} · Follow-up contact: {c.consent.followUpContact ? "yes" : "no"}
-          </p>
-          {c.context && Object.keys(c.context).length > 0 && (
-            <p>
-              {Object.entries(c.context)
-                .map(([k, v]) => `${k}: ${String(v)}`)
-                .join(" · ")}
-            </p>
-          )}
+                    <button type="submit" className="btn btn-primary btn-sm">
+                      Save {review.action.toLowerCase()}
+                    </button>
+                    <button type="button" className="btn btn-quiet btn-sm" onClick={() => setReview(null)}>
+                      Cancel
+                    </button>
+                  </form>
+                )}
+              </li>
+            ))}
+          </ul>
         </div>
-        <div className="card flex flex-col gap-2 p-4 text-sm">
-          <h2 className="section-title">Recommendations</h2>
-          {c.recommendations.length === 0 && <p className="text-muted-foreground">None.</p>}
-          <ul className="flex flex-col gap-1">
+
+        <div className="card card-pad flex flex-col gap-3">
+          <h2 className="section-title">Transcript</h2>
+          {noShare && <p className="text-sm text-ink-3">The person did not consent to sharing their words with a counsellor.</p>}
+          {!noShare && messages.length === 0 && <p className="text-sm text-ink-3">Nothing said yet.</p>}
+          <ol className="flex flex-col gap-3">
+            {messages.map((m) => (
+              <li key={m.id} className={`text-sm ${m.sender === "OPERATOR" ? "pl-3 border-l-2 border-line" : ""}`} data-testid="message">
+                <div className="text-xs text-ink-3">
+                  #{m.seq} · {m.sender === "VICTIM" ? "person" : m.sender.toLowerCase()} · {m.language ?? ""}
+                  {m.emotion ? ` · ${m.emotion.label}` : ""} · {new Date(m.createdAt).toLocaleString()}
+                </div>
+                <p className="leading-relaxed text-ink">
+                  <Highlighted text={m.text} spans={spansByMessage.get(m.id) ?? []} />
+                </p>
+                {m.translation && m.translation !== m.text && <p className="text-ink-2">EN: {m.translation}</p>}
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      <section className="grid gap-4 lg:grid-cols-2">
+        <div className="card card-pad flex flex-col gap-3 text-sm">
+          <h2 className="section-title">Proposed support</h2>
+          {c.recommendations.length === 0 && <p className="text-ink-3">Nothing proposed yet.</p>}
+          <ul className="flex flex-col divide-y divide-line">
             {c.recommendations.map((r) => (
-              <li key={r.id} className="flex flex-col gap-1 border-b border-border pb-2 last:border-0">
-                <span>
-                  <strong>{r.type.replace(/_/g, " ").toLowerCase()}</strong> · {r.urgency.replace(/_/g, " ").toLowerCase()} · {r.status.toLowerCase()} ·{" "}
-                  {r.responsibleRole.replace(/_/g, " ").toLowerCase()}
-                </span>
-                <span className="text-xs text-muted-foreground">{r.reason}</span>
-                {r.legalBasis && <span className="text-xs text-muted-foreground">Basis: {r.legalBasis}</span>}
+              <li key={r.id} className="flex flex-col gap-1.5 py-3 first:pt-0 last:pb-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <strong className="text-ink">{words(r.type)}</strong>
+                  <span className={`tag ${r.urgency === "IMMEDIATE" || r.urgency === "WITHIN_15_MIN" ? "tag-danger" : ""}`}>{words(r.urgency)}</span>
+                  <span className={`tag ${r.status === "APPROVED" || r.status === "AUTO_TRIGGERED" ? "tag-ok" : r.status === "REJECTED" ? "" : "tag-brand"}`}>{r.status.toLowerCase()}</span>
+                  <span className="text-xs text-ink-3">{words(r.responsibleRole)}</span>
+                </div>
+                <span className="text-xs text-ink-2">{r.reason}</span>
+                {r.legalBasis && <span className="text-xs text-ink-3">Basis: {r.legalBasis}</span>}
                 <RecommendationActions
                   rec={r}
                   onDone={(m) => {
@@ -435,47 +489,90 @@ export function CaseDetailView({ caseId }: { caseId: string }) {
             ))}
           </ul>
         </div>
+        <div className="card card-pad flex flex-col gap-2 text-sm">
+          <h2 className="section-title">Consent and context</h2>
+          <dl className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+            {(
+              [
+                ["Text analysis", c.consent.textAnalysis],
+                ["Voice analysis", c.consent.voiceAnalysis],
+                ["Share with counsellor", c.consent.shareWithCounsellor],
+                ["Follow-up contact", c.consent.followUpContact],
+              ] as const
+            ).map(([k, v]) => (
+              <div key={k} className="flex items-center justify-between gap-2 border-b border-line py-1">
+                <dt className="text-ink-2">{k}</dt>
+                <dd className={`font-medium ${v ? "text-ok" : "text-ink-3"}`}>{v ? "Yes" : "No"}</dd>
+              </div>
+            ))}
+          </dl>
+          {c.context && Object.keys(c.context).length > 0 && (
+            <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1.5">
+              {Object.entries(c.context).map(([k, v]) => (
+                <div key={k} className="flex items-center justify-between gap-2 border-b border-line py-1">
+                  <dt className="text-ink-2">{k}</dt>
+                  <dd className="font-medium text-ink">{String(v)}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+          <div className="mt-2 flex flex-wrap gap-1.5 text-xs text-ink-3">
+            {c.interactions.map((i) => (
+              <span key={i.id} className="tag">
+                {words(i.channel)} · {i.status.toLowerCase()}
+              </span>
+            ))}
+          </div>
+        </div>
       </section>
 
-      <section className="grid gap-4 md:grid-cols-2">
-        <form onSubmit={override} className="card flex flex-col gap-2 p-4 text-sm" data-testid="override-form">
+      <section className="grid gap-4 lg:grid-cols-2">
+        <form onSubmit={override} className="card card-pad flex flex-col gap-3 text-sm" data-testid="override-form">
           <h2 className="section-title">Change band (human override)</h2>
-          <p className="text-xs text-muted-foreground">Only a person can lower a locked band, with a written reason (FR-RISK-03).</p>
-          <select name="toBand" defaultValue={c.band ?? "LOW"} className="field">
-            {["LOW", "MODERATE", "HIGH", "CRITICAL"].map((b) => (
-              <option key={b} value={b}>
-                {b.toLowerCase()}
-              </option>
-            ))}
-          </select>
-          <input name="reason" placeholder="Reason (at least 5 characters)" className="field" />
-          <button type="submit" className="btn btn-primary">
-            Change band
-          </button>
-          {c.bandOverrides.map((o, i) => (
-            <p key={i} className="text-xs">
-              {o.fromBand} → {o.toBand} by {o.by?.name ?? "?"}: {o.reason}
-            </p>
-          ))}
+          <p className="text-xs text-ink-3">Only a person can lower a locked band, with a written reason (FR-RISK-03).</p>
+          <div className="grid gap-2 sm:grid-cols-[10rem_1fr]">
+            <select name="toBand" defaultValue={c.band ?? "LOW"} className="field" aria-label="New band">
+              {["LOW", "MODERATE", "HIGH", "CRITICAL"].map((b) => (
+                <option key={b} value={b}>
+                  {b.toLowerCase()}
+                </option>
+              ))}
+            </select>
+            <input name="reason" placeholder="Reason (at least 5 characters)" className="field" aria-label="Reason" />
+          </div>
+          <div>
+            <button type="submit" className="btn btn-primary">
+              Change band
+            </button>
+          </div>
+          {c.bandOverrides.length > 0 && (
+            <ul className="flex flex-col gap-1 border-t border-line pt-2 text-xs text-ink-2">
+              {c.bandOverrides.map((o, i) => (
+                <li key={i}>
+                  {o.fromBand} → {o.toBand} by {o.by?.name ?? "?"}: {o.reason}
+                </li>
+              ))}
+            </ul>
+          )}
         </form>
-        <div className="card flex flex-col gap-2 p-4 text-sm">
+        <div className="card card-pad flex flex-col gap-3 text-sm">
           <h2 className="section-title">Case actions and notes</h2>
           <div className="flex flex-wrap gap-2">
             {["UNDER_REVIEW", "ACTION_TAKEN", "CLOSED"].map((s) => (
               <button key={s} type="button" onClick={() => patch({ status: s })} className="btn btn-secondary btn-sm">
-                Mark {s.replace(/_/g, " ").toLowerCase()}
+                Mark {words(s)}
               </button>
             ))}
           </div>
           <form onSubmit={scheduleFollowUp} className="flex flex-wrap items-center gap-2" data-testid="followup-form">
-            <label htmlFor="fu-due" className="text-xs">
+            <label htmlFor="fu-due" className="text-xs text-ink-2">
               Follow-up
             </label>
-            <input id="fu-due" name="dueAt" type="datetime-local" className="field" />
-            <select name="channel" defaultValue="VOICE_CALL" aria-label="Follow-up channel" className="field">
+            <input id="fu-due" name="dueAt" type="datetime-local" className="field w-auto" />
+            <select name="channel" defaultValue="VOICE_CALL" aria-label="Follow-up channel" className="field w-auto">
               {["VOICE_CALL", "CHATBOT", "PORTAL", "MOBILE_APP"].map((ch) => (
                 <option key={ch} value={ch}>
-                  {ch.replace(/_/g, " ").toLowerCase()}
+                  {words(ch)}
                 </option>
               ))}
             </select>
@@ -488,7 +585,7 @@ export function CaseDetailView({ caseId }: { caseId: string }) {
               {followUps.map((f) => (
                 <li key={f.id} className="flex flex-wrap items-center gap-2">
                   <span>
-                    {new Date(f.dueAt).toLocaleString()} · {f.channel.replace(/_/g, " ").toLowerCase()} · {f.assignedTo?.name ?? "unassigned"}
+                    {new Date(f.dueAt).toLocaleString()} · {words(f.channel)} · {f.assignedTo?.name ?? "unassigned"}
                   </span>
                   <button type="button" className="link" onClick={() => finishFollowUp(f.id, "DONE")}>
                     Done
@@ -501,18 +598,18 @@ export function CaseDetailView({ caseId }: { caseId: string }) {
             </ul>
           )}
           <form onSubmit={addNote} className="flex gap-2">
-            <input name="body" required placeholder="Add a note" className="field flex-1" />
+            <input name="body" required placeholder="Add a note" className="field flex-1" aria-label="Note" />
             <button type="submit" className="btn btn-primary">
               Save
             </button>
           </form>
-          <ul className="flex flex-col gap-1">
+          <ul className="flex flex-col gap-2">
             {notes.map((n) => (
-              <li key={n.id}>
-                <span className="text-xs text-muted-foreground">
+              <li key={n.id} className="rounded-lg bg-surface-2 px-3 py-2">
+                <span className="text-xs text-ink-3">
                   {n.author?.name} · {new Date(n.createdAt).toLocaleString()}
                 </span>
-                <p>{n.body}</p>
+                <p className="text-ink">{n.body}</p>
               </li>
             ))}
           </ul>
