@@ -13,6 +13,7 @@
     "e2e": "playwright test",
     "seed": "tsx scripts/seed.ts",
     "db:indexes": "tsx scripts/sync-indexes.ts",
+    "db:drop-screener-data": "tsx scripts/drop-screener-data.ts",
     "jobs": "tsx scripts/jobs.ts",
     "eval": "tsx ../evaluation/run_eval.ts",
     "i18n:check": "tsx scripts/check-i18n.ts",

@@ -1,6 +1,6 @@
 {
   "id": "en",
-  "version": "en-1.1",
+  "version": "en-1.2",
   "negation": {
     "cues": [
       "never",
@@ -130,6 +130,24 @@
         "(?:standing|waiting|sitting) outside (?:my|our|the) (?:house|home|door|gate)",
         "(?:they|he|the accused)(?:['’]re|['’]s| are| is) (?:here|outside) (?:now|right now)",
         "(?:coming|on their way) (?:here|to (?:my|our) (?:house|home)) (?:now|right now)"
+      ]
+    },
+    {
+      "id": "EN-NOT-SAFE-1",
+      "label": "Says they are not safe right now",
+      "dimension": "FEAR_ANXIETY",
+      "score": 0.8,
+      "confidence": 0.75,
+      "flags": [
+        "NOT_SAFE_NOW"
+      ],
+      "patterns": [
+        "(?:no[,.]? )?(?:i|we) (?:am|are|['’]m|['’]re) not safe",
+        "(?:no[,.]? )?(?:i|we) (?:do not|don['’]t|dont) feel safe",
+        "(?:no[,.]? )?(?:it is|it['’]s|its) not safe (?:for (?:me|us) )?(?:here|at home|to (?:stay|go home))",
+        "(?:no[,.]? )?not safe (?:here|at home|right now|anymore|any more)",
+        "(?:no[,.]? )?(?:i|we) (?:feel|am|are|['’]m|['’]re) unsafe",
+        "(?:no[,.]? )?(?:i|we) (?:am|are|['’]m|['’]re) in danger"
       ]
     },
     {

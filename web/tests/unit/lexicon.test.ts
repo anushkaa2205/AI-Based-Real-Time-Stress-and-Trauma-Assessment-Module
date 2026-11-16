@@ -1,6 +1,8 @@
 /** Safety lexicon (task 2.8). All sentences are synthetic, respectful and non-graphic (rule 11). */
 import { describe, expect, it } from "vitest";
 import { LEXICON_VERSION, RuleSetSchema, compile, lexiconSignals, scan } from "@/core/safety-lexicon/engine";
+import { assess } from "@/core/scoring/assess";
+import { DEFAULT_CONFIG } from "@/core/scoring/defaultConfig";
 import en from "@/core/safety-lexicon/rules/en.json";
 import hi from "@/core/safety-lexicon/rules/hi.json";
 import hinglish from "@/core/safety-lexicon/rules/hinglish.json";
@@ -22,7 +24,7 @@ describe("rule files", () => {
   });
 
   it("reports a version", () => {
-    expect(LEXICON_VERSION).toBe("en-1.1+hi-1.0+hinglish-1.0+mr-0.1-draft+ta-0.1-draft+bn-0.1-draft");
+    expect(LEXICON_VERSION).toBe("en-1.2+hi-1.1+hinglish-1.1+mr-0.2-draft+ta-0.2-draft+bn-0.2-draft");
   });
 });
 
@@ -179,5 +181,40 @@ describe("performance (NFR-PERF-04)", () => {
     for (let i = 0; i < runs; i++) scan(text);
     const perMessage = (performance.now() - t0) / runs;
     expect(perMessage).toBeLessThan(50);
+  });
+});
+
+describe("'not safe right now' in the person's own words → OV-9 (task M.3, Appendix B)", () => {
+  const notSafe = (text: string) => lexiconSignals(text).indicators.filter((i) => i.flags?.includes("NOT_SAFE_NOW") && !i.negated);
+
+  it.each([
+    "No, I'm not safe here",
+    "No I am not safe", // the leading "no" is part of the match, so it cannot negate it
+    "I don't feel safe at home",
+    "we are in danger",
+    "नहीं, मैं सुरक्षित नहीं हूँ",
+    "main safe nahi hoon",
+    "मी सुरक्षित नाही",
+    "நான் பாதுகாப்பாக இல்லை",
+    "আমি নিরাপদ নই",
+  ])("flags %j", (text) => {
+    expect(notSafe(text).length).toBeGreaterThan(0);
+  });
+
+  it.each(["Yes, I am safe now. They left.", "मैं सुरक्षित हूँ", "mai abhi safe hoon", "আমি নিরাপদ আছি", "I would never say I am not safe"])(
+    "does not flag %j",
+    (text) => {
+      expect(notSafe(text)).toEqual([]);
+    },
+  );
+
+  it("raises the band to at least High through OV-9, whatever the SVI", () => {
+    const draft = assess({ indicators: lexiconSignals("No, I am not safe here.").indicators, config: DEFAULT_CONFIG });
+    expect(draft.overridesFired).toContain("OV-9");
+    expect(["HIGH", "CRITICAL"]).toContain(draft.band);
+  });
+
+  it("a bare 'No' is not enough on its own (needs its question: gap V7, task M.9)", () => {
+    expect(notSafe("No")).toEqual([]);
   });
 });

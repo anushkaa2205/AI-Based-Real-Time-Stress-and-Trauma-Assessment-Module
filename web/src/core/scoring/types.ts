@@ -1,6 +1,6 @@
 /**
  * Types for the deterministic scoring core (task 2.1, ARCHITECTURE §8).
- * Everything in core/scoring, core/screeners, core/safety-lexicon and
+ * Everything in core/scoring, core/safety-lexicon and
  * core/recommendations is pure: inputs in, result out. No I/O, no clock.
  * The AI finds indicators; these rules compute the score (CLAUDE.md rule 3).
  */
@@ -10,7 +10,7 @@ export type { Dimension, RiskBand, SignalSource };
 
 /**
  * Facts that can force a minimum band (REQUIREMENTS Appendix B). Indicators
- * from text, screeners and context may carry them; voice never does (FR-VOI-08).
+ * from text (lexicon, NLP) and case context may carry them; voice never does (FR-VOI-08).
  */
 export const OVERRIDE_FLAGS = [
   "SUICIDAL_INTENT", // intent, plan or means
@@ -22,7 +22,7 @@ export const OVERRIDE_FLAGS = [
   "SEXUAL_OFFENCE_MINOR", // sexual offence and the victim is a minor
   "PRESSURE_TO_WITHDRAW", // pressure to withdraw the complaint or turn hostile
   "DISPLACED", // displaced or homeless because of the atrocity
-  "NOT_SAFE_NOW", // says they are not safe right now (safety check; OV-9, decided 2026-11-15)
+  "NOT_SAFE_NOW", // says in their own words they are not safe right now (OV-9; lexicon rules, task M.3)
 ] as const;
 export type OverrideFlag = (typeof OVERRIDE_FLAGS)[number];
 
@@ -51,11 +51,6 @@ export interface IndicatorInput {
   flags?: readonly OverrideFlag[];
   /** Short staff-facing label, e.g. "Pressure to withdraw the complaint" */
   label?: string;
-  /**
-   * A "No" to a safety or suicide question, scored as 0 (decided 2026-11-15).
-   * It may lower the SVI but never the band (NFR-ETH-05): see assess().
-   */
-  denial?: boolean;
 }
 
 export interface BandThresholds {

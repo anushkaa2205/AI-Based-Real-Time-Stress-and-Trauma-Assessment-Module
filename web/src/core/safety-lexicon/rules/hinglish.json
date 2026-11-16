@@ -1,6 +1,6 @@
 {
   "id": "hinglish",
-  "version": "hinglish-1.0",
+  "version": "hinglish-1.1",
   "negation": {
     "cues": ["nahi", "nahin", "nhi", "nai", "mat", "never", "not"],
     "before": 3,
@@ -69,6 +69,22 @@
       "patterns": [
         "ghar ke (?:bahar|baahar|saamne|samne) (?:khade|khadey|baithe|ghoom)",
         "(?:wo|woh|ve) (?:log )?(?:abhi )?(?:yaha|yahan|idhar) (?:hai|hain|aa gaye|aa gye)"
+      ]
+    },
+    {
+      "id": "HL-NOT-SAFE-1",
+      "label": "Safe nahi hoon (not safe right now)",
+      "dimension": "FEAR_ANXIETY",
+      "score": 0.8,
+      "confidence": 0.75,
+      "flags": [
+        "NOT_SAFE_NOW"
+      ],
+      "patterns": [
+        "(?:nahi(?:n)?[,.]? )?(?:main|mai|mein|hum) (?:abhi |yaha |yahan )?(?:safe|surakshit) nahi(?:n)? (?:hu|hoon|hun|hai|hain)",
+        "(?:nahi(?:n)?[,.]? )?(?:mujhe|hume|humein) (?:yaha |yahan |ghar pe |ghar par )?(?:safe|surakshit) (?:feel )?nahi(?:n)? (?:lag raha|lag rahi|lagta|hai|ho raha)",
+        "(?:nahi(?:n)?[,.]? )?(?:yaha|yahan|ghar (?:pe|par|mein|me)) (?:safe|surakshit) nahi(?:n)?",
+        "(?:nahi(?:n)?[,.]? )?(?:main|mai|hum) (?:abhi )?khatre (?:mein|me) (?:hu|hoon|hun|hain)"
       ]
     },
     {

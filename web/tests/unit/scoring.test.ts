@@ -68,9 +68,9 @@ describe("SVI: 10 hand-calculated examples (AC-SVI-01, Appendix A)", () => {
       35,
     ],
     [
-      // (.4·.8·.9 + .3·.9·.6) / (.4·.8 + .3·.9) = .45/.59 = .7627 → 20 × .7627 = 15.25
-      "SI text .9@.8 + screener .6@.9 fused = .7627 → 15.25",
-      [ind("SUICIDAL_IDEATION", 0.9, { confidence: 0.8 }), ind("SUICIDAL_IDEATION", 0.6, { source: "SCREENER", confidence: 0.9 })],
+      // (.4·.8·.9 + .4·.9·.6) / (.4·.8 + .4·.9) = .504/.68 = .7412 → 20 × .7412 = 14.82
+      "SI text .9@.8 + lexicon .6@.9 fused = .7412 → 14.82",
+      [ind("SUICIDAL_IDEATION", 0.9, { confidence: 0.8 }), ind("SUICIDAL_IDEATION", 0.6, { source: "SAFETY_LEXICON", confidence: 0.9 })],
       15,
     ],
     [
@@ -144,7 +144,7 @@ describe("fusion (task 2.4)", () => {
   it("gives lower confidence with fewer sources (FR-SVI-04)", () => {
     const one = computeSvi(fuseDimensions([ind("INTIMIDATION", 0.8)], cfg), cfg).confidence;
     const two = computeSvi(
-      fuseDimensions([ind("INTIMIDATION", 0.8), ind("INTIMIDATION", 0.8, { source: "SCREENER" })], cfg),
+      fuseDimensions([ind("INTIMIDATION", 0.8), ind("INTIMIDATION", 0.8, { source: "SAFETY_LEXICON" })], cfg),
       cfg,
     ).confidence;
     expect(one).toBeLessThan(two);
@@ -323,5 +323,16 @@ describe("explanation (task 2.7, FR-RISK-04)", () => {
   it("never uses diagnostic wording (NFR-ETH-02)", () => {
     const d = assess({ indicators: DIMENSIONS.map((dim) => ind(dim, 0.8)), config: cfg });
     expect(d.explanation.en).not.toMatch(/diagnos|disorder|depression\b|you have/i);
+  });
+});
+
+describe("scoring config v3 (task M.3)", () => {
+  it("has no screener source and keeps the other weights (Appendix A)", () => {
+    expect(cfg.version).toBe(3);
+    expect(Object.keys(cfg.sourceWeights).sort()).toEqual(["CONTEXT", "SAFETY_LEXICON", "TEXT_NLP", "VOICE"]);
+    expect(cfg.sourceWeights).toMatchObject({ TEXT_NLP: 0.4, SAFETY_LEXICON: 0.4, CONTEXT: 0.15, VOICE: 0.15 });
+  });
+  it("is still a valid config", () => {
+    expect(validateConfig(cfg).ok).toBe(true);
   });
 });

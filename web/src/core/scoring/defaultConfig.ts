@@ -6,7 +6,7 @@
 import type { ScoringConfig } from "./types";
 
 export const DEFAULT_CONFIG: ScoringConfig = {
-  version: 2, // v2: OV-9 "not safe right now" → minimum High
+  version: 3, // v2: OV-9 "not safe right now" → minimum High · v3: screener source removed (task M.3)
 
   // Appendix A, step 2 (sums to 1)
   dimensionWeights: {
@@ -20,11 +20,11 @@ export const DEFAULT_CONFIG: ScoringConfig = {
     ACUTE_STRESS: 0.08,
   },
 
-  // Appendix A, step 1. The safety lexicon reads explicit statements, like TEXT_NLP.
+  // Appendix A, step 1. The safety lexicon reads explicit statements, like TEXT_NLP. Weights are
+  // relative (the fusion divides by the weights present); SCREENER (0.3) was removed in v3.
   sourceWeights: {
     TEXT_NLP: 0.4,
     SAFETY_LEXICON: 0.4,
-    SCREENER: 0.3,
     CONTEXT: 0.15,
     VOICE: 0.15,
   },

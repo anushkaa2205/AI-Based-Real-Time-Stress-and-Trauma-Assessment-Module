@@ -4,7 +4,7 @@
  * Same input + same config version ⇒ identical output (FR-SVI-07, AC-SVI-04).
  */
 import { DIMENSIONS } from "@/models/enums";
-import { assignBand, maxBand } from "./bands";
+import { assignBand } from "./bands";
 import { explain } from "./explain";
 import { effective, fuseDimensions } from "./fuse";
 import { applyOverrides, flagsFrom } from "./overrides";
@@ -32,15 +32,9 @@ export function assess(input: AssessInput): AssessmentDraft {
   const { indicators, config } = input;
   const fused = fuseDimensions(indicators, config);
   const { svi, contributions, confidence } = computeSvi(fused, config);
-  // NFR-ETH-05: "No" answers (denials) may lower the SVI, never the band. The band is at
-  // least what the evidence gives without them.
-  const denials = indicators.some((i) => i.denial);
-  const computedBand = denials
-    ? maxBand(
-        assignBand(svi, config.bandThresholds),
-        assignBand(computeSvi(fuseDimensions(indicators.filter((i) => !i.denial), config), config).svi, config.bandThresholds),
-      )
-    : assignBand(svi, config.bandThresholds);
+  // Config v3 (task M.3): no structured answers, so no "denial" scores. A spoken or written "no"
+  // is analysed like any other words (FR-NLP-11).
+  const computedBand = assignBand(svi, config.bandThresholds);
   const { band, fired, lockedBand } = applyOverrides(
     computedBand,
     input.flags ?? flagsFrom(indicators),

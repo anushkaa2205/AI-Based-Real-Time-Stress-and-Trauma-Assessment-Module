@@ -30,7 +30,10 @@ export function effective(ind: IndicatorInput): { score: number; confidence: num
   return { score: clamp01(ind.score), confidence: clamp01(ind.confidence) };
 }
 
-/** Sources present together with a text source and a screener count as full coverage. */
+/**
+ * Sources weighing this much together count as full coverage (e.g. text NLP 0.4 + safety lexicon 0.4).
+ * Unchanged in config v3 when the screener source (0.3) was removed (REQUIREMENTS Appendix A).
+ */
 const FULL_COVERAGE_WEIGHT = 0.7;
 
 export function fuseDimensions(
