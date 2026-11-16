@@ -9,7 +9,14 @@ import { callModule } from "@/core/demo/client";
 import { demoRoute, originOf } from "@/core/demo/route";
 import { Interaction } from "@/models";
 
+/** Free-tier limit (PRODUCT_VISION.md §6): one live microphone call at a time. A new one ends older ones. */
+const LIVE_REF = "demo:live_audio:live";
+
 export const POST = demoRoute({ body: DemoStart }, async ({ req, body }) => {
+  if (body.mode === "LIVE_AUDIO") {
+    const older = await Interaction.find({ externalRef: LIVE_REF, status: "ACTIVE", isDemo: true }).select("_id").limit(10).lean();
+    for (const o of older) await callModule(originOf(req), `/interactions/${String(o._id)}/end`, { json: { reason: "COMPLETED" } });
+  }
   const started = await callModule<{ interactionId?: string; docketNumber?: string; mode?: string }>(originOf(req), "/interactions", {
     json: {
       channel: DEMO_CHANNEL[body.mode],

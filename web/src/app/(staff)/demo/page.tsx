@@ -19,6 +19,14 @@ const MODES = [
     body: "Type as the person. Ask NHAA's scripted questions as the chatbot; their answers are read with the question. Replay a scenario's text version line by line.",
   },
   {
+    n: 2,
+    href: "/demo/live-call",
+    title: "Live microphone",
+    represents: "Helpline call",
+    path: "POST /audio every 5 s, caller's channel",
+    body: "Speak as the caller. Each 5-second window is transcribed and analysed while you talk. One live call at a time; audio is never stored.",
+  },
+  {
     n: 3,
     href: "/demo/recorded",
     title: "Recorded audio library",
@@ -26,11 +34,14 @@ const MODES = [
     path: "POST /audio, 5 s windows cut on the server",
     body: "Plays a team recording of a scenario through the real audio path. Two voices on one track are separated; only the caller's words are scored.",
   },
-] as const;
-
-const PLANNED = [
-  { n: 2, title: "Live microphone", represents: "Helpline call", note: "Task M.12" },
-  { n: 4, title: "Generated text", represents: "Synthetic chatbot conversations", note: "Task M.13" },
+  {
+    n: 4,
+    href: "/demo/generated",
+    title: "Generated text",
+    represents: "Synthetic chatbot conversations",
+    path: "POST /messages, one generated line at a time",
+    body: "An LLM writes a synthetic conversation from options you choose (topic, language, length, tone). It is labelled synthetic and played through the module like any chat.",
+  },
 ] as const;
 
 export default async function Page() {
@@ -67,18 +78,6 @@ export default async function Page() {
             )}
             <span className="text-sm font-semibold text-navy underline-offset-4 group-hover:underline">Open {m.title.toLowerCase()} →</span>
           </Link>
-        ))}
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2">
-        {PLANNED.map((m) => (
-          <div key={m.n} className="flex items-center justify-between gap-3 border border-dashed border-line px-5 py-3 text-sm text-muted-foreground">
-            <span>
-              <span className="mr-2 font-mono text-xs">Mode {m.n}</span>
-              <strong className="font-semibold text-ink-2">{m.title}</strong> · {m.represents}
-            </span>
-            <span className="text-xs">Not built yet ({m.note})</span>
-          </div>
         ))}
       </div>
 

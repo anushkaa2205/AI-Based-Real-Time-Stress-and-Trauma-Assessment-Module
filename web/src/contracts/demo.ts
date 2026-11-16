@@ -2,12 +2,15 @@
 import { z } from "zod";
 import { ConsentRequest, VictimLang } from "./interaction";
 
-export const DEMO_MODES = ["LIVE_TEXT", "RECORDED_AUDIO"] as const;
+export const DEMO_MODES = ["LIVE_TEXT", "RECORDED_AUDIO", "LIVE_AUDIO", "GENERATED_TEXT"] as const;
 export const DemoMode = z.enum(DEMO_MODES);
 export type DemoMode = z.infer<typeof DemoMode>;
 
 /** The simulated NHAA source channel for each demo mode. */
-export const DEMO_CHANNEL: Record<DemoMode, "CHATBOT" | "VOICE_CALL"> = { LIVE_TEXT: "CHATBOT", RECORDED_AUDIO: "VOICE_CALL" };
+export const DEMO_CHANNEL: Record<DemoMode, "CHATBOT" | "VOICE_CALL"> = { LIVE_TEXT: "CHATBOT", RECORDED_AUDIO: "VOICE_CALL", LIVE_AUDIO: "VOICE_CALL", GENERATED_TEXT: "CHATBOT" };
+
+/** One live-microphone window (M.12): the caller's own channel, during the call. */
+export const MAX_LIVE_WINDOW_BYTES = 200 * 1024;
 
 export const DemoStart = z.object({
   mode: DemoMode,
@@ -56,3 +59,13 @@ export type RecordingEvent =
     }
   | { type: "done"; windows: number; analysed: number }
   | { type: "error"; code: string; message: string };
+
+/** Task M.13: options for a generated synthetic conversation (the analysis service checks them again). */
+export const GENERATE_CATEGORIES = ["THREAT_INTIMIDATION", "PHYSICAL_ATTACK", "SOCIAL_BOYCOTT", "PROPERTY_DAMAGE", "PRESSURE_TO_WITHDRAW", "CASE_STATUS"] as const;
+export const DemoGenerate = z.object({
+  category: z.enum(GENERATE_CATEGORIES),
+  language: VictimLang,
+  length: z.enum(["short", "medium", "long"]),
+  tone: z.enum(["calm", "worried", "distressed"]),
+});
+export type DemoGenerate = z.infer<typeof DemoGenerate>;

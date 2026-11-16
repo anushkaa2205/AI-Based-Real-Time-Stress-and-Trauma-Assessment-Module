@@ -7,7 +7,7 @@
 import { env } from "@/lib/env";
 import { CircuitBreaker } from "./breaker";
 import { randomBytes } from "node:crypto";
-import { AnalyzeAudioResponse, AnalyzeTextResponse, SummarizeResponse } from "./schema";
+import { AnalyzeAudioResponse, AnalyzeTextResponse, GenerateResponse, SummarizeResponse } from "./schema";
 import { signedBinaryHeaders, signedHeaders } from "./sign";
 
 export const TEXT_TIMEOUT_MS = 2_500;
@@ -85,6 +85,26 @@ export function summarizeCase(
   deps: CallDeps = defaultDeps(),
 ): Promise<Analysis<SummarizeResponse>> {
   return call("/v1/summarize", req, (v) => SummarizeResponse.parse(v), SUMMARY_TIMEOUT_MS, deps);
+}
+
+/** Demo only (task M.13): its own breaker, so demo failures never open the circuit real analysis uses. */
+const gd = globalThis as unknown as { _demoBreaker?: CircuitBreaker };
+const demoBreaker = (gd._demoBreaker ??= new CircuitBreaker());
+export const GENERATE_TIMEOUT_MS = 25_000;
+
+export interface GenerateRequest {
+  requestId: string;
+  category: string;
+  language: string;
+  length: "short" | "medium" | "long";
+  tone: "calm" | "worried" | "distressed";
+  /** NHAA's scripted questions in that language: the only lines the synthetic chatbot may use */
+  questions: string[];
+}
+
+/** A synthetic chatbot conversation for the demo input layer (task M.13). Never throws. */
+export function generateConversation(req: GenerateRequest, deps: CallDeps = { ...defaultDeps(), breaker: demoBreaker }): Promise<Analysis<GenerateResponse>> {
+  return call("/v1/demo/generate", req, (v) => GenerateResponse.parse(v), GENERATE_TIMEOUT_MS, deps);
 }
 
 export interface AnalyzeAudioRequest {
