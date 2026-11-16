@@ -11,6 +11,7 @@ import { dropIntegrationKeys, integrationSession, staffLogin, withDb } from "./h
 test.describe.configure({ mode: "serial" });
 
 const FIXTURE = resolve(__dirname, "../../../analysis-service/tests/fixtures/audio/pauses_en.wav");
+const TWO_VOICES = resolve(__dirname, "../../../analysis-service/tests/fixtures/audio/two_voices_en.wav");
 const WINDOW_S = 5;
 
 /** Splits a 16-bit mono PCM WAV into standalone WAV files of WINDOW_S seconds. */
@@ -113,6 +114,54 @@ test("a simulated voice call updates the operator console every window; no audio
     // FR-VOI-08: voice indicators carry no safety-override flags.
     const voice = await db.collection("indicators").find({ interactionId: iid, source: "VOICE" }).toArray();
     for (const i of voice) expect(i.flags ?? []).toEqual([]);
+  });
+});
+
+test("a two-voice call is separated: only the caller's words are scored (AC-VOI-08, FR-VOI-10, task M.10)", async ({ request }) => {
+  test.setTimeout(240_000);
+  // Synthetic text-to-speech: an operator voice and a caller voice taking turns (fixture README).
+  const v = await integrationSession(request, { channel: "VOICE_CALL", consent: { voiceAnalysis: true } });
+  const windows = wavWindows(TWO_VOICES);
+  const transcripts: string[] = [];
+  for (const [i, wav] of windows.entries()) {
+    const r = await request.post(`${v.base}/audio`, {
+      headers: v.headers,
+      multipart: {
+        audio: { name: `w${i}.wav`, mimeType: "audio/wav", buffer: wav },
+        windowIndex: String(i),
+        startMs: String(i * WINDOW_S * 1000),
+        audioSource: "MIXED",
+        firstSpeaker: "OPERATOR",
+      },
+    });
+    expect(r.status()).toBe(202);
+    const body = await r.json();
+    expect(body.analysed).toBe(true);
+    transcripts.push(body.transcript ?? "");
+  }
+  // Window 0 holds only the operator's greeting: with one voice heard so far it is treated as the
+  // caller's and marked limited (the single-voice rule). From the second voice on, separation applies.
+  const later = transcripts.slice(1).join(" ");
+  expect(later).toMatch(/complaint|sister|village/i);
+  expect(later).not.toMatch(/are you safe|anything else you would like|how can i help/i);
+
+  await v.call("/end", { reason: "COMPLETED" });
+  await withDb(async (db) => {
+    const iid = new (await import("mongoose")).Types.ObjectId(v.interactionId);
+    // The operator's spoken questions are stored as OPERATOR turns, never scored.
+    const msgs = await db.collection("messages").find({ interactionId: iid }).toArray();
+    expect(msgs.filter((m) => m.sender === "OPERATOR" && m.modality === "VOICE_TRANSCRIPT").length).toBeGreaterThanOrEqual(2);
+    const operatorIds = new Set(msgs.filter((m) => m.sender === "OPERATOR").map((m) => String(m._id)));
+    const inds = await db.collection("indicators").find({ interactionId: iid }).toArray();
+    for (const i of inds) expect(operatorIds.has(String(i.messageId))).toBe(false);
+    // Every window after the first was separated with confidence; the call is not marked unseparated.
+    const vw = await db.collection("voice_windows").find({ interactionId: iid }).sort({ windowIndex: 1 }).toArray();
+    expect(vw).toHaveLength(windows.length);
+    for (const w of vw) expect(w.audioSource).toBe("MIXED");
+    for (const w of vw.slice(1)) expect(w.speakers).toMatchObject({ separated: true, confident: true });
+    const inter = await db.collection("interactions").findOne({ _id: iid });
+    expect(inter?.voiceUnseparated ?? false).toBe(false);
+    expect(inter?.speakerStateEnc).toBeUndefined(); // cleared when the call ends
   });
 });
 
