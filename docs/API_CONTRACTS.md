@@ -424,10 +424,12 @@ Headers: `Idempotency-Key`. `sender` is `"VICTIM"` (the person, default) or `"OP
 | `audio` | file | `audio/webm;codecs=opus` or `audio/ogg`, ≤ 6 s, ≤ 200 KB |
 | `windowIndex` | int | 0, 1, 2… (order and de-duplication) |
 | `startMs` | int | Offset from call start |
+| `audioSource` | `CALLER_ONLY` \| `MIXED` | Optional, default **`MIXED`**. `CALLER_ONLY`: the caller's own channel (call centres usually record agent and caller separately). `MIXED`: both voices in one recording (FR-VOI-10). |
+| `firstSpeaker` | `OPERATOR` \| `CALLER` | Optional, default `OPERATOR` (the helpline answers first). Only used for `MIXED` audio, to tell which of the two voices is the operator. |
 
 **202 Accepted** `{ "windowIndex": 7, "transcript": "…", "analysed": true, "showEmergencyPanel": false, "emergency": null }`
 - Needs `voiceAnalysis` consent; otherwise **409** `CONSENT_REQUIRED`.
-- Send the **caller's channel** only where possible. Two-voice audio needs speaker separation (FR-VOI-10, Phase M); until it exists, its assessments are marked limited confidence.
+- **Speaker separation (FR-VOI-10, task M.10).** For `MIXED` audio the analysis service labels each stretch of speech `OPERATOR` or `CALLER` (voice fingerprints, kept consistent across the call). Only the caller's words are scored and only the caller's speech is used for voice features; the operator's words are stored as an `OPERATOR` turn, so a spoken answer is read with the spoken question (FR-NLP-11). `transcript` in the response is the caller's words only. Until a second voice has been heard, nothing is discarded: all speech is scored as the caller's and that window's assessment is limited confidence (normal at the start of a call). When separation is not possible or not confident (voices too similar, too much speech too short to fingerprint, speaker model unavailable), the interaction's assessments are marked **limited confidence** from then on. Safety net: words labelled as the operator's that hold a first-person life-safety statement (not a question) are scored as the caller's and the call is marked limited (CLAUDE.md rule 4, NFR-ETH-05). `CALLER_ONLY` audio is used as it is; send it whenever the call system can.
 - The raw audio is never written to disk unless `audioRetention` is true (FR-VOI-09). A recorded file is cut into windows before sending (gap V4, Phase M).
 
 ### 6.4 Case context

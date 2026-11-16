@@ -30,6 +30,7 @@ Free tiers change often: re-check before the demo.
 | **Silero VAD** | Pause detection | MIT | Small; CPU |
 | **Praat via `praat-parselmouth`** | Pitch, jitter, shimmer | GPLv3 | Free. Fine for a server we run ourselves; GPL terms apply if the software is ever distributed. |
 | **librosa** | Loudness, energy | ISC | |
+| **CAM++ speaker embedding** (`funasr/campplus`, via FunASR) | Speaker separation in two-voice calls (task M.10, FR-VOI-10) | Open weights from the FunASR model zoo (free use; check the model card before production) | ~7M params, ~150 ms per stretch of speech on the laptop CPU; ~30 MB download; no new pip package. Trained mostly on Chinese speech, so separation quality on Indian languages must be measured. |
 | **emotion2vec+ base** (via FunASR) | Emotion in voice | Code MIT; weights under the FunASR Model License (free use with attribution) | ~90M params, CPU OK. Pulls in PyTorch (~1–2 GB RAM). |
 | **XLM-EMO** | Optional text-emotion backup | Code MIT; model released for research use | Optional; only joy/anger/fear/sadness. |
 | **YAMNet** | Optional crying/sobbing detection | Apache-licensed TensorFlow tooling | Optional. |

@@ -129,7 +129,9 @@ Legend: **🔒** = encrypted field, **TTL** = auto-deleted by MongoDB, **U** = u
 | `uiLanguage`, `detectedLanguages[]` | string | BCP-47 codes |
 | `operatorId`, `apiClientId`, `districtId` | ObjectId | |
 | `messageSeq`, `assessmentSeq` | number | Counters, incremented with `$inc` to number child documents |
-| `voiceBaseline` | object | Speaker baseline (FR-VOI-03) |
+| `voiceBaseline` | object | Speaker baseline (FR-VOI-03), from the caller's speech only |
+| `speakerStateEnc` 🔒 | string | Encrypted voice fingerprints of the two speakers of a `MIXED` call (task M.10), so labels stay consistent across windows. Biometric: deleted when the interaction ends |
+| `voiceUnseparated` | bool | A `MIXED` window could not be separated with confidence: every later assessment of this interaction is limited confidence (FR-VOI-10) |
 | `context` | embedded | Optional case details from NHAA's record (FR-CH-08) |
 | `consents[]` | embedded | `{action, noticeVersion, language, textAnalysis, voiceAnalysis, shareWithCounsellor, followUpContact, audioRetention, guardianConsent, at}` |
 | `current` | embedded | `{assessmentId, svi, band, confidence, at}` |
@@ -153,6 +155,8 @@ Legend: **🔒** = encrypted field, **TTL** = auto-deleted by MongoDB, **U** = u
 
 ### 4.4 `voice_windows`: features only, never raw audio
 `interactionId`, `windowIndex` (**U** together), `startMs`, `endMs`, `messageId` (transcript), `pauses {count, meanMs, maxMs, silenceRatio}`, `pitch {meanHz, stdHz, rangeHz}`, `speechRateWpm`, `energy {meanDb, deltaDb}`, `voiceQuality {jitter, shimmer}`, `events[] {type: CRYING|SOBBING|SIGH|LONG_SILENCE|SHARP_BREATH, startMs, endMs, confidence}`, `baselineDeviation`, `emotion {label, confidence, distribution}`, `modelVersion`, `purgeAt` **TTL**.
+
+Since task M.10: `audioSource` (`CALLER_ONLY` | `MIXED`) and `speakers {separated, confident, callerMs, operatorMs}`. Features are computed from the caller's speech only; nothing identifying the voice is stored per window.
 
 ### 4.5 `stored_audio`: only with `audioRetention` consent
 `interactionId`, `storageKey` (encrypted object in S3-compatible storage), `durationMs`, `deleteAfter`. No TTL index: the worker deletes the **object first, then the document**, so no orphaned files remain.

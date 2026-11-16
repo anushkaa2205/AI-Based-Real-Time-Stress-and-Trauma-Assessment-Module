@@ -285,7 +285,7 @@ sequenceDiagram
         PU-->>OP: live transcript, SVI gauge, indicators, suggested question
     end
 ```
-Budget per window: ≤ 5 s after the window ends (NFR-PERF-02). The first 20–30 s set the speaker's baseline (`Interaction.voiceBaseline`), and later windows are compared to it (FR-VOI-03). The caller's channel should be sent on its own (call centres usually record agent and caller separately). Two-voice audio needs speaker separation (FR-VOI-10, Phase M); until it exists, its assessments are marked limited confidence.
+Budget per window: ≤ 5 s after the window ends (NFR-PERF-02). The first 20–30 s set the speaker's baseline (`Interaction.voiceBaseline`), and later windows are compared to it (FR-VOI-03). The caller's channel should be sent on its own (`audioSource: CALLER_ONLY`; call centres usually record agent and caller separately). For two-voice audio (`MIXED`, the default) the analysis service separates the speakers (FR-VOI-10, task M.10): Silero VAD finds the speech, CAM++ (via FunASR) gives each stretch a voice fingerprint, and the fingerprints are matched across the call (first speaker = operator unless `firstSpeaker` says otherwise). The caller's words go through scoring and the caller's speech gives the voice features; the operator's words become an `OPERATOR` turn. The two fingerprints round-trip encrypted through the web app (`interactions.speakerStateEnc`, deleted at the end). If separation is not confident, the interaction's assessments are limited confidence.
 
 ### 6.3 Critical: alert, emergency panel, escalation
 ```mermaid

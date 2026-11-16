@@ -301,7 +301,9 @@ const InteractionSchema = new Schema(
     messageSeq: { type: Number, default: 0 },
     assessmentSeq: { type: Number, default: 0 },
 
-    voiceBaseline: { type: Schema.Types.Mixed }, // speaker baseline (FR-VOI-03)
+    voiceBaseline: { type: Schema.Types.Mixed }, // speaker baseline (FR-VOI-03), caller speech only
+    speakerStateEnc: { type: String, select: false }, // M.10: encrypted voice fingerprints of a MIXED call; biometric, deleted at the end
+    voiceUnseparated: { type: Boolean, default: false }, // M.10: a MIXED window was not separated with confidence → limited confidence
 
     context: { type: CaseContextSchema, default: () => ({}) },
     consents: { type: [ConsentEntrySchema], default: [] },
