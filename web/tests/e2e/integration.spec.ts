@@ -104,6 +104,29 @@ test("indicators with evidence need the indicators:read scope; quotes are exact 
   expect((await reader.get(`/interactions/${own.interactionId}/indicators`)).status()).toBe(404);
 });
 
+test("every integration response states the contract version; the input method is stored beside the modality (M.6, V2)", async ({ request }) => {
+  // Errors carry the version too.
+  const unauth = await api(request, null).post("/interactions", {});
+  expect(unauth.status()).toBe(401);
+  expect(unauth.headers()["x-contract-version"]).toBe("1.1");
+
+  const c = api(request, await client(["interactions:write", "assessments:read"]));
+  const start = await c.post("/interactions", { channel: "API", language: "en", consent });
+  expect(start.headers()["x-contract-version"]).toBe("1.1");
+  const { interactionId } = await start.json();
+  const said = await c.post(`/interactions/${interactionId}/messages`, { text: "I am worried about the hearing next week.", inputMethod: "TRANSCRIPT" });
+  expect(said.status()).toBe(201);
+  expect(said.headers()["x-contract-version"]).toBe("1.1");
+  expect((await c.post(`/interactions/${interactionId}/messages`, { text: "ok", inputMethod: "LIVE_AUDIO" })).status()).toBe(400);
+  await withDb(async (db) => {
+    const m = await db.collection("messages").findOne({ interactionId: new mongoose.Types.ObjectId(interactionId), sender: "VICTIM" });
+    expect(m?.modality).toBe("TEXT");
+    expect(m?.inputMethod).toBe("TRANSCRIPT");
+  });
+  // Staff routes are not part of the integration contract.
+  expect((await request.get("/api/v1/staff/health")).headers()["x-contract-version"]).toBeUndefined();
+});
+
 test("keys, scopes, ownership and rate limits (AC-API-02)", async ({ request }) => {
   const writeOnly = await client(["interactions:write"], 4);
   const other = await client(["interactions:write", "assessments:read"]);
