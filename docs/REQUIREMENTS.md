@@ -140,7 +140,7 @@ Long-term monitoring after the complaint is filed is covered by the sister probl
 | FR-NLP-08 | The system shall handle **negation and context** correctly, e.g. "I would never hurt myself" must not count as suicidal ideation. | M |
 | FR-NLP-09 | The system shall produce a short, neutral **case summary** for responders, so the victim doesn't have to repeat the story. | S |
 | FR-NLP-10 | A **rule-based safety lexicon** shall run on every message the person sends, in every consent mode, alongside the ML/LLM model, so critical phrases are caught even if the model fails or is unavailable. | M |
-| FR-NLP-11 | A short answer shall be **read with the question it answers**: the preceding chatbot or operator turn is passed as context to the AI analysis and to question-aware safety rules ("No" after "Are you safe right now?" is a safety signal). | M |
+| FR-NLP-11 | A short answer shall be **read with the question it answers**: the preceding chatbot or operator turn is passed as context to the AI analysis and to question-aware rules. For the four **safety** questions, "No" to "Are you safe right now?" or "Yes" to the accused-nearby or suicide questions raises the band (Appendix B). For the **wellbeing** questions (PHQ-2, GAD-2 and PC-PTSD-5 wording, asked by NHAA's chatbot or operator inside the conversation), a frequency or yes answer is scored per item (Appendix A). The module itself never asks these questions and has no questionnaire. | M |
 
 ### 3.5 Emotion AI (FR-EMO)
 *Problem statement: "Emotion AI to identify signs of trauma and distress… emotional indicators."*
@@ -427,6 +427,7 @@ Long-term monitoring after the complaint is filed is covered by the sister probl
 | AC-NLP-06 | FR-NLP-10, NFR-REL-01 | With the ML/LLM service switched off, the safety lexicon still flags 100% of the scenarios used in AC-NLP-01 and AC-NLP-02. |
 | AC-NLP-07 | FR-NLP-06 | Hinglish scenarios reach at least 80% of the indicator F1 score of the English scenarios. |
 | AC-NLP-08 | FR-NLP-11 | "No" sent after an operator turn "Are you safe right now?" raises the band to at least High (OV-9); the same "No" after an unrelated question does not. |
+| AC-NLP-09 | FR-NLP-11 | "More than half the days" sent after an operator turn asking how often the person felt nervous or worried gives fear/anxiety ≥ 0.5; the same answer after an unrelated question gives nothing. |
 | AC-EMO-01 | FR-EMO-01, 02 | The emotion profile includes at least the six required classes with confidence values; fused output exists for every window that has both text and voice. |
 
 ### 6.5 Screening and safety check: removed
@@ -591,6 +592,8 @@ SVI = round( 100 · Σ_d ( W_d · dimension_score(d) ) )      with Σ_d W_d = 1
 **Step 3, band.** 0–29 Low · 30–54 Moderate · 55–74 High · 75–100 Critical, then apply the safety overrides in Appendix B.
 
 **No structured answers.** Config v3 has no screener source and no "denial" scores. A spoken or written "no" is analysed like any other words (FR-NLP-11).
+
+**Answers to wellbeing questions asked in the conversation** (FR-NLP-11, task M.9; decided 16 Nov 2026). If NHAA's chatbot or operator asks a PHQ-2, GAD-2 or PC-PTSD-5 question and the person's next message is a short answer, rules turn that answer into an indicator (source: safety lexicon, confidence 0.75), **one item at a time**: low-mood and anxiety items score frequency / 3 ("Several days" 0.33, "More than half the days" 0.67, "Nearly every day" 1.0; "Not at all" adds nothing); a "Yes" to a trauma item scores severe trauma 0.6. Within the source the strongest item counts (step 1). This is an approximation of the instruments, not their validated totals, and it applies only when the questions are actually asked.
 
 ### Appendix B: Safety overrides (default)
 | # | Condition | Minimum band |

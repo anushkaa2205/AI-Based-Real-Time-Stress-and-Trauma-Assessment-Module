@@ -20,7 +20,7 @@
       "recs": [
         "INFORMATION"
       ],
-      "ms": 592.1684
+      "ms": 503.9293
     },
     {
       "id": "S002",
@@ -40,7 +40,7 @@
       "recs": [
         "INFORMATION"
       ],
-      "ms": 1650.7115
+      "ms": 1635.6563
     },
     {
       "id": "S003",
@@ -60,7 +60,7 @@
       "recs": [
         "INFORMATION"
       ],
-      "ms": 67.19349999999986
+      "ms": 60.40189999999984
     },
     {
       "id": "S004",
@@ -86,7 +86,7 @@
       "recs": [
         "COUNSELLING"
       ],
-      "ms": 2.2507000000000517
+      "ms": 1.9672999999997955
     },
     {
       "id": "S005",
@@ -108,7 +108,7 @@
         "LEGAL_AID",
         "INFORMATION"
       ],
-      "ms": 1.3049999999998363
+      "ms": 0.9311999999999898
     },
     {
       "id": "S006",
@@ -120,13 +120,14 @@
       ],
       "expectedBand": "MODERATE",
       "band": "LOW",
-      "svi": 6,
+      "svi": 13,
       "overrides": [],
       "expectedIndicators": [
         "SOCIAL_ISOLATION",
         "DEPRESSION"
       ],
       "detected": [
+        "DEPRESSION",
         "SOCIAL_ISOLATION"
       ],
       "expectedRecs": [
@@ -134,10 +135,11 @@
         "COUNSELLING"
       ],
       "recs": [
+        "COUNSELLING",
         "REHABILITATION_RELIEF",
         "INFORMATION"
       ],
-      "ms": 29.996799999999894
+      "ms": 30.132900000000063
     },
     {
       "id": "S007",
@@ -149,21 +151,24 @@
       ],
       "expectedBand": "MODERATE",
       "band": "LOW",
-      "svi": 0,
+      "svi": 8,
       "overrides": [],
       "expectedIndicators": [
         "FEAR_ANXIETY"
       ],
-      "detected": [],
+      "detected": [
+        "FEAR_ANXIETY"
+      ],
       "expectedRecs": [
         "COUNSELLING",
         "LEGAL_AID"
       ],
       "recs": [
+        "COUNSELLING",
         "LEGAL_AID",
         "INFORMATION"
       ],
-      "ms": 15.308100000000195
+      "ms": 14.13610000000017
     },
     {
       "id": "S008",
@@ -189,7 +194,7 @@
       "recs": [
         "REHABILITATION_RELIEF"
       ],
-      "ms": 1.0097999999998137
+      "ms": 0.8337999999998829
     },
     {
       "id": "S009",
@@ -201,19 +206,22 @@
       ],
       "expectedBand": "MODERATE",
       "band": "LOW",
-      "svi": 0,
+      "svi": 9,
       "overrides": [],
       "expectedIndicators": [
         "SEVERE_TRAUMA"
       ],
-      "detected": [],
+      "detected": [
+        "SEVERE_TRAUMA"
+      ],
       "expectedRecs": [
         "COUNSELLING"
       ],
       "recs": [
+        "COUNSELLING",
         "INFORMATION"
       ],
-      "ms": 3.3413000000000466
+      "ms": 2.834600000000137
     },
     {
       "id": "S010",
@@ -225,21 +233,24 @@
       ],
       "expectedBand": "MODERATE",
       "band": "LOW",
-      "svi": 0,
+      "svi": 8,
       "overrides": [],
       "expectedIndicators": [
         "FEAR_ANXIETY"
       ],
-      "detected": [],
+      "detected": [
+        "FEAR_ANXIETY"
+      ],
       "expectedRecs": [
         "LEGAL_AID",
         "COUNSELLING"
       ],
       "recs": [
+        "COUNSELLING",
         "LEGAL_AID",
         "INFORMATION"
       ],
-      "ms": 2.6889000000001033
+      "ms": 2.3289999999997235
     },
     {
       "id": "S011",
@@ -267,7 +278,7 @@
         "POLICE_INTERVENTION",
         "WITNESS_PROTECTION"
       ],
-      "ms": 0.659099999999853
+      "ms": 0.5979999999999563
     },
     {
       "id": "S012",
@@ -295,7 +306,7 @@
       "recs": [
         "COUNSELLING"
       ],
-      "ms": 0.9989999999997963
+      "ms": 0.7442000000000917
     },
     {
       "id": "S013",
@@ -321,7 +332,7 @@
       "recs": [
         "POLICE_INTERVENTION"
       ],
-      "ms": 0.6158000000000357
+      "ms": 0.5363000000002103
     },
     {
       "id": "S014",
@@ -350,7 +361,7 @@
       "recs": [
         "MEDICAL_ASSISTANCE"
       ],
-      "ms": 0.7256999999999607
+      "ms": 0.7917999999999665
     },
     {
       "id": "S015",
@@ -378,7 +389,7 @@
         "POLICE_INTERVENTION",
         "WITNESS_PROTECTION"
       ],
-      "ms": 0.7463999999999942
+      "ms": 0.9313999999999396
     },
     {
       "id": "S016",
@@ -409,7 +420,7 @@
         "POLICE_INTERVENTION",
         "WITNESS_PROTECTION"
       ],
-      "ms": 0.8647000000000844
+      "ms": 1.0438999999996668
     },
     {
       "id": "S017",
@@ -437,7 +448,7 @@
         "EMERGENCY_SUPPORT",
         "COUNSELLING"
       ],
-      "ms": 0.7076999999999316
+      "ms": 0.6073999999998705
     },
     {
       "id": "S018",
@@ -465,7 +476,7 @@
         "EMERGENCY_SUPPORT",
         "POLICE_INTERVENTION"
       ],
-      "ms": 0.49989999999979773
+      "ms": 0.5341000000003078
     },
     {
       "id": "S019",
@@ -497,7 +508,7 @@
         "EMERGENCY_SUPPORT",
         "COUNSELLING"
       ],
-      "ms": 2.2002000000002226
+      "ms": 1.8832000000002154
     },
     {
       "id": "S020",
@@ -526,7 +537,7 @@
         "COUNSELLING",
         "MEDICAL_ASSISTANCE"
       ],
-      "ms": 1.0887000000002445
+      "ms": 1.034099999999853
     },
     {
       "id": "S021",
@@ -559,7 +570,7 @@
         "COUNSELLING",
         "POLICE_INTERVENTION"
       ],
-      "ms": 1.93100000000004
+      "ms": 1.8744999999998981
     },
     {
       "id": "S022",
@@ -579,7 +590,7 @@
       "recs": [
         "INFORMATION"
       ],
-      "ms": 2.994299999999839
+      "ms": 1.9911000000001877
     },
     {
       "id": "S023",
@@ -607,7 +618,7 @@
         "POLICE_INTERVENTION",
         "WITNESS_PROTECTION"
       ],
-      "ms": 2.8714999999997417
+      "ms": 1.4487000000003718
     },
     {
       "id": "S024",
@@ -627,7 +638,7 @@
       "recs": [
         "INFORMATION"
       ],
-      "ms": 2.827900000000227
+      "ms": 1.9727999999995518
     },
     {
       "id": "S025",
@@ -655,7 +666,7 @@
         "EMERGENCY_SUPPORT",
         "COUNSELLING"
       ],
-      "ms": 1.112699999999677
+      "ms": 0.9708000000000538
     },
     {
       "id": "S026",
@@ -681,7 +692,7 @@
       "recs": [
         "REHABILITATION_RELIEF"
       ],
-      "ms": 1.392500000000382
+      "ms": 1.2558999999996558
     },
     {
       "id": "S027",
@@ -703,7 +714,7 @@
       "recs": [
         "INFORMATION"
       ],
-      "ms": 0.9864000000002306
+      "ms": 1.1428999999998268
     },
     {
       "id": "S028",
@@ -725,7 +736,7 @@
       "recs": [
         "INFORMATION"
       ],
-      "ms": 1.1381000000001222
+      "ms": 0.891399999999976
     },
     {
       "id": "S029",
@@ -747,7 +758,7 @@
       "recs": [
         "INFORMATION"
       ],
-      "ms": 1.0156999999999243
+      "ms": 1.078599999999824
     },
     {
       "id": "S030",
@@ -759,19 +770,22 @@
       ],
       "expectedBand": "MODERATE",
       "band": "LOW",
-      "svi": 0,
+      "svi": 11,
       "overrides": [],
       "expectedIndicators": [
         "FEAR_ANXIETY"
       ],
-      "detected": [],
+      "detected": [
+        "FEAR_ANXIETY"
+      ],
       "expectedRecs": [
         "COUNSELLING"
       ],
       "recs": [
+        "COUNSELLING",
         "INFORMATION"
       ],
-      "ms": 2.490099999999984
+      "ms": 3.1603000000000065
     },
     {
       "id": "S031",
@@ -798,7 +812,7 @@
       "recs": [
         "POLICE_INTERVENTION"
       ],
-      "ms": 1.107600000000275
+      "ms": 1.0595000000002983
     },
     {
       "id": "S032",
@@ -826,7 +840,7 @@
       "recs": [
         "COUNSELLING"
       ],
-      "ms": 1.696700000000419
+      "ms": 1.2692999999999302
     },
     {
       "id": "S033",
@@ -854,7 +868,7 @@
         "EMERGENCY_SUPPORT",
         "POLICE_INTERVENTION"
       ],
-      "ms": 1.550000000000182
+      "ms": 0.9277000000001863
     },
     {
       "id": "S034",
@@ -883,7 +897,7 @@
         "COUNSELLING",
         "MEDICAL_ASSISTANCE"
       ],
-      "ms": 1.6925999999998567
+      "ms": 0.9816000000000713
     },
     {
       "id": "S035",
@@ -905,7 +919,7 @@
       "recs": [
         "INFORMATION"
       ],
-      "ms": 1.271600000000035
+      "ms": 0.8777000000000044
     },
     {
       "id": "S036",
@@ -925,7 +939,7 @@
       "recs": [
         "INFORMATION"
       ],
-      "ms": 0.7731000000003405
+      "ms": 0.6666000000000167
     },
     {
       "id": "S037",
@@ -949,7 +963,7 @@
       "recs": [
         "INFORMATION"
       ],
-      "ms": 0.7602000000001681
+      "ms": 0.7548999999999069
     },
     {
       "id": "S038",
@@ -962,19 +976,22 @@
       ],
       "expectedBand": "MODERATE",
       "band": "LOW",
-      "svi": 0,
+      "svi": 8,
       "overrides": [],
       "expectedIndicators": [
         "FEAR_ANXIETY"
       ],
-      "detected": [],
+      "detected": [
+        "FEAR_ANXIETY"
+      ],
       "expectedRecs": [
         "COUNSELLING"
       ],
       "recs": [
+        "COUNSELLING",
         "INFORMATION"
       ],
-      "ms": 1.3980999999998858
+      "ms": 1.563499999999749
     },
     {
       "id": "S039",
@@ -1002,7 +1019,7 @@
         "POLICE_INTERVENTION",
         "WITNESS_PROTECTION"
       ],
-      "ms": 0.8964999999998327
+      "ms": 0.8208999999997104
     },
     {
       "id": "S040",
@@ -1030,7 +1047,7 @@
       "recs": [
         "COUNSELLING"
       ],
-      "ms": 0.7883999999999105
+      "ms": 0.8915999999999258
     },
     {
       "id": "S041",
@@ -1058,7 +1075,7 @@
         "EMERGENCY_SUPPORT",
         "POLICE_INTERVENTION"
       ],
-      "ms": 0.969300000000203
+      "ms": 0.9478999999996631
     },
     {
       "id": "S042",
@@ -1086,7 +1103,7 @@
         "EMERGENCY_SUPPORT",
         "COUNSELLING"
       ],
-      "ms": 0.8042000000000371
+      "ms": 0.8438000000001011
     },
     {
       "id": "S043",
@@ -1111,7 +1128,7 @@
         "POLICE_INTERVENTION",
         "INFORMATION"
       ],
-      "ms": 0.8957000000000335
+      "ms": 2.382499999999709
     },
     {
       "id": "S044",
@@ -1133,7 +1150,7 @@
       "recs": [
         "INFORMATION"
       ],
-      "ms": 0.7692000000001826
+      "ms": 0.9632999999998901
     },
     {
       "id": "S045",
@@ -1153,7 +1170,7 @@
       "recs": [
         "INFORMATION"
       ],
-      "ms": 0.6767999999997301
+      "ms": 0.8478000000000065
     },
     {
       "id": "S046",
@@ -1165,20 +1182,23 @@
       ],
       "expectedBand": "MODERATE",
       "band": "LOW",
-      "svi": 0,
+      "svi": 8,
       "overrides": [],
       "expectedIndicators": [
         "FEAR_ANXIETY"
       ],
-      "detected": [],
+      "detected": [
+        "FEAR_ANXIETY"
+      ],
       "expectedRecs": [
         "LEGAL_AID",
         "COUNSELLING"
       ],
       "recs": [
+        "COUNSELLING",
         "INFORMATION"
       ],
-      "ms": 1.3347999999996318
+      "ms": 1.5131999999998698
     },
     {
       "id": "S047",
@@ -1190,19 +1210,22 @@
       ],
       "expectedBand": "MODERATE",
       "band": "LOW",
-      "svi": 0,
+      "svi": 9,
       "overrides": [],
       "expectedIndicators": [
         "SEVERE_TRAUMA"
       ],
-      "detected": [],
+      "detected": [
+        "SEVERE_TRAUMA"
+      ],
       "expectedRecs": [
         "COUNSELLING"
       ],
       "recs": [
+        "COUNSELLING",
         "INFORMATION"
       ],
-      "ms": 4.224499999999807
+      "ms": 2.360400000000027
     },
     {
       "id": "S048",
@@ -1227,7 +1250,7 @@
         "REHABILITATION_RELIEF",
         "INFORMATION"
       ],
-      "ms": 1.4113000000002103
+      "ms": 0.7849999999998545
     },
     {
       "id": "S049",
@@ -1253,7 +1276,7 @@
       "recs": [
         "POLICE_INTERVENTION"
       ],
-      "ms": 1.4462000000003172
+      "ms": 0.8623000000002321
     },
     {
       "id": "S050",
@@ -1280,7 +1303,7 @@
       "recs": [
         "MEDICAL_ASSISTANCE"
       ],
-      "ms": 0.9373000000000502
+      "ms": 0.802599999999984
     },
     {
       "id": "S051",
@@ -1308,7 +1331,7 @@
       "recs": [
         "COUNSELLING"
       ],
-      "ms": 0.9502999999999702
+      "ms": 0.810399999999845
     },
     {
       "id": "S052",
@@ -1336,7 +1359,7 @@
         "EMERGENCY_SUPPORT",
         "COUNSELLING"
       ],
-      "ms": 1.0315999999997985
+      "ms": 0.881800000000112
     },
     {
       "id": "S053",
@@ -1369,7 +1392,7 @@
         "COUNSELLING",
         "POLICE_INTERVENTION"
       ],
-      "ms": 0.863999999999578
+      "ms": 0.806999999999789
     },
     {
       "id": "S054",
@@ -1394,7 +1417,7 @@
         "REHABILITATION_RELIEF",
         "INFORMATION"
       ],
-      "ms": 2.1790000000000873
+      "ms": 1.5954000000001543
     },
     {
       "id": "S055",
@@ -1422,7 +1445,7 @@
         "POLICE_INTERVENTION",
         "WITNESS_PROTECTION"
       ],
-      "ms": 2.1173000000003412
+      "ms": 1.2543000000000575
     },
     {
       "id": "S056",
@@ -1447,7 +1470,7 @@
         "POLICE_INTERVENTION",
         "INFORMATION"
       ],
-      "ms": 1.954200000000128
+      "ms": 0.9810999999999694
     },
     {
       "id": "S057",
@@ -1475,7 +1498,7 @@
         "EMERGENCY_SUPPORT",
         "POLICE_INTERVENTION"
       ],
-      "ms": 2.03879999999981
+      "ms": 1.2536999999997533
     },
     {
       "id": "S058",
@@ -1487,19 +1510,22 @@
       ],
       "expectedBand": "MODERATE",
       "band": "LOW",
-      "svi": 0,
+      "svi": 8,
       "overrides": [],
       "expectedIndicators": [
         "FEAR_ANXIETY"
       ],
-      "detected": [],
+      "detected": [
+        "FEAR_ANXIETY"
+      ],
       "expectedRecs": [
         "COUNSELLING"
       ],
       "recs": [
+        "COUNSELLING",
         "INFORMATION"
       ],
-      "ms": 3.4191000000000713
+      "ms": 2.8287999999997737
     },
     {
       "id": "S059",
@@ -1519,7 +1545,7 @@
       "recs": [
         "INFORMATION"
       ],
-      "ms": 1.3584000000000742
+      "ms": 1.0553999999997359
     },
     {
       "id": "S060",
@@ -1546,7 +1572,7 @@
       "recs": [
         "POLICE_INTERVENTION"
       ],
-      "ms": 1.2591000000002168
+      "ms": 1.0682999999999083
     },
     {
       "id": "S061",
@@ -1566,7 +1592,7 @@
       "recs": [
         "INFORMATION"
       ],
-      "ms": 1.0248000000001412
+      "ms": 1.0027000000000044
     },
     {
       "id": "S062",
@@ -1595,7 +1621,7 @@
         "COUNSELLING",
         "MEDICAL_ASSISTANCE"
       ],
-      "ms": 1.1077000000000226
+      "ms": 0.9838999999997213
     }
   ]
 }

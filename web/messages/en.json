@@ -14,6 +14,15 @@
     "threatDetails": "Has anyone threatened you or your family since the complaint?",
     "whoCanHelp": "Is there someone you trust who can be with you?",
     "injury": "Are you hurt, or do you need a doctor?",
-    "sayMore": "Thank you for telling us. Is there anything else you would like us to know?"
+    "sayMore": "Thank you for telling us. Is there anything else you would like us to know?",
+    "lowInterest": "Over the last 2 weeks, how often have you been bothered by: Little interest or pleasure in doing things",
+    "feelingDown": "Over the last 2 weeks, how often have you been bothered by: Feeling down or hopeless",
+    "nervous": "Over the last 2 weeks, how often have you been bothered by: Feeling nervous, worried or on edge",
+    "cannotStopWorrying": "Over the last 2 weeks, how often have you been bothered by: Not being able to stop worrying",
+    "badDreams": "In the past month, because of what happened, have you: Had bad dreams about it, or thought about it when you did not want to?",
+    "avoidance": "In the past month, because of what happened, have you: Tried hard not to think about it, or stayed away from things that remind you of it?",
+    "onGuard": "In the past month, because of what happened, have you: Felt constantly on guard, watchful or easily startled?",
+    "numb": "In the past month, because of what happened, have you: Felt numb or cut off from people, activities or your surroundings?",
+    "guilt": "In the past month, because of what happened, have you: Felt guilty, or unable to stop blaming yourself or others?"
   }
 }

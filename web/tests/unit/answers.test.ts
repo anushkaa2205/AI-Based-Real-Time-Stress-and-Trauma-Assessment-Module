@@ -5,7 +5,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { answerSignals, polarityOf, safetyQuestionOf, withPreviousQuestion } from "@/core/safety-lexicon/answers";
+import { answerSignals, frequencyOf, polarityOf, safetyQuestionOf, wellbeingQuestionOf, withPreviousQuestion } from "@/core/safety-lexicon/answers";
 import { conversationSignals } from "@/core/safety-lexicon/conversation";
 import { assess } from "@/core/scoring/assess";
 import { DEFAULT_CONFIG } from "@/core/scoring/defaultConfig";
@@ -133,5 +133,90 @@ describe("conversationSignals and AC-NLP-08 end to end (rules only)", () => {
     const d = band([{ sender: "OPERATOR", text: "Are you having thoughts of ending your life?" }]);
     expect(d.svi).toBe(0);
     expect(d.overridesFired).toEqual([]);
+  });
+});
+
+describe("wellbeing questions asked in the conversation (M.9, decided 16 Nov 2026, AC-NLP-09)", () => {
+  const SAFETY_KEYS = { safeNow: "SAFE_NOW", accusedNearby: "ACCUSED_NEARBY", suicidalThoughts: "SUICIDAL_THOUGHTS", suicidalIntent: "SUICIDAL_INTENT" } as const;
+  const WELLBEING_KEYS = ["lowInterest", "feelingDown", "nervous", "cannotStopWorrying", "badDreams", "avoidance", "onGuard", "numb", "guilt"] as const;
+
+  it.each(LANGS)("every scripted question in %s is recognised as itself and never as another", (lang) => {
+    const o = q(lang);
+    for (const [key, kind] of Object.entries(SAFETY_KEYS)) {
+      expect(safetyQuestionOf(o[key]), `${lang} ${key}`).toBe(kind);
+      expect(wellbeingQuestionOf(o[key]), `${lang} ${key}`).toBeNull();
+    }
+    for (const key of WELLBEING_KEYS) {
+      expect(wellbeingQuestionOf(o[key]), `${lang} ${key}`).toBe(key);
+      expect(safetyQuestionOf(o[key]), `${lang} ${key}`).toBeNull();
+    }
+  });
+
+  it("a 'yes' to the Hindi 'cut off from your surroundings' item is trauma, not 'accused nearby'", () => {
+    const s = answerSignals(q("hi").numb, "हाँ");
+    expect(s.indicators.map((i) => i.dimension)).toEqual(["SEVERE_TRAUMA"]);
+    expect(s.indicators.flatMap((i) => i.flags ?? [])).toEqual([]);
+  });
+
+  it.each([
+    ["Not at all", null],
+    ["Several days", 1],
+    ["More than half the days", 2],
+    ["nearly every day", 3],
+    ["आधे से ज़्यादा दिन", 2],
+    ["kuch din", 1],
+    ["अर्ध्याहून जास्त दिवस", 2],
+    ["பாதி நாட்களுக்கு மேல்", 2],
+    ["প্রায় প্রতিদিন", 3],
+  ])("frequency %j → %s", (answer, value) => {
+    const f = frequencyOf(answer);
+    expect(f ? (f.value === 0 ? null : f.value) : null).toBe(value);
+  });
+
+  it("scores each low-mood and anxiety item as frequency / 3, and a trauma 'yes' as 0.6", () => {
+    const one = (question: string, answer: string) => answerSignals(question, answer).indicators;
+    expect(one(q("en").nervous, "More than half the days")).toMatchObject([{ dimension: "FEAR_ANXIETY", score: 0.67, source: "SAFETY_LEXICON" }]);
+    expect(one(q("en").feelingDown, "Nearly every day")).toMatchObject([{ dimension: "DEPRESSION", score: 1 }]);
+    expect(one(q("en").lowInterest, "Several days")).toMatchObject([{ dimension: "DEPRESSION", score: 0.33 }]);
+    expect(one(q("ta").badDreams, "ஆம்")).toMatchObject([{ dimension: "SEVERE_TRAUMA", score: 0.6 }]);
+  });
+
+  it("'not at all', 'no', a long answer or an unrelated question adds nothing", () => {
+    expect(answerSignals(q("en").nervous, "Not at all").indicators).toEqual([]);
+    expect(answerSignals(q("en").guilt, "No").indicators).toEqual([]);
+    expect(answerSignals(q("en").nervous, "More than half the days but only because the hearing keeps getting postponed again and again").indicators).toEqual([]);
+    expect(answerSignals("When is your next hearing?", "More than half the days").indicators).toEqual([]);
+  });
+
+  it("wellbeing answers never fire a safety override", () => {
+    for (const key of WELLBEING_KEYS) {
+      for (const answer of ["Yes", "Nearly every day"]) {
+        expect(answerSignals(q("en")[key], answer).indicators.flatMap((i) => i.flags ?? []), key).toEqual([]);
+      }
+    }
+  });
+
+  it("AC-NLP-09: 'More than half the days' after the anxiety question gives fear/anxiety ≥ 0.5", () => {
+    const d = assess({
+      indicators: conversationSignals([
+        { sender: "OPERATOR", text: q("en").nervous },
+        { sender: "VICTIM", text: "More than half the days" },
+      ]).flatMap((t) => t.indicators),
+      config: DEFAULT_CONFIG,
+      limitedConfidence: true,
+    });
+    expect(d.dimensions.FEAR_ANXIETY.score).toBeGreaterThanOrEqual(0.5);
+    expect(d.overridesFired).toEqual([]);
+  });
+
+  it("the evidence quote is the person's own words (rule 12)", () => {
+    for (const [question, answer] of [
+      [q("hi").nervous, "आधे से ज़्यादा दिन"],
+      [q("en").nervous, "  More than half the days."],
+      [q("bn").badDreams, "হ্যাঁ"],
+    ] as const) {
+      const [ind] = answerSignals(question, answer).indicators;
+      expect(answer.slice(ind!.evidence.start, ind!.evidence.end)).toBe(ind!.evidence.quote);
+    }
   });
 });

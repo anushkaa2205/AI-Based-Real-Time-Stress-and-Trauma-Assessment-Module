@@ -52,6 +52,10 @@ export function suggestQuestions(input: SuggestInput): Suggestion[] {
 
   // 4. What the evidence points at.
   if (d("INTIMIDATION") >= 0.5) add(q("threatDetails"), "Signs of threats or intimidation");
+  // Wellbeing questions (PHQ-2, GAD-2, PC-PTSD-5 wording): the answers are read with them (task M.9).
+  if (d("FEAR_ANXIETY") >= 0.4) add(q("nervous"), "Signs of fear or anxiety");
+  if (d("DEPRESSION") >= 0.4) add(q("lowInterest"), "Signs of low mood");
+  if (d("SEVERE_TRAUMA") >= 0.4) add(q("badDreams"), "Signs of trauma");
   if (d("SOCIAL_ISOLATION") >= 0.4) add(q("whoCanHelp"), "Signs of isolation or boycott");
   if (d("EXTREME_VULNERABILITY") >= 0.5) add(q("injury"), "Signs of injury or extreme vulnerability");
 

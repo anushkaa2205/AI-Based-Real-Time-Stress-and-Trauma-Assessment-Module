@@ -4,8 +4,8 @@ Scenarios: 62 · scoring config v3 · labels are drafts until two team members a
 
 - **Band accuracy:** 48/62 (77%) — target ≥ 80% (AC-RISK-01)
 - **Critical scenarios placed below High:** 0 — target 0
-- **Expected recommendations produced:** 75/92 (82%) — target ≥ 85% (AC-REC-01)
-- **Slowest scenario:** 1650.7 ms
+- **Expected recommendations produced:** 84/92 (91%) — target ≥ 85% (AC-REC-01)
+- **Slowest scenario:** 1635.7 ms
 - **Suicidal-ideation recall:** 100% (AC-NLP-01 target 100%) · **immediate-danger recall:** 100% (AC-NLP-02 target 100%)
 
 ## Confusion matrix (rows = expected, columns = rules-only result)
@@ -21,11 +21,11 @@ Scenarios: 62 · scoring config v3 · labels are drafts until two team members a
 
 | Dimension | TP | FN | FP | Recall | Precision |
 |---|---|---|---|---|---|
-| DEPRESSION | 0 | 1 | 0 | 0% | n/a |
+| DEPRESSION | 1 | 0 | 0 | 100% | 100% |
 | EXTREME_VULNERABILITY | 1 | 0 | 1 | 100% | 50% |
-| FEAR_ANXIETY | 1 | 7 | 2 | 13% | 33% |
+| FEAR_ANXIETY | 7 | 1 | 2 | 88% | 78% |
 | INTIMIDATION | 16 | 0 | 2 | 100% | 89% |
-| SEVERE_TRAUMA | 3 | 2 | 0 | 60% | 100% |
+| SEVERE_TRAUMA | 5 | 0 | 0 | 100% | 100% |
 | SOCIAL_ISOLATION | 5 | 2 | 0 | 71% | 100% |
 | SUICIDAL_IDEATION | 8 | 0 | 1 | 100% | 89% |
 
@@ -57,11 +57,11 @@ Scenarios: 62 · scoring config v3 · labels are drafts until two team members a
 | S003 | hi-Latn | LOW | LOW | 0 | - | - |
 | S004 | en | LOW | **HIGH** | 16 | OV-6 | INFORMATION |
 | S005 | hi-Latn | LOW | LOW | 0 | - | - |
-| S006 | en | MODERATE | **LOW** | 6 | - | COUNSELLING |
-| S007 | hi | MODERATE | **LOW** | 0 | - | COUNSELLING |
+| S006 | en | MODERATE | **LOW** | 13 | - | - |
+| S007 | hi | MODERATE | **LOW** | 8 | - | - |
 | S008 | hi-Latn | MODERATE | MODERATE | 7 | OV-8 | - |
-| S009 | en | MODERATE | **LOW** | 0 | - | COUNSELLING |
-| S010 | hi | MODERATE | **LOW** | 0 | - | COUNSELLING |
+| S009 | en | MODERATE | **LOW** | 9 | - | - |
+| S010 | hi | MODERATE | **LOW** | 8 | - | - |
 | S011 | en | HIGH | HIGH | 13 | OV-7 | - |
 | S012 | hi | HIGH | HIGH | 15 | OV-6 | - |
 | S013 | hi-Latn | HIGH | HIGH | 14 | OV-4 | - |
@@ -81,7 +81,7 @@ Scenarios: 62 · scoring config v3 · labels are drafts until two team members a
 | S027 | hi | LOW | LOW | 0 | - | - |
 | S028 | hi | LOW | LOW | 0 | - | - |
 | S029 | hi | MODERATE | **LOW** | 0 | - | REHABILITATION_RELIEF |
-| S030 | hi | MODERATE | **LOW** | 0 | - | COUNSELLING |
+| S030 | hi | MODERATE | **LOW** | 11 | - | - |
 | S031 | hi | HIGH | HIGH | 14 | OV-4 | WITNESS_PROTECTION |
 | S032 | hi | HIGH | HIGH | 10 | OV-9 | - |
 | S033 | hi | CRITICAL | CRITICAL | 14 | OV-2 | - |
@@ -89,7 +89,7 @@ Scenarios: 62 · scoring config v3 · labels are drafts until two team members a
 | S035 | hi-Latn | LOW | LOW | 0 | - | - |
 | S036 | hi-Latn | LOW | LOW | 0 | - | - |
 | S037 | hi-Latn | MODERATE | **LOW** | 0 | - | REHABILITATION_RELIEF |
-| S038 | hi-Latn | MODERATE | **LOW** | 0 | - | COUNSELLING |
+| S038 | hi-Latn | MODERATE | **LOW** | 8 | - | - |
 | S039 | hi-Latn | HIGH | HIGH | 13 | OV-7 | - |
 | S040 | hi-Latn | HIGH | HIGH | 18 | OV-6 | - |
 | S041 | hi-Latn | CRITICAL | CRITICAL | 14 | OV-2 | - |
@@ -97,8 +97,8 @@ Scenarios: 62 · scoring config v3 · labels are drafts until two team members a
 | S043 | en | LOW | LOW | 11 | - | - |
 | S044 | en | LOW | LOW | 0 | - | - |
 | S045 | en | LOW | LOW | 0 | - | - |
-| S046 | en | MODERATE | **LOW** | 0 | - | LEGAL_AID, COUNSELLING |
-| S047 | en | MODERATE | **LOW** | 0 | - | COUNSELLING |
+| S046 | en | MODERATE | **LOW** | 8 | - | LEGAL_AID |
+| S047 | en | MODERATE | **LOW** | 9 | - | - |
 | S048 | en | MODERATE | **LOW** | 6 | - | - |
 | S049 | en | HIGH | HIGH | 14 | OV-4 | - |
 | S050 | en | HIGH | HIGH | 11 | OV-5 | COUNSELLING |
@@ -109,7 +109,7 @@ Scenarios: 62 · scoring config v3 · labels are drafts until two team members a
 | S055 | mr | HIGH | HIGH | 13 | OV-7 | - |
 | S056 | mr | LOW | LOW | 11 | - | - |
 | S057 | ta | CRITICAL | CRITICAL | 14 | OV-2 | - |
-| S058 | ta | MODERATE | **LOW** | 0 | - | COUNSELLING |
+| S058 | ta | MODERATE | **LOW** | 8 | - | - |
 | S059 | ta | LOW | LOW | 0 | - | - |
 | S060 | bn | HIGH | HIGH | 14 | OV-4 | WITNESS_PROTECTION |
 | S061 | bn | LOW | LOW | 0 | - | - |

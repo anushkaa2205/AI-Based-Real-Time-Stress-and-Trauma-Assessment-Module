@@ -396,7 +396,7 @@ The calling system obtains consent in its own workflow and sends it on start as 
 If every analysis option is `false` → `mode: "SAFETY_ONLY"`: the interaction is recorded and routed, and only the safety lexicon runs (FR-CON-03). For minors without a guardian: `SAFETY_ONLY` (FR-CON-05). `POST /interactions/{id}/consent/withdraw` stops analysis at once, sets `SAFETY_ONLY` and deletes any stored audio (FR-CON-04, AC-CON-04).
 
 ### 6.2 Text messages
-Headers: `Idempotency-Key`. `sender` is `"VICTIM"` (the person, default) or `"OPERATOR"` (NHAA's chatbot or operator, for example the question "Are you safe right now?"). Operator turns are stored as context and never scored (FR-CH-02, AC-CH-07); from Phase M they are passed with the next reply so short answers are read with their question (FR-NLP-11).
+Headers: `Idempotency-Key`. `sender` is `"VICTIM"` (the person, default) or `"OPERATOR"` (NHAA's chatbot or operator, for example the question "Are you safe right now?"). Operator turns are stored as context and never scored (FR-CH-02, AC-CH-07). The person's next message is read with the operator turn just before it (FR-NLP-11, task M.9): question-aware rules score short answers to the four safety questions and to the PHQ-2, GAD-2 and PC-PTSD-5 wellbeing questions (REQUIREMENTS Appendix A, B), and the AI receives the question as `previousQuestion`. The scripted wording of these questions is in `messages/*.json` (`operatorQuestions.*`).
 
 **201** (person's message):
 ```json

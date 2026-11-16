@@ -103,11 +103,20 @@ describe("suggestQuestions (FR-CH-04, FR-DSH-01): scripted questions for the ope
     const s = suggestQuestions({ dimensions: { INTIMIDATION: 0.7 }, suicideSignal: false, notSafeNow: true });
     expect(s.map((x) => x.key)).toEqual([q("safePlace"), q("accusedNearby"), q("threatDetails")]);
   });
+  it("suggests a wellbeing question when the evidence points at anxiety, low mood or trauma", () => {
+    expect(suggestQuestions({ dimensions: { FEAR_ANXIETY: 0.6 }, suicideSignal: false, notSafeNow: false }).map((x) => x.key)).toEqual([
+      q("safeNow"),
+      q("accusedNearby"),
+      q("nervous"),
+    ]);
+    expect(suggestQuestions({ dimensions: { SEVERE_TRAUMA: 0.5 }, suicideSignal: false, notSafeNow: true }).map((x) => x.key)).toContain(q("badDreams"));
+  });
   it("only ever suggests keys that exist in every language", () => {
     const all = [
       suggestQuestions({ dimensions: {}, suicideSignal: false, notSafeNow: false }),
       suggestQuestions({ dimensions: { SUICIDAL_IDEATION: 0.9 }, suicideSignal: true, notSafeNow: true }),
       suggestQuestions({ dimensions: { SOCIAL_ISOLATION: 0.8, EXTREME_VULNERABILITY: 0.8 }, suicideSignal: false, notSafeNow: false }),
+      suggestQuestions({ dimensions: { FEAR_ANXIETY: 0.9, DEPRESSION: 0.9, SEVERE_TRAUMA: 0.9 }, suicideSignal: false, notSafeNow: false }),
     ].flat();
     for (const lang of VICTIM_LANGS) for (const s of all) expect(hasKey(lang, s.key), `${lang}: ${s.key}`).toBe(true);
   });
