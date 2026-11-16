@@ -72,6 +72,8 @@ export interface AnalyzeTextRequest {
   text: string;
   languageHint?: string;
   context?: { isSexualOffence?: boolean; isMinor?: boolean };
+  /** The chatbot's or operator's question just before this message, redacted (FR-NLP-11, task M.9) */
+  previousQuestion?: string;
 }
 
 export function analyzeText(req: AnalyzeTextRequest, deps: CallDeps = defaultDeps()): Promise<Analysis<AnalyzeTextResponse>> {

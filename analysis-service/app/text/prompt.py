@@ -8,7 +8,7 @@ All examples are synthetic and non-graphic (rule 11).
 
 from __future__ import annotations
 
-PROMPT_VERSION = "prompt-v1"
+PROMPT_VERSION = "prompt-v2"  # v2: previousQuestion (task M.9, FR-NLP-11)
 
 DIMENSIONS = [
     "ACUTE_STRESS",
@@ -49,6 +49,9 @@ plan → PASSIVE_SUICIDAL_IDEATION; accused present/near NOW → ACCUSED_PRESENT
 current serious injury → SERIOUS_INJURY; threat to kill → THREAT_TO_LIFE; pressure to withdraw case or
 change testimony → PRESSURE_TO_WITHDRAW; forced out of home/village → DISPLACED), else [].
 "rationale": max 12 neutral words. Never use diagnostic labels. One entry per distinct sign; [] if none.
+If "previousQuestion" is given, it is what the helpline's chatbot or operator asked just before: read a short
+answer ("No", "हाँ", "yes") with it (e.g. "No" to "Are you safe right now?" is a sign of FEAR_ANXIETY).
+Never find signs in the question itself, and copy quotes only from the message, never from the question.
 
 Also: language code ({", ".join(LANGS)}; Romanised Hindi = hi-Latn), a faithful English translation,
 immediate_danger (accused present, confinement or injury right now), and the main emotion

@@ -143,6 +143,9 @@ async def analyze_text(llm: LLM, cache: DiskCache, req: dict) -> dict:
             "message": text,
             "languageHint": req.get("languageHint"),
             "context": req.get("context") or {},
+            # The chatbot's or operator's question just before the message (task M.9, FR-NLP-11).
+            # Context only: quotes are still checked against the message alone.
+            "previousQuestion": str(req.get("previousQuestion") or "")[:500] or None,
         },
         ensure_ascii=False,
     )

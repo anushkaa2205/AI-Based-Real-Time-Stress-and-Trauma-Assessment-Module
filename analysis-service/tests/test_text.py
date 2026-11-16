@@ -25,7 +25,7 @@ HINGLISH = "main kabhi khud ko nuksaan nahi pahunchaungi, bas dar lagta hai"
 
 
 class RecordedLLM:
-    """Returns a recorded answer and counts calls."""
+    """Returns a recorded answer, counts calls and keeps the last user payload."""
 
     def __init__(self, fixture: str | None = None, error: Exception | None = None):
         self.raw = json.loads((FIXTURES / fixture).read_text(encoding="utf-8")) if fixture else {}
@@ -38,6 +38,7 @@ class RecordedLLM:
 
     async def complete_json(self, system, user, schema, schema_name):
         self.calls += 1
+        self.last_user = json.loads(user)
         if self.error:
             raise self.error
         return self.raw, self.version
@@ -127,7 +128,21 @@ def test_hindi_threat_keeps_only_quotes_found_in_the_original(make_client):
     assert body["immediateDanger"]["detected"] is True
     assert body["emotion"]["label"] == "fear"
     assert body["translation"]["en"].startswith("Those people")
-    assert body["modelVersion"]["nlp"] == "recorded:test-model@prompt-v1"
+    assert body["modelVersion"]["nlp"] == "recorded:test-model@prompt-v2"
+
+
+def test_previous_question_is_context_only(make_client):
+    """Task M.9: the question asked just before is passed to the model; quotes still come from the message."""
+    llm = RecordedLLM("hindi_threat.json")
+    client = make_client(llm)
+    body = post(client, "/v1/analyze/text", {"text": HINDI, "languageHint": "hi", "previousQuestion": "Are you safe right now?"}).json()
+    assert llm.last_user["previousQuestion"] == "Are you safe right now?"
+    assert llm.last_user["message"] == HINDI
+    for ind in body["indicators"]:
+        ev = ind["evidence"]
+        assert HINDI[ev["start"] : ev["end"]] == ev["quote"]  # rule 12: never from the question
+    post(client, "/v1/analyze/text", {"text": HINDI, "languageHint": "hi"})
+    assert llm.last_user["previousQuestion"] is None
 
 
 def test_hinglish_negation_clamping_and_unknown_flags(make_client):

@@ -19,8 +19,9 @@ import { TEXT_TIMEOUT_MS, analyzeText, defaultDeps } from "@/core/analysis-clien
 import { checkAnalysis, type CheckedAnalysis } from "@/core/analysis-client/guardrails";
 import type { AnalyzeAudioResponse } from "@/core/analysis-client/schema";
 import { allowsTextAnalysis, allowsVoiceAnalysis, currentConsent, resolveMode } from "@/core/consent/mode";
-import { encrypt } from "@/core/privacy/crypto";
+import { decrypt, encrypt } from "@/core/privacy/crypto";
 import { redact } from "@/core/privacy/redact";
+import { answerSignals, mergeSignals } from "@/core/safety-lexicon/answers";
 import { LEXICON_VERSION, lexiconSignals } from "@/core/safety-lexicon/engine";
 import { activeConfig } from "@/core/scoring/activeConfig";
 import { isMinor, type CaseContextInput } from "@/core/scoring/context";
@@ -80,12 +81,11 @@ export async function runPipeline(input: RunInput): Promise<RunResult> {
 
   // Work outside the transaction: lexicon scan, AI call on REDACTED text, encryption.
   const text = input.message?.text ?? "";
-  const lexicon = text ? lexiconSignals(text) : null;
   const textEnc = text ? encrypt(text) : null;
-  const quotesEnc = new Map((lexicon?.indicators ?? []).map((i) => [i.id, encrypt(i.evidence.quote)]));
 
-  // One parallel round trip before the transaction: checks, duplicate detection, scoring config.
-  const [pre, existing, config] = await Promise.all([
+  // One parallel round trip before the transaction: checks, duplicate detection, scoring config, and
+  // the message just before this one (an OPERATOR turn there is the question being answered: FR-NLP-11).
+  const [pre, existing, config, previous] = await Promise.all([
     Interaction.findById(input.interactionId).select("mode uiLanguage context status consents.action").lean(),
     input.voice
       ? VoiceWindow.findOne({ interactionId: input.interactionId, windowIndex: input.voice.windowIndex }).select("_id messageId").lean()
@@ -93,7 +93,13 @@ export async function runPipeline(input: RunInput): Promise<RunResult> {
         ? Message.findOne({ interactionId: input.interactionId, idempotencyKey: input.message.idempotencyKey }).select("_id").lean()
         : Promise.resolve(null),
     activeConfig(),
+    text ? Message.findOne({ interactionId: input.interactionId }).sort({ seq: -1 }).select("sender textEnc").lean() : Promise.resolve(null),
   ]);
+  // Task M.9 (V7): a short answer is read with the safety question asked just before it. Runs with the
+  // lexicon, in every consent mode (rules 4 and 6). The question is staff/chatbot text, never scored itself.
+  const question = previous?.sender === "OPERATOR" && previous.textEnc ? decrypt(previous.textEnc) : null;
+  const lexicon = text ? mergeSignals(lexiconSignals(text), answerSignals(question, text)) : null;
+  const quotesEnc = new Map((lexicon?.indicators ?? []).map((i) => [i.id, encrypt(i.evidence.quote)]));
   if (!pre) throw new ApiError("NOT_FOUND");
   if (pre.status !== "ACTIVE") throw new ApiError("INTERACTION_ENDED");
   // Consent step first, even "no to everything", so nothing is processed before the notice (AC-CON-01).
@@ -121,6 +127,8 @@ export async function runPipeline(input: RunInput): Promise<RunResult> {
         text: redacted,
         languageHint: pre.uiLanguage,
         context: { isSexualOffence: ctx.isSexualOffence === true, isMinor: isMinor(ctx) },
+        // The question just asked, so the model reads a short answer in context (FR-NLP-11). Redacted too.
+        ...(question ? { previousQuestion: redact(question).text } : {}),
       },
       { ...defaultDeps(), timeoutMs },
     );
