@@ -7,7 +7,8 @@
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 
 /** indicators:read (task M.5): indicators with their evidence; granted only to systems that need it */
-export const SCOPES = ["interactions:write", "assessments:read", "stream:read", "indicators:read"] as const;
+/** status:read (task N.3): case status and arranged support, for a tracking page in the calling system */
+export const SCOPES = ["interactions:write", "assessments:read", "stream:read", "indicators:read", "status:read"] as const;
 export type Scope = (typeof SCOPES)[number];
 
 export function hashSecret(secret: string): string {
