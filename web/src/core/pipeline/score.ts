@@ -183,6 +183,8 @@ export interface ScoreOptions {
   aiDegraded?: boolean;
   /** Force the limited-confidence flag (e.g. the rescore job clears it) */
   limitedConfidence?: boolean;
+  /** This voice window could not be attributed to one speaker yet (only one voice heard so far, M.10) */
+  voiceLimited?: boolean;
 }
 
 export interface ScoreResult {
@@ -216,7 +218,10 @@ export async function scoreInteraction(
   const contextIsNew = isNew((interaction.context as { updatedAt?: Date } | undefined)?.updatedAt);
 
   if (allowsAnyAnalysis(mode)) {
-    const limitedConfidence = opts.limitedConfidence ?? (opts.aiDegraded === true || caseDoc.limitedConfidence === true);
+    // FR-VOI-10 (task M.10): two-voice audio that could not be separated keeps every later assessment
+    // limited, whatever the AI state or a rescore says.
+    const unseparated = interaction.voiceUnseparated === true;
+    const limitedConfidence = (opts.limitedConfidence ?? (opts.aiDegraded === true || caseDoc.limitedConfidence === true)) || unseparated || opts.voiceLimited === true;
     const stored = await Indicator.find({ interactionId: interaction._id, status: { $ne: "REJECTED" } })
       .select("dimension source score confidence negated status review flags label createdAt")
       .session(session)

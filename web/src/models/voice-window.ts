@@ -43,6 +43,15 @@ const VoiceWindowSchema = new Schema(
       confidence: Number,
       distribution: { type: Schema.Types.Mixed },
     },
+    // Task M.10 (FR-VOI-10): where the audio came from and how the two voices were separated.
+    // Features above come from the caller's speech only; nothing identifying the voice is stored here.
+    audioSource: { type: String, enum: ["CALLER_ONLY", "MIXED"], default: "MIXED" },
+    speakers: {
+      separated: Boolean,
+      confident: Boolean,
+      callerMs: Number,
+      operatorMs: Number,
+    },
     modelVersion: { type: String, required: true },
     purgeAt: Date,
   },

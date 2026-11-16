@@ -58,7 +58,8 @@ export async function purgeDue(now: Date = new Date()): Promise<PurgeResult> {
     .lean();
   for (const i of stale) {
     const endedAt = i.updatedAt ? new Date(new Date(i.updatedAt).getTime() + STALE_AFTER_MS) : now;
-    const res = await Interaction.updateOne({ _id: i._id, status: "ACTIVE" }, { $set: { status: "ABANDONED", endedAt } });
+    // Voice fingerprints (M.10) are biometric: they go when the interaction closes.
+    const res = await Interaction.updateOne({ _id: i._id, status: "ACTIVE" }, { $set: { status: "ABANDONED", endedAt }, $unset: { speakerStateEnc: "" } });
     if (res.modifiedCount) {
       r.closedAbandoned += 1;
       await startRetention(i._id, endedAt);

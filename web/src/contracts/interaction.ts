@@ -81,6 +81,10 @@ export const FORBIDDEN_VICTIM_FIELDS = [
 export const AudioFields = z.object({
   windowIndex: z.coerce.number().int().min(0).max(10_000),
   startMs: z.coerce.number().int().min(0).max(4 * 3_600_000),
+  /** Task M.10 (FR-VOI-10): MIXED (both voices, the default) or CALLER_ONLY (the caller's channel) */
+  audioSource: z.enum(["CALLER_ONLY", "MIXED"]).default("MIXED"),
+  /** Which voice speaks first in a MIXED call; the helpline usually answers first */
+  firstSpeaker: z.enum(["OPERATOR", "CALLER"]).default("OPERATOR"),
 });
 
 /** 202 for a voice window: the transcript back, and only the emergency signal (rule 1). */

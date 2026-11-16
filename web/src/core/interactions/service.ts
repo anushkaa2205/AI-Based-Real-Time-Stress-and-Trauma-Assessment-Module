@@ -13,7 +13,8 @@ import { startRetention } from "@/core/privacy/retention";
 import { isMinor, type CaseContextInput } from "@/core/scoring/context";
 import { db } from "@/lib/db";
 import { ApiError } from "@/lib/problem";
-import { Case, District, Interaction, State, StoredAudio, Subject, type Channel } from "@/models";
+import { encrypt } from "@/core/privacy/crypto";
+import { Case, District, Interaction, Message, State, StoredAudio, Subject, type Channel } from "@/models";
 
 /** Who is acting: an integrating system (API key). */
 export type ServiceActor = { type: "API_CLIENT"; id: string };
@@ -150,6 +151,36 @@ export async function withdrawConsent(id: string, actor: ServiceActor) {
   return { mode: "SAFETY_ONLY" as const, audioDeleted: true };
 }
 
+// --- operator turns (FR-CH-02) ------------------------------------------------------------
+
+/**
+ * Stores a question or remark from NHAA's chatbot or operator: encrypted, in order, never scored.
+ * The person's next message is read with it (FR-NLP-11). Used for typed turns and, since task M.10,
+ * for the operator's words separated out of two-voice call audio.
+ */
+export async function addOperatorTurn(
+  id: string,
+  text: string,
+  opts: { modality?: "TEXT" | "VOICE_TRANSCRIPT"; idempotencyKey?: string } = {},
+): Promise<string> {
+  await db();
+  if (opts.idempotencyKey) {
+    const dup = await Message.findOne({ interactionId: id, idempotencyKey: opts.idempotencyKey }).select("_id").lean();
+    if (dup) return String(dup._id);
+  }
+  const i = await Interaction.findOneAndUpdate({ _id: id, status: "ACTIVE" }, { $inc: { messageSeq: 1 } }, { returnDocument: "after" }).select("messageSeq").lean();
+  if (!i) throw new ApiError("INTERACTION_ENDED");
+  const m = await Message.create({
+    interactionId: id,
+    seq: i.messageSeq,
+    sender: "OPERATOR",
+    modality: opts.modality ?? "TEXT",
+    textEnc: encrypt(text),
+    idempotencyKey: opts.idempotencyKey,
+  });
+  return String(m._id);
+}
+
 // --- end --------------------------------------------------------------------------------
 
 export async function endInteraction(id: string, reason: "COMPLETED" | "TIMEOUT", actor: ServiceActor) {
@@ -158,6 +189,7 @@ export async function endInteraction(id: string, reason: "COMPLETED" | "TIMEOUT"
   if (interaction.status === "ACTIVE") {
     interaction.status = reason === "COMPLETED" ? "ENDED" : "ABANDONED";
     interaction.endedAt = new Date();
+    interaction.set("speakerStateEnc", undefined); // voice fingerprints are biometric: gone with the call (M.10)
     await interaction.save();
     await startRetention(interaction._id, interaction.endedAt); // NFR-PRI-04 (task 8.7)
     await record({ actorType: actor.type, actorId: actor.id, action: "interaction.end", entityType: "interaction", entityId: id, metadata: { reason } });

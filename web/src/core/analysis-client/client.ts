@@ -93,6 +93,12 @@ export interface AnalyzeAudioRequest {
   startMs: number;
   languageHint?: string;
   baseline?: Record<string, number> | null;
+  /** Task M.10 (FR-VOI-10): MIXED = both voices in one recording (default); CALLER_ONLY = the caller's channel */
+  audioSource?: "CALLER_ONLY" | "MIXED";
+  /** Which voice speaks first in a MIXED call (default OPERATOR: the helpline answers) */
+  firstSpeaker?: "OPERATOR" | "CALLER";
+  /** Opaque speaker state returned by the previous window (decrypted only for this call) */
+  speakerState?: string | null;
   audio: Uint8Array;
   mimeType: string;
 }
@@ -114,7 +120,16 @@ export function multipartBody(parts: { name: string; filename?: string; type: st
 /** Never throws; the raw audio lives only in this request's memory (FR-VOI-09). */
 export async function analyzeAudio(req: AnalyzeAudioRequest, deps: CallDeps = defaultDeps()): Promise<Analysis<AnalyzeAudioResponse>> {
   if (!deps.breaker.canCall(deps.now())) return { degraded: true, reason: "circuit-open" };
-  const meta = JSON.stringify({ requestId: req.requestId, windowIndex: req.windowIndex, startMs: req.startMs, languageHint: req.languageHint, baseline: req.baseline ?? null });
+  const meta = JSON.stringify({
+    requestId: req.requestId,
+    windowIndex: req.windowIndex,
+    startMs: req.startMs,
+    languageHint: req.languageHint,
+    baseline: req.baseline ?? null,
+    audioSource: req.audioSource ?? "MIXED",
+    firstSpeaker: req.firstSpeaker ?? "OPERATOR",
+    speakerState: req.speakerState ?? null,
+  });
   const ext = req.mimeType.includes("ogg") ? "ogg" : req.mimeType.includes("wav") ? "wav" : "webm";
   const { body, contentType } = multipartBody([
     { name: "meta", type: "application/json", data: meta },

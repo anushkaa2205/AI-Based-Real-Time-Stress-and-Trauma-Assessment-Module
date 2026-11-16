@@ -42,7 +42,7 @@ export interface RunInput {
   message?: { text: string; idempotencyKey?: string };
   context?: CaseContextInput;
   /** One analysed voice window (task 7.5); its transcript, if any, is `message`. */
-  voice?: { windowIndex: number; startMs: number; analysis: AnalyzeAudioResponse | null };
+  voice?: { windowIndex: number; startMs: number; analysis: AnalyzeAudioResponse | null; audioSource?: "CALLER_ONLY" | "MIXED" };
   /** Whole-turn AI budget override. */
   aiBudgetMs?: number;
   /**
@@ -51,6 +51,8 @@ export interface RunInput {
    * meets its 5 s budget (NFR-PERF-02). The window is marked limited confidence until then.
    */
   deferAi?: boolean;
+  /** Task M.10: this voice window's speaker is not confirmed yet; its assessment is limited confidence */
+  voiceLimited?: boolean;
 }
 
 export interface RunResult {
@@ -230,6 +232,10 @@ export async function runPipeline(input: RunInput): Promise<RunResult> {
                 baselineDeviation: a.baselineDeviation ?? undefined,
                 emotion: a.emotion,
                 fusedEmotion: fused ?? undefined,
+                audioSource: input.voice.audioSource ?? "MIXED",
+                ...(a.speakers
+                  ? { speakers: { separated: a.speakers.separated, confident: a.speakers.confident, callerMs: a.speakers.callerMs, operatorMs: a.speakers.operatorMs } }
+                  : {}),
                 modelVersion: [a.modelVersion.stt, a.modelVersion.vad, a.modelVersion.ser].filter(Boolean).join("+"),
               },
             ],
@@ -341,6 +347,7 @@ export async function runPipeline(input: RunInput): Promise<RunResult> {
           lexiconActive,
           nlpVersion: ai?.checked.modelVersion ?? null,
           aiDegraded: aiDegraded && !!messageId && allowsTextAnalysis(mode),
+          voiceLimited: input.voiceLimited === true,
         });
 
         caseDoc.lastActivityAt = now;

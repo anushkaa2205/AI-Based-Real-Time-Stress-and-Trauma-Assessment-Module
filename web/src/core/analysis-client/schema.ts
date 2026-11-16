@@ -50,7 +50,25 @@ export const AnalyzeAudioResponse = z.object({
   emotion: z.object({ label: z.string(), confidence: Num, distribution: z.record(z.string(), Num) }),
   baselineDeviation: z.record(z.string(), Num.nullable()).nullable(),
   baselineUpdate: z.record(z.string(), Num).nullable(),
-  modelVersion: z.object({ stt: z.string().nullable(), vad: z.string(), ser: z.string(), events: z.string() }),
+  modelVersion: z.object({ stt: z.string().nullable(), vad: z.string(), ser: z.string(), events: z.string() }).loose(),
   latencyMs: Num,
+  /**
+   * Task M.10 (FR-VOI-10). For MIXED audio: whether the two voices were separated with confidence. The
+   * `transcript` and all features above are then the caller's only; `operatorText` is the operator's words.
+   * `state` is opaque (voice fingerprints) and must be stored encrypted. Absent from older services.
+   */
+  speakers: z
+    .object({
+      audioSource: z.enum(["CALLER_ONLY", "MIXED"]),
+      separated: z.boolean(),
+      confident: z.boolean(),
+      callerMs: Num,
+      operatorMs: Num,
+      operatorText: z.string().nullable(),
+      /** Only one voice heard so far in a MIXED call: all speech was treated as the caller's */
+      singleVoice: z.boolean().optional(),
+      state: z.string().nullable(),
+    })
+    .optional(),
 });
 export type AnalyzeAudioResponse = z.infer<typeof AnalyzeAudioResponse>;
