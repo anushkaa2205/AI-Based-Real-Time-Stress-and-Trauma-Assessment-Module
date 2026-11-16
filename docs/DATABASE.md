@@ -116,6 +116,7 @@ Legend: **🔒** = encrypted field, **TTL** = auto-deleted by MongoDB, **U** = u
 | `summaryEnc` 🔒, `summaryTranslatedEnc` 🔒 | string | Neutral summary (FR-NLP-09) |
 | `bandOverrides[]` | embedded | `{fromBand, toBand, reason (≥ 5 chars), byUserId, at}` |
 | `firstContactAt`, `lastActivityAt`, `closedAt` | Date | |
+| `isDemo` | bool | Created through the demo input layer's API key (task M.7). Set on the server from the key, never from a request; shown as a "Demo" mark on staff screens |
 
 **Indexes:** `{status:1, bandRank:-1, currentSvi:-1, waitingSince:1}` (queue) · `{districtId:1, status:1, bandRank:-1}` · `{assignedCounsellorId:1, status:1}` · `docketNumber` U · `subjectId`.
 
@@ -128,6 +129,7 @@ Legend: **🔒** = encrypted field, **TTL** = auto-deleted by MongoDB, **U** = u
 | `mode` | enum | SAFETY_ONLY · TEXT_ONLY · VOICE_ONLY · FULL, derived from consent; default SAFETY_ONLY |
 | `uiLanguage`, `detectedLanguages[]` | string | BCP-47 codes |
 | `operatorId`, `apiClientId`, `districtId` | ObjectId | |
+| `isDemo` | bool | Copied from the API client at start (task M.7) |
 | `messageSeq`, `assessmentSeq` | number | Counters, incremented with `$inc` to number child documents |
 | `voiceBaseline` | object | Speaker baseline (FR-VOI-03), from the caller's speech only |
 | `speakerStateEnc` 🔒 | string | Encrypted voice fingerprints of the two speakers of a `MIXED` call (task M.10), so labels stay consistent across windows. Biometric: deleted when the interaction ends |
@@ -198,7 +200,7 @@ Since task M.10: `audioSource` (`CALLER_ONLY` | `MIXED`) and `speakers {separate
 **Indexes:** `{caseId:1, type:1, status:1}` · `{status:1, responsibleRole:1, dueAt:1}` (approval inbox).
 
 ### 4.10 `referrals`: the only case data police and welfare see
-`recommendationId` **U**, `caseId`, `docketNumber`, `type`, `targetRole`, `districtId`, `assignedToId`, `actionRequested`, `locationHint` (village/ward, never a full address), `contactRoute`, `urgency`, `dueAt`, `status`, `outcomeNote`, `declinedReason`, `history[] {status, byUserId, at}`.
+`recommendationId` **U**, `caseId`, `docketNumber`, `type`, `targetRole`, `districtId`, `assignedToId`, `actionRequested`, `locationHint` (village/ward, never a full address), `contactRoute`, `urgency`, `dueAt`, `status`, `outcomeNote`, `declinedReason`, `history[] {status, byUserId, at}`, `isDemo` (copied from the case, task M.7: the only demo signal police and welfare see).
 **Index:** `{targetRole:1, districtId:1, status:1, dueAt:1}`.
 
 ### 4.11 `alerts`
@@ -209,7 +211,7 @@ Since task M.10: `audioSource` (`CALLER_ONLY` | `MIXED`) and `speakers {separate
 | Collection | Key fields | Indexes |
 |---|---|---|
 | `users` | `email` U, `passwordHash` (hidden), `role`, `stateId`, `districtId`, `languages[]`, `totpSecretEnc` 🔒 (hidden), `isActive`, `isOnDuty`, `openCaseCount` | `{role, districtId, isOnDuty}` |
-| `api_clients` | `keyPrefix` U, `keyHash` (hidden), `scopes[]`, `rateLimitPerMin`, `isActive` | |
+| `api_clients` | `keyPrefix` U, `keyHash` (hidden), `scopes[]`, `rateLimitPerMin`, `isActive`, `isDemo` (the demo input layer's client, task M.7) | |
 | `subjects` | `_id`, `createdAt` only | |
 | `subject_identities` (PII DB) | `_id` = subject id, `fullNameEnc` 🔒, `phoneEnc` 🔒, `phoneHash` (HMAC, for de-duplication), `addressEnc` 🔒 | `phoneHash` |
 | `case_notes` | `caseId`, `authorId`, `bodyEnc` 🔒 | `{caseId, createdAt:-1}` |
@@ -217,7 +219,7 @@ Since task M.10: `audioSource` (`CALLER_ONLY` | `MIXED`) and `speakers {separate
 | `rate_limits` | `key` (SHA-256 of scope + subject; never a raw IP), `windowStart`, `count`, `expiresAt` | `{key, windowStart}` U, **TTL** on `expiresAt` |
 | `audit_logs` | `actorType`, `actorId`, `action`, `entityType`, `entityId`, `metadata` (never content), `ipHash`, `prevHash` U, `hash` U | `{entityType, entityId, createdAt}`, `{actorId, createdAt}` |
 | `jobs` | `type`, `payload`, `runAt`, `attempts`, `lockedUntil`, `doneAt`, `lastError`, `cleanupAt` **TTL** | `{doneAt, runAt}` |
-| `daily_stats` | `day`, `stateId`, `districtId`, `channel`, `language`, `band`, counts, median times, referral counts by type | U on the full dimension key |
+| `daily_stats` | `day`, `stateId`, `districtId`, `channel`, `language`, `band`, `isDemo`, counts, median times, referral counts by type | U on the full dimension key |
 | `states`, `districts` | `code` U, `name`, `stateId` | |
 
 ---
@@ -489,6 +491,7 @@ services:
 - Scoring config v1 (weights, thresholds, overrides, rules from REQUIREMENTS appendices), active
 - 20+ synthetic cases across all bands, channels and languages (from `evaluation/scenarios`)
 - One API client for the integration demo
+- The demo input layer's client is created separately: `npm run api:client -- --demo` (`isDemo: true`; writes `DEMO_API_KEY` to `.env.local`, never printed)
 
 ### 10.5 Size estimate (for sizing Atlas)
 | Per interaction (typical 10-minute session) | Approx. |

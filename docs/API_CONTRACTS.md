@@ -136,6 +136,8 @@ interface ReferralDto {
   status: "PENDING" | "ACCEPTED" | "IN_PROGRESS" | "DONE" | "DECLINED";
   outcomeNote?: string;
   createdAt: Iso;
+  /** Created through the demo input layer (task M.7): shown as a Demo mark. A flag, never case content. */
+  isDemo?: boolean;
 }
 
 interface Page<T> { items: T[]; nextCursor: string | null }
@@ -170,6 +172,7 @@ interface Page<T> { items: T[]; nextCursor: string | null }
 | Scoring configs | — | — | — | — | — | — | — | — | ✅ | ✅ (read) |
 | Users, API clients | — | — | — | — | — | — | — | — | ✅ | — |
 | Audit logs, chain verify | — | — | — | — | — | — | — | — | — | ✅ |
+| Demo input layer `/demo`, `/api/demo/*` (only when `DEMO_ENABLED`, §6.5) | — | ✅ | — | — | — | — | — | — | — | — |
 
 Rules enforced in `src/core/policies`:
 1. **Police and welfare roles have no route to case, interaction, message, indicator or assessment data.** Requests return `403` (AC-DSH-01).
@@ -213,6 +216,7 @@ Sorted by **band ↓, SVI ↓, waiting time ↑** (FR-CASE-01).
       "assignedTo": { "id": "…", "name": "Dr. A. Kulkarni" },
       "waitingSince": "2026-11-14T11:32:05Z",
       "topReason": "Accused reported outside the house now",
+      "isDemo": false,
       "limitedConfidence": false,
       "openAlert": { "id": "…", "level": "CRITICAL", "escalationLevel": 0 }
     }
@@ -322,7 +326,7 @@ Allowed transitions: PENDING → ACCEPTED → IN_PROGRESS → DONE; any open sta
 | `PATCH` | `/follow-ups/{id}` | `{ status, outcomeNote? }` → `200` |
 
 ### 5.8 Analytics (FR-DSH-06): anonymised only
-All analytics endpoints take `scope=national|state|district`, `stateId`, `districtId`, `from`, `to`, `channel`, `language`. **Any group with a count below 5 is returned as `null` with `suppressed: true`.**
+All analytics endpoints take `scope=national|state|district`, `stateId`, `districtId`, `from`, `to`, `channel`, `language`, and `demo=include|exclude|only` (default `include`; demo cases are tagged on the server, §6.5, task M.7). **Any group with a count below 5 is returned as `null` with `suppressed: true`.**
 
 | Path | Response |
 |---|---|
@@ -341,7 +345,7 @@ All analytics endpoints take `scope=national|state|district`, `stateId`, `distri
 | `POST` | `/admin/scoring-configs/{id}/activate` | Activates the version; queues `rescore` jobs for active interactions (bands never lowered below locks) |
 | `POST` | `/admin/scoring-configs/{id}/simulate` | Runs the evaluation set with this config → `{ bandAccuracy, recallSuicidal, recallDanger, confusionMatrix }` (no data written) |
 | `GET/POST/PATCH` | `/admin/users`, `/admin/users/{id}` | Create users, change role, deactivate |
-| `GET/POST/DELETE` | `/admin/api-clients`, `/admin/api-clients/{id}` | The key secret is shown **once** at creation |
+| `GET/POST/DELETE` | `/admin/api-clients`, `/admin/api-clients/{id}` | The key secret is shown **once** at creation. `isDemo` (default false) marks the demo input layer's client: everything it creates is tagged demo (§6.5) |
 | `GET` | `/admin/audit?entityType=&entityId=&actorId=&from=&to=` | Auditor only |
 | `GET` | `/admin/audit/verify` | `{ ok: boolean, checked: number, firstBrokenId?: string }` (FR-AUD-03) |
 | `GET` | `/health` | `{ db: "ok", analysis: "ok"|"degraded", realtime: "ok" }` |
@@ -447,6 +451,26 @@ Metadata from NHAA's own record, not something the person is asked (FR-CH-08). E
   "displaced": false
 }
 ```
+
+### 6.5 Demo input layer (detachable; not part of the module)
+
+Pages and routes for presenters (`PRODUCT_VISION.md` §6–§7, tasks M.7, M.8, M.11, M.14). **Off unless `DEMO_ENABLED=true`**; when off, every `/demo` page and `/api/demo/*` route answers `404` and the menu entry is hidden, and the module is unchanged (FR-API-05). Only a signed-in `NHAA_SUPERVISOR` may use them (policy action `demo.use`, §4).
+
+The demo calls the module **only through this integration API**, over HTTP, with its own key `DEMO_API_KEY` (a server-only environment variable; the key never reaches the browser). The demo key's client has `isDemo: true` (set when the key is created, `npm run api:client -- --demo`), so every case and interaction it creates is tagged demo **on the server** (M.7). Nothing in a request body can set or clear the tag.
+
+| Method | Path | Request → Response |
+|---|---|---|
+| `POST` | `/api/demo/interactions` | `{ mode: "LIVE_TEXT" \| "RECORDED_AUDIO", language, consent: ConsentRequest, scenarioId? }` → `201 { interactionId, docketNumber, caseId, mode, call }`. Calls `POST /integration/interactions` with channel `CHATBOT` (live text) or `VOICE_CALL` (recorded audio). |
+| `POST` | `/api/demo/interactions/{id}/messages` | `{ text, sender }` → `200 { status, call, body }`: the module's status and body unchanged, plus `call = { requestId, ms }` |
+| `POST` | `/api/demo/interactions/{id}/recording` | Either JSON `{ scenarioId }` (a library file on the server) or `multipart/form-data` with one WAV `file` (≤ 4 MB), plus `audioSource`, `firstSpeaker`. The server cuts the WAV into 5 s windows (M.8) and sends them to `POST /integration/…/audio` in order. **Response: `application/x-ndjson`**, one line per event: `{ type: "start", windows, durationMs }`, then per window `{ type: "window", windowIndex, startMs, endMs, status, analysed, transcript, call }`, then `{ type: "done" }` or `{ type: "error", code }`. |
+| `POST` | `/api/demo/interactions/{id}/end` | → `200`; calls `POST /integration/…/end` |
+| `GET` | `/api/demo/library` | `{ items: DemoScenario[] }`: the scenario library (below), each with `recordingAvailable` |
+
+**Recorded audio (M.8).** Library files and uploads must be PCM WAV (16-bit, mono or stereo, any sample rate; convert with Audacity, which is free). Each window is a standalone WAV of at most 5 s; a final piece under 1 s is dropped. Windows are sent one at a time, never in parallel, with `startMs` = window × 5000. The real audio goes through the real audio path; a prewritten transcript is never sent.
+
+**Scenario library (M.14).** `demo/library/library.json` (committed) lists scenarios with a stable `id`, `title`, `language`, `audioSource`, `firstSpeaker`, a `script` of turns (`{ speaker: "OPERATOR" | "CALLER", text }`, synthetic, respectful, non-graphic) for the team to record and for the live-text page to replay, and `expected` (band, overrides; draft labels fixed before any run). Recordings are the team's own voices reading the script, stored as `demo/library/audio/<id>.wav`, **git-ignored and never committed** (FR-VOI-09). Audio is never generated (`PRODUCT_VISION.md` Q4). `expected` is test metadata: it is never sent to the module, and the results view shows it apart, labelled "expected".
+
+**Results view.** The demo pages read the case through the staff API (§5) as the signed-in supervisor, with the same role rules as any staff screen: `GET /staff/interactions/{id}/assessments/current`, `/assessments`, `/indicators`, `/transcript`, `/voice`, and `GET /staff/recommendations?caseId=`. Nothing is computed on the page.
 
 ---
 

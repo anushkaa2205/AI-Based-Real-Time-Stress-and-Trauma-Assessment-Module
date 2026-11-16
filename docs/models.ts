@@ -151,6 +151,7 @@ const ApiClientSchema = new Schema(
     scopes: { type: [String], default: [] }, // "interactions:write", "assessments:read", …
     rateLimitPerMin: { type: Number, default: 120 },
     isActive: { type: Boolean, default: true },
+    isDemo: { type: Boolean, default: false }, // the demo input layer's client (task M.7)
   },
   base,
 );
@@ -209,6 +210,7 @@ const CaseSchema = new Schema(
     overrideLockedBand: { type: String, enum: RISK_BANDS }, // FR-RISK-03: AI cannot go below this
     waitingSince: { type: Date, default: Date.now }, // reset when a responder acts
     limitedConfidence: { type: Boolean, default: false },
+    isDemo: { type: Boolean, default: false }, // M.7: created by the demo input layer's key (server-side only)
 
     summaryEnc: String, // neutral case summary (FR-NLP-09)
     summaryTranslatedEnc: String,
@@ -304,6 +306,7 @@ const InteractionSchema = new Schema(
     voiceBaseline: { type: Schema.Types.Mixed }, // speaker baseline (FR-VOI-03), caller speech only
     speakerStateEnc: { type: String, select: false }, // M.10: encrypted voice fingerprints of a MIXED call; biometric, deleted at the end
     voiceUnseparated: { type: Boolean, default: false }, // M.10: a MIXED window was not separated with confidence → limited confidence
+    isDemo: { type: Boolean, default: false }, // M.7: copied from the API client at start
 
     context: { type: CaseContextSchema, default: () => ({}) },
     consents: { type: [ConsentEntrySchema], default: [] },
@@ -670,6 +673,7 @@ const DailyStatSchema = new Schema(
     channel: { type: String, enum: CHANNELS },
     language: String,
     band: { type: String, enum: RISK_BANDS },
+    isDemo: { type: Boolean, default: false }, // M.7
     interactions: { type: Number, default: 0 },
     criticalAlerts: { type: Number, default: 0 },
     medianAckSec: Number,
@@ -679,7 +683,7 @@ const DailyStatSchema = new Schema(
   },
   { versionKey: false },
 );
-DailyStatSchema.index({ day: 1, stateId: 1, districtId: 1, channel: 1, language: 1, band: 1 }, { unique: true });
+DailyStatSchema.index({ day: 1, stateId: 1, districtId: 1, channel: 1, language: 1, band: 1, isDemo: 1 }, { unique: true });
 
 // ============================================================================
 // Models

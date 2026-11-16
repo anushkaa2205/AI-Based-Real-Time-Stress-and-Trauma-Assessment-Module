@@ -575,7 +575,9 @@ flowchart LR
 │   │   │   │   ├── police/
 │   │   │   │   ├── welfare/
 │   │   │   │   ├── analytics/          # state + ministry
-│   │   │   │   └── admin/              # users, scoring configs, audit
+│   │   │   │   ├── admin/              # users, scoring configs, audit
+│   │   │   │   └── demo/               # demo input layer (M.11, M.14): text/, recorded/; off unless DEMO_ENABLED
+│   │   │   ├── api/demo/…              # demo proxy: calls /api/v1/integration with DEMO_API_KEY (API_CONTRACTS §6.5)
 │   │   │   └── api/v1/
 │   │   │       ├── integration/…       # API-key API: the module's only input
 │   │   │       ├── staff/…             # Auth.js session API
@@ -590,8 +592,9 @@ flowchart LR
 │   │   │   ├── cases/  alerts/  audit/
 │   │   │   ├── privacy/                # redact.ts crypto.ts
 │   │   │   ├── policies/               # rbac.ts serializers.ts
-│   │   │   └── analysis-client/
-│   │   ├── components/                 # staff/, ui/, audio/ (live recorder kept for the demo)
+│   │   │   ├── analysis-client/
+│   │   │   └── demo/                   # demo layer only: wav.ts (cut a recording into 5 s windows, M.8), library, client
+│   │   ├── components/                 # staff/, ui/, audio/ (live recorder kept for the demo), demo/ (results view)
 │   │   ├── contracts/                  # Zod schemas = API contracts
 │   │   ├── lib/                        # db.ts (cached Mongoose connection), realtime.ts, ratelimit.ts
 │   │   └── models/                     # Mongoose models (one file per collection)
@@ -605,6 +608,7 @@ flowchart LR
 │   ├── scenarios/*.json
 │   ├── audio/
 │   └── run_eval.ts                     # band accuracy, recall, fairness report
+├── demo/library/                       # scenario library: library.json (scripts, expected labels); audio/ git-ignored
 ├── docs/                               # REQUIREMENTS, ARCHITECTURE, DATABASE, API_CONTRACTS, TOOLS_AND_COSTS, IMPLEMENTATION_PLAN
 └── CLAUDE.md
 ```
