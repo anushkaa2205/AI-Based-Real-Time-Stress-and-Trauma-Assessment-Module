@@ -34,3 +34,15 @@ describe("OpenAPI document (task 8.5)", () => {
     }
   });
 });
+
+describe("case status endpoint (N.3)", () => {
+  it("is documented behind the status:read scope and returns no diagnostic field", async () => {
+    const { openApiDocument } = await import("@/contracts/openapi");
+    const doc = openApiDocument() as { paths: Record<string, { get?: { security?: unknown; responses: Record<string, { content?: Record<string, { schema: { properties?: Record<string, unknown> } }> }> } }> };
+    const op = doc.paths["/api/v1/integration/cases/{docket}/status"]?.get;
+    expect(op).toBeTruthy();
+    expect(JSON.stringify(op)).toContain("status:read");
+    const props = Object.keys(op!.responses["200"]?.content?.["application/json"]?.schema.properties ?? {}).sort();
+    expect(props).toEqual(["docketNumber", "registeredAt", "status", "support", "updatedAt"]);
+  });
+});

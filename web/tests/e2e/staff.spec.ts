@@ -21,7 +21,7 @@ async function makeCritical(request: Parameters<typeof integrationSession>[0]) {
 test("a Critical case appears on the counsellor's screen within 5 s, without a refresh (AC-ALR-01, AC-RISK-04)", async ({ page, request }) => {
   await staffLogin(page, "COUNSELLOR");
   await page.goto("/counsellor");
-  await expect(page.getByTestId("queue").or(page.getByText("No open cases."))).toBeVisible();
+  await expect(page.getByTestId("queue").or(page.getByText("No cases are waiting"))).toBeVisible();
   await page.waitForTimeout(1500); // let the real-time subscription settle
 
   const v = await makeCritical(request);

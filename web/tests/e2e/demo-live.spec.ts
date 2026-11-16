@@ -1,15 +1,16 @@
 /**
- * Demo mode 2, live microphone (task M.12). Edge plays the synthetic TTS fixture as its microphone
+ * Demo input 2, speak (tasks M.12, N.7). Edge plays the synthetic TTS fixture as its microphone
  * (`--use-file-for-fake-audio-capture`), so the real recorder, MediaRecorder and /audio path run.
- * Needs DEMO_ENABLED and the analysis service; skipped otherwise. Synthetic audio only.
+ * Public: no sign-in. Needs DEMO_ENABLED and the analysis service; skipped otherwise. Synthetic audio only.
  */
 import { resolve } from "node:path";
 import { expect, test } from "@playwright/test";
 import mongoose from "mongoose";
-import { staffLogin, withDb } from "./helpers";
+import { freshIp, staffLogin, withDb } from "./helpers";
 
 const VOICE = resolve(__dirname, "../../../analysis-service/tests/fixtures/audio/pauses_en.wav");
 const CONSENT = { noticeVersion: "2026-11-v1", language: "en", textAnalysis: true, voiceAnalysis: true, shareWithCounsellor: true, followUpContact: false, audioRetention: false };
+const START = { mode: "LIVE_AUDIO", language: "en", consent: CONSENT, districtCode: "MH-PUN" };
 
 test.describe.configure({ mode: "serial" });
 test.use({
@@ -24,23 +25,20 @@ test.beforeAll(async () => {
   test.skip(!ok, "analysis service not running");
 });
 
-test("live microphone: windows go to /audio as the caller's channel while the presenter speaks (M.12)", async ({ page }) => {
+test("speak: windows go to /audio as the caller's channel while the visitor talks; no transcript on the page (M.12, N.7)", async ({ page, baseURL }) => {
   test.setTimeout(180_000);
-  await staffLogin(page, "NHAA_SUPERVISOR");
-  await page.goto("/demo/live-call");
-  await page.getByTestId("start-call").click();
+  await page.setExtraHTTPHeaders({ "x-forwarded-for": freshIp(), origin: baseURL ?? "http://localhost:3000" });
+  await page.goto("/demo/call");
+  await page.getByTestId("start").click();
   await page.getByTestId("voice-start").click({ timeout: 30_000 });
   await expect(page.getByTestId("voice-recorder")).toBeVisible();
   await page.waitForTimeout(16_000); // three 5 s windows
   await page.getByTestId("voice-stop").click();
 
-  const timeline = page.getByTestId("timeline");
-  await expect(timeline).toContainText("Window 1", { timeout: 60_000 });
-  await expect(timeline).toContainText("202");
-  await expect(timeline).toContainText("Call ended", { timeout: 90_000 }); // Stop waits for every window, then ends the call
-  await expect(page.getByTestId("call-transcript")).toContainText(/village|meeting|school|families|water/i, { timeout: 30_000 });
-
-  const docket = (await page.getByTestId("case-link").textContent())?.trim() ?? "";
+  // Stop waits for every window, then registers the case: the docket appears, never a transcript.
+  const docket = ((await page.getByTestId("docket").textContent({ timeout: 120_000 })) ?? "").trim();
+  expect(docket).toMatch(/^NHAA-/);
+  await expect(page.getByText(/village|meeting|school|families|water/i)).toHaveCount(0);
   await withDb(async (db) => {
     const c = await db.collection("cases").findOne({ docketNumber: docket });
     expect(c?.isDemo).toBe(true);
@@ -53,15 +51,30 @@ test("live microphone: windows go to /audio as the caller's channel while the pr
   });
 });
 
-test("one live microphone call at a time: starting another ends the older one (M.12, free tier)", async ({ page }) => {
-  await staffLogin(page, "NHAA_SUPERVISOR");
-  const start = async () => (await (await page.request.post("/api/demo/interactions", { data: { mode: "LIVE_AUDIO", language: "en", consent: CONSENT } })).json()) as { interactionId: string };
-  const first = await start();
-  const second = await start();
+test("one live call at a time: a newcomer is told the line is busy; an idle call frees it; a supervisor may take it over (plan §7)", async ({ page, browser, baseURL }) => {
+  const origin = baseURL ?? "http://localhost:3000";
+  await page.setExtraHTTPHeaders({ "x-forwarded-for": freshIp(), origin });
+  await page.goto("/");
+  const first = (await (await page.request.post("/api/demo/interactions", { data: START })).json()) as { interactionId: string };
+  // Touch the call so it counts as live (an audio window would do the same).
+  await withDb((db) => db.collection("interactions").updateOne({ _id: new mongoose.Types.ObjectId(first.interactionId) }, { $set: { updatedAt: new Date() } }));
+
+  const other = await browser.newContext({ extraHTTPHeaders: { "x-forwarded-for": freshIp(), origin } });
+  const busy = await other.request.post(`${origin}/api/demo/interactions`, { data: START });
+  expect(busy.status()).toBe(409);
+  expect(((await busy.json()) as { code: string }).code).toBe("LINE_BUSY");
+  await other.close();
+
+  // A supervisor takes the line over: the older call is ended.
+  const sup = await browser.newPage();
+  await sup.setExtraHTTPHeaders({ "x-forwarded-for": freshIp(), origin });
+  await staffLogin(sup, "NHAA_SUPERVISOR");
+  const taken = (await (await sup.request.post("/api/demo/interactions", { data: { ...START, takeover: true } })).json()) as { interactionId: string };
   await withDb(async (db) => {
     const get = (id: string) => db.collection("interactions").findOne({ _id: new mongoose.Types.ObjectId(id) });
-    expect((await get(first.interactionId))?.status).toBe("ENDED");
-    expect((await get(second.interactionId))?.status).toBe("ACTIVE");
+    expect((await get(first.interactionId))?.status).not.toBe("ACTIVE");
+    expect((await get(taken.interactionId))?.status).toBe("ACTIVE");
   });
-  expect((await page.request.post(`/api/demo/interactions/${second.interactionId}/end`)).status()).toBe(200);
+  expect((await sup.request.post(`/api/demo/interactions/${taken.interactionId}/end`)).status()).toBe(200);
+  await sup.close();
 });

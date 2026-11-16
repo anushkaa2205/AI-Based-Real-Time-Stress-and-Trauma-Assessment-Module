@@ -1,7 +1,7 @@
 /**
- * Accessibility (task 9.4, AC-ACC-01, NFR-ACC-01): axe-core WCAG 2.1 A/AA rules on the sign-in page and
- * the staff dashboards, plus a keyboard-only pass on sign-in. The module has no victim-facing pages
- * (PRODUCT_VISION.md §5); calling systems own those. A screen-reader session still needs a person.
+ * Accessibility (task 9.4, AC-ACC-01, NFR-ACC-01; extended in N.11): axe-core WCAG 2.1 A/AA rules on the
+ * public pages (home, demo, track), the sign-in page and the staff dashboards, plus a keyboard-only
+ * pass on sign-in. A screen-reader session still needs a person.
  */
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
@@ -15,16 +15,25 @@ async function audit(page: Page, label: string) {
   expect(problems, `${label}\n${problems.join("\n")}`).toEqual([]);
 }
 
-test("sign-in and staff dashboards have no WCAG 2.1 AA violations (AC-ACC-01)", async ({ page }) => {
-  test.setTimeout(180_000);
+test("public pages, sign-in and staff dashboards have no WCAG 2.1 AA violations (AC-ACC-01)", async ({ page }) => {
+  test.setTimeout(240_000);
   await page.setExtraHTTPHeaders({ "x-forwarded-for": freshIp() });
   await page.goto("/");
-  await expect(page).toHaveURL(/\/login/); // no victim website: / goes to staff sign-in
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  await audit(page, "home");
+  if (process.env.DEMO_ENABLED === "true") {
+    await page.goto("/demo/text");
+    await expect(page.getByTestId("consent-step")).toBeVisible();
+    await audit(page, "demo: type a message");
+    await page.goto("/track");
+    await audit(page, "track");
+  }
+  await page.goto("/login");
   await audit(page, "login");
 
   await staffLogin(page, "COUNSELLOR");
   await page.goto("/counsellor");
-  await expect(page.getByTestId("queue").or(page.getByText("No open cases."))).toBeVisible();
+  await expect(page.getByTestId("queue").or(page.getByText("No cases are waiting"))).toBeVisible();
   await audit(page, "counsellor queue");
 
   await staffLogin(page, "OPERATOR");
