@@ -361,6 +361,7 @@ Base: `/api/v1/integration`. **The module's only input interface** (FR-API-05), 
 | `interactions:write` | Start interactions, send text and audio, send case context, withdraw consent, end |
 | `assessments:read` | Read current assessment and recommendations for interactions this client created |
 | `stream:read` | Subscribe to the live stream of an interaction this client created |
+| `indicators:read` | Read indicators with their evidence for interactions this client created (§6.4a, task M.5). Granted only to systems that need it; never shown to the person |
 
 | Method | Path | Request → Response |
 |---|---|---|
@@ -371,6 +372,7 @@ Base: `/api/v1/integration`. **The module's only input interface** (FR-API-05), 
 | `POST` | `/interactions/{id}/consent/withdraw` | `{ reason?: string }` → `200 { mode: "SAFETY_ONLY" }` (§6.1) |
 | `GET` | `/interactions/{id}/assessment` | `200 { svi, band, confidence, limitedConfidence, explanation, overridesFired, topDimensions: [{dimension, score}], updatedAt }` |
 | `GET` | `/interactions/{id}/recommendations` | `200 { items: RecommendationDto[] }` |
+| `GET` | `/interactions/{id}/indicators` | `200 { items: IntegrationIndicator[] }` (§6.4a), scope `indicators:read` |
 | `GET` | `/interactions/{id}/stream` | **Server-Sent Events**: `event: assessment.updated` / `event: emergency.show` / `event: recommendation.created`, with the payloads in §7 (FR-API-03) |
 | `POST` | `/interactions/{id}/end` | `{ reason }` → `200` |
 
@@ -451,6 +453,27 @@ Metadata from NHAA's own record, not something the person is asked (FR-CH-08). E
   "displaced": false
 }
 ```
+
+### 6.4a Indicators with evidence (task M.5, gap V1, FR-API-01, FR-IND-04)
+`GET /interactions/{id}/indicators`, scope **`indicators:read`**, only for interactions this client created. Every indicator the module recorded, in order, with **why** it was found:
+```ts
+interface IntegrationIndicator {
+  id: ObjectId;
+  dimension: Dimension;
+  source: "TEXT_NLP" | "SAFETY_LEXICON" | "VOICE" | "CONTEXT";
+  score: number;          // 0–1, this signal only (the SVI comes from GET /assessment)
+  confidence: number;
+  negated: boolean;       // kept for audit, not scored (FR-NLP-08)
+  status: "ACTIVE" | "CONFIRMED" | "REJECTED" | "ADJUSTED";  // after human review
+  flags: string[];        // override facts the signal carries, e.g. THREAT_TO_LIFE
+  evidence:
+    | { type: "TEXT_SPAN"; messageId: ObjectId; start: number; end: number; quote: string | null }  // exact substring of the message (rule 12); null after the retention purge
+    | { type: "ACOUSTIC_EVENT"; cue: string | null; windowIndex: number | null; startMs: number | null; endMs: number | null }  // where in the call
+    | { type: "CONTEXT_FIELD"; field: string | null };
+  createdAt: Iso;
+}
+```
+Staff review details (who, why) are not included. Like the assessment, this is for the calling system's authorised reviewers: **never shown to the person** (CLAUDE.md rule 1). The staff indicator endpoint (§5.3) carries the same voice time positions.
 
 ### 6.5 Demo input layer (detachable; not part of the module)
 
