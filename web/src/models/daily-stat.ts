@@ -11,6 +11,7 @@ const DailyStatSchema = new Schema(
     channel: { type: String, enum: CHANNELS },
     language: String,
     band: { type: String, enum: RISK_BANDS },
+    isDemo: { type: Boolean, default: false }, // M.7
     interactions: { type: Number, default: 0 },
     criticalAlerts: { type: Number, default: 0 },
     medianAckSec: Number,
@@ -26,6 +27,6 @@ const DailyStatSchema = new Schema(
   },
   { versionKey: false },
 );
-DailyStatSchema.index({ day: 1, stateId: 1, districtId: 1, channel: 1, language: 1, band: 1 }, { unique: true });
+DailyStatSchema.index({ day: 1, stateId: 1, districtId: 1, channel: 1, language: 1, band: 1, isDemo: 1 }, { unique: true });
 
 export const DailyStat = getModel("DailyStat", DailyStatSchema, "daily_stats");

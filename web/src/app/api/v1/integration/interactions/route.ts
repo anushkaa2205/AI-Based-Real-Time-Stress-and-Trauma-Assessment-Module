@@ -16,6 +16,7 @@ export const POST = route({ auth: "api", scope: "interactions:write", body: Inte
     districtCode: body.districtCode ?? null,
     apiClientId: client.id,
     externalRef: body.externalRef,
+    isDemo: client.isDemo, // M.7: tagged on the server from the key
   });
   const mode = await giveConsent(started.interactionId, body.consent, { type: "API_CLIENT", id: client.id });
   return Response.json({ interactionId: started.interactionId, docketNumber: started.docketNumber, mode }, { status: 201 });

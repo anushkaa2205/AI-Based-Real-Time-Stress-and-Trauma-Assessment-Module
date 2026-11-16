@@ -7,10 +7,12 @@
  */
 import { useCallback, useEffect, useState } from "react";
 import { useRealtime } from "@/components/realtime/realtime-provider";
+import { DemoMark } from "./demo-mark";
 
 interface Referral {
   id: string;
   docketNumber: string;
+  isDemo?: boolean;
   type: string;
   actionRequested: string;
   locationHint?: string;
@@ -101,6 +103,7 @@ export function ReferralQueue({
               <li key={r.id} data-testid="referral-row" data-status={r.status} className="card flex flex-col gap-1 p-3 text-sm">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-mono">{r.docketNumber}</span>
+                  <DemoMark show={r.isDemo} />
                   <span className="tag">{lower(r.type)}</span>
                   <span className={`tag ${r.urgency === "IMMEDIATE" || r.urgency === "WITHIN_15_MIN" ? "bg-danger text-white" : ""}`}>{lower(r.urgency)}</span>
                   <span className="text-xs">Status: {lower(r.status)}</span>

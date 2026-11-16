@@ -92,6 +92,8 @@ export const CaseQueueItem = z.object({
   topReason: z.string().optional(),
   limitedConfidence: z.boolean(),
   openAlert: z.object({ id: ObjectIdStr, level: z.enum(["CRITICAL", "HIGH"]), escalationLevel: z.number() }).nullable(),
+  /** Task M.7: created by the demo input layer (synthetic) */
+  isDemo: z.boolean().optional(),
 });
 export type CaseQueueItem = z.infer<typeof CaseQueueItem>;
 
@@ -119,6 +121,7 @@ export const CaseDetailDto = z.object({
   openAlerts: z.array(z.object({ id: ObjectIdStr, level: z.enum(["CRITICAL", "HIGH"]), createdAt: Iso })),
   bandOverrides: z.array(z.unknown()),
   assignedTo: UserRef.nullable(),
+  isDemo: z.boolean().optional(), // M.7
 });
 export type CaseDetailDto = z.infer<typeof CaseDetailDto>;
 
@@ -126,6 +129,7 @@ export type CaseDetailDto = z.infer<typeof CaseDetailDto>;
 export const ReferralDto = z.object({
   id: ObjectIdStr,
   docketNumber: z.string(),
+  isDemo: z.boolean().optional(), // M.7
   type: SupportType,
   actionRequested: z.string().max(300),
   locationHint: z.string().optional(),
@@ -270,6 +274,7 @@ export const RecommendationQuery = z.object({
 export const RecommendationInboxItem = RecommendationDto.extend({
   caseId: ObjectIdStr,
   docketNumber: z.string(),
+  isDemo: z.boolean().optional(), // M.7
   band: RiskBand.nullable(),
   postReviewedAt: Iso.nullable(),
 });
@@ -349,6 +354,8 @@ export const AnalyticsQuery = z.object({
   language: z.string().max(10).optional(),
   /** FR-DSH-07 band filter (additive) */
   band: RiskBand.optional(),
+  /** Task M.7: demo cases (tagged on the server) included, excluded or alone */
+  demo: z.enum(["include", "exclude", "only"]).default("include"),
   interval: z.enum(["day", "week"]).default("day"),
 });
 export type AnalyticsQuery = z.infer<typeof AnalyticsQuery>;
@@ -376,6 +383,8 @@ export const ApiClientCreate = z.object({
   name: z.string().trim().min(2).max(100),
   scopes: z.array(z.enum(["interactions:write", "assessments:read", "stream:read"])).min(1),
   rateLimitPerMin: z.number().int().min(1).max(10_000).default(120),
+  /** Task M.7: the demo input layer's client; everything it creates is tagged demo */
+  isDemo: z.boolean().default(false),
 });
 
 export const AuditQuery = z.object({

@@ -9,10 +9,12 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { BandBadge } from "./band-badge";
 import { RecommendationActions, type RecLike } from "./recommendation-actions";
+import { DemoMark } from "./demo-mark";
 
 interface Item extends RecLike {
   caseId: string;
   docketNumber: string;
+  isDemo?: boolean;
   band: string | null;
   reason: string;
   urgency: string;
@@ -37,6 +39,7 @@ function List({ items, caseHref, onDone }: { items: Item[]; caseHref: string | n
             ) : (
               <span className="font-mono">{r.docketNumber}</span>
             )}
+            <DemoMark show={r.isDemo} />
             <BandBadge band={r.band} />
             <strong>{lower(r.type)}</strong>
             <span className="text-xs">{lower(r.urgency)}</span>

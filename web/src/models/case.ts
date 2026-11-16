@@ -31,6 +31,7 @@ const CaseSchema = new Schema(
     overrideLockedBand: { type: String, enum: RISK_BANDS }, // FR-RISK-03: AI cannot go below this
     waitingSince: { type: Date, default: Date.now }, // reset when a responder acts
     limitedConfidence: { type: Boolean, default: false },
+    isDemo: { type: Boolean, default: false }, // M.7: created by the demo input layer's key (server-side only)
 
     summaryEnc: String, // neutral case summary (FR-NLP-09)
     summaryTranslatedEnc: String,

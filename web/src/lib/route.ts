@@ -27,6 +27,8 @@ export interface ApiCaller {
   id: string;
   name: string;
   scopes: string[];
+  /** Task M.7: the demo input layer's key; set when the key is created, never from a request */
+  isDemo: boolean;
 }
 type Params = Record<string, string | string[] | undefined>;
 
@@ -86,9 +88,9 @@ async function loadApiClient(req: NextRequest): Promise<ApiCaller & { rateLimitP
   const parts = parseAuthorization(req.headers.get("authorization"));
   if (!parts) throw new ApiError("INVALID_API_KEY");
   await db();
-  const c = await ApiClient.findOne({ keyPrefix: parts.prefix, isActive: true }).select("+keyHash name scopes rateLimitPerMin").lean();
+  const c = await ApiClient.findOne({ keyPrefix: parts.prefix, isActive: true }).select("+keyHash name scopes rateLimitPerMin isDemo").lean();
   if (!c || !secretMatches(parts.secret, c.keyHash)) throw new ApiError("INVALID_API_KEY");
-  return { id: String(c._id), name: c.name, scopes: c.scopes ?? [], rateLimitPerMin: c.rateLimitPerMin ?? 120 };
+  return { id: String(c._id), name: c.name, scopes: c.scopes ?? [], isDemo: c.isDemo === true, rateLimitPerMin: c.rateLimitPerMin ?? 120 };
 }
 
 async function loadStaffUser(): Promise<StaffUser> {
@@ -173,7 +175,7 @@ export function route<A extends AuthMode, B extends z.ZodType = z.ZodUndefined, 
         body,
         query,
         user,
-        client: client ? { id: client.id, name: client.name, scopes: client.scopes } : null,
+        client: client ? { id: client.id, name: client.name, scopes: client.scopes, isDemo: client.isDemo } : null,
         authorize(action: Action, resource?: PolicyResource): Access {
           const level = user ? access(user, action, resource) : null;
           if (!level) throw new ApiError("FORBIDDEN");

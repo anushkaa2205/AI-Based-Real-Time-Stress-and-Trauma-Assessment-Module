@@ -8,10 +8,12 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useRealtime } from "@/components/realtime/realtime-provider";
 import { BandBadge, waitingFor } from "./band-badge";
+import { DemoMark } from "./demo-mark";
 
 interface Item {
   id: string;
   docketNumber: string;
+  isDemo?: boolean;
   band: string | null;
   svi: number | null;
   status: string;
@@ -106,7 +108,8 @@ export function CaseQueue({ channels, caseHref }: { channels: string[]; caseHref
                       </Link>
                     ) : (
                       c.docketNumber
-                    )}
+                    )}{" "}
+                    <DemoMark show={c.isDemo} />
                   </td>
                   <td className="p-2">{c.topReason ?? ""}</td>
                   <td className="p-2 whitespace-nowrap">{waitingFor(c.waitingSince, now)}</td>

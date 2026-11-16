@@ -7,10 +7,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRealtime } from "@/components/realtime/realtime-provider";
 import { BandBadge, waitingFor } from "./band-badge";
+import { DemoMark } from "./demo-mark";
 
 interface Row {
   id: string;
   docketNumber: string;
+  isDemo?: boolean;
   band: string | null;
   svi: number | null;
   status: string;
@@ -77,7 +79,9 @@ export function DistrictCases({ channels }: { channels: string[] }) {
               <BandBadge band={r.band} />
             </td>
             <td className="p-2 font-mono">{r.svi ?? "–"}</td>
-            <td className="p-2 font-mono">{r.docketNumber}</td>
+            <td className="p-2 font-mono">
+              {r.docketNumber} <DemoMark show={r.isDemo} />
+            </td>
             <td className="p-2">{r.status.replace(/_/g, " ").toLowerCase()}</td>
             <td className="p-2">{waitingFor(r.waitingSince, now)}</td>
             <td className="p-2 text-xs">{r.openAlert ? `${r.openAlert.level.toLowerCase()}${r.openAlert.escalationLevel ? `, escalated (level ${r.openAlert.escalationLevel})` : ""}` : "–"}</td>

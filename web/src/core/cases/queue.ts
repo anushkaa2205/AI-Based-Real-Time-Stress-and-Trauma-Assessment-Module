@@ -43,7 +43,7 @@ export async function caseQueue(user: StaffUser, scope: ListScope, q: z.output<t
     .sort(QUEUE_SORT)
     .skip(offset)
     .limit(q.limit + 1)
-    .select("docketNumber currentBand currentSvi status assignedCounsellorId waitingSince limitedConfidence districtId latestAssessmentId")
+    .select("docketNumber currentBand currentSvi status assignedCounsellorId waitingSince limitedConfidence districtId latestAssessmentId isDemo")
     .lean();
   const page = rows.slice(0, q.limit);
   const ids = page.map((c) => c._id);
@@ -84,6 +84,7 @@ export async function caseQueue(user: StaffUser, scope: ListScope, q: z.output<t
       ...(c.latestAssessmentId && reasonById.get(ID(c.latestAssessmentId)) ? { topReason: reasonById.get(ID(c.latestAssessmentId))! } : {}),
       limitedConfidence: c.limitedConfidence ?? false,
       openAlert: alert ? { id: ID(alert._id), level: alert.level as "CRITICAL" | "HIGH", escalationLevel: alert.escalationLevel ?? 0 } : null,
+      isDemo: c.isDemo === true,
     };
     return serializeCaseQueueItem(user, item, { districtId: c.districtId ? ID(c.districtId) : null });
   });

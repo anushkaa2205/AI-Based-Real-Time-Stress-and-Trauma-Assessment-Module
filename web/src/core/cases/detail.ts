@@ -38,6 +38,7 @@ export async function caseDetail(user: StaffUser, loaded: Awaited<ReturnType<typ
   const dto: CaseDetailDto = {
     id: ID(caseDoc._id),
     docketNumber: caseDoc.docketNumber,
+    isDemo: caseDoc.isDemo === true,
     status: caseDoc.status as CaseDetailDto["status"],
     band: (caseDoc.currentBand ?? null) as CaseDetailDto["band"],
     svi: caseDoc.currentSvi ?? null,

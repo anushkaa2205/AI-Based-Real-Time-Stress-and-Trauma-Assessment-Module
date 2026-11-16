@@ -2,8 +2,12 @@
  * `npm run api:client -- --name "Portal (demo)" [--scopes interactions:write,assessments:read,stream:read] [--rpm 120]`
  * (task 8.4). Creates an integration client. The key is shown once: it is written to the
  * git-ignored `.seed-output/api-client-<prefix>.txt`, never printed or logged.
+ *
+ * `npm run api:client -- --demo` (task M.7) creates the demo input layer's client (`isDemo: true`,
+ * so everything it creates is marked demo) and writes `DEMO_API_KEY` and `DEMO_ENABLED=true` into the
+ * git-ignored `.env.local` instead. Restart the dev server afterwards.
  */
-import { mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import "./load-env";
 import mongoose from "mongoose";
@@ -16,14 +20,32 @@ function arg(name: string): string | undefined {
   return i > 0 ? process.argv[i + 1] : undefined;
 }
 
+/** Sets (or adds) `NAME=value` lines in an env file, keeping every other line as it is. */
+function setEnvLines(file: string, values: Record<string, string>) {
+  const lines = existsSync(file) ? readFileSync(file, "utf8").split(/\r?\n/) : [];
+  for (const [k, v] of Object.entries(values)) {
+    const i = lines.findIndex((l) => l.startsWith(`${k}=`));
+    if (i >= 0) lines[i] = `${k}=${v}`;
+    else lines.push(`${k}=${v}`);
+  }
+  writeFileSync(file, `${lines.join("\n").replace(/\n+$/, "")}\n`, { mode: 0o600 });
+}
+
 async function main() {
-  const name = arg("name") ?? "Demo integration client";
+  const demo = process.argv.includes("--demo");
+  const name = arg("name") ?? (demo ? "Demo input layer" : "Demo integration client");
   const scopes = (arg("scopes") ?? SCOPES.join(",")).split(",").map((s) => s.trim()) as Scope[];
   for (const s of scopes) if (!SCOPES.includes(s)) throw new Error(`Unknown scope: ${s}`);
   const rpm = Math.max(1, Math.min(10_000, Number(arg("rpm") ?? 120)));
   await db();
   const k = generateKey();
-  await ApiClient.create({ name, keyPrefix: k.prefix, keyHash: k.keyHash, scopes, rateLimitPerMin: rpm, isActive: true });
+  await ApiClient.create({ name, keyPrefix: k.prefix, keyHash: k.keyHash, scopes, rateLimitPerMin: rpm, isActive: true, isDemo: demo });
+  if (demo) {
+    setEnvLines(resolve(__dirname, "../.env.local"), { DEMO_ENABLED: "true", DEMO_API_KEY: k.key });
+    console.log(`Created the demo client ${k.prefix}. DEMO_API_KEY and DEMO_ENABLED=true are in .env.local; restart the dev server.`);
+    await mongoose.disconnect();
+    return;
+  }
   const dir = resolve(__dirname, "../.seed-output");
   mkdirSync(dir, { recursive: true });
   const file = resolve(dir, `api-client-${k.prefix}.txt`);

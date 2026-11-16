@@ -8,6 +8,7 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { useRealtime } from "@/components/realtime/realtime-provider";
 import { BandBadge } from "./band-badge";
+import { DemoMark } from "./demo-mark";
 import { RecommendationActions } from "./recommendation-actions";
 
 type Json = Record<string, unknown>;
@@ -64,6 +65,7 @@ interface FollowUp {
 interface CaseDetail {
   id: string;
   docketNumber: string;
+  isDemo?: boolean;
   status: string;
   band: string | null;
   svi: number | null;
@@ -269,6 +271,7 @@ export function CaseDetailView({ caseId }: { caseId: string }) {
     <div className="flex flex-col gap-6">
       <header className="flex flex-wrap items-center gap-3">
         <h1 className="font-mono text-[1.375rem] font-bold text-ink">{c.docketNumber}</h1>
+        <DemoMark show={c.isDemo} />
         <BandBadge band={c.band} />
         <span className="text-lg" data-testid="svi">
           SVI <strong>{c.svi ?? "–"}</strong>

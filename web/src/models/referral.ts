@@ -23,6 +23,7 @@ const ReferralSchema = new Schema(
     dueAt: Date,
     status: { type: String, enum: REFERRAL_STATUSES, default: "PENDING" },
     outcomeNote: String,
+    isDemo: { type: Boolean, default: false }, // M.7: copied from the case at creation
     declinedReason: String,
     history: [
       {

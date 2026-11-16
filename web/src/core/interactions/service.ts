@@ -28,6 +28,8 @@ export async function startInteraction(input: {
   districtCode?: string | null;
   apiClientId: string;
   externalRef?: string;
+  /** Task M.7: from the API client on the server, never from the request body */
+  isDemo?: boolean;
 }): Promise<{ interactionId: string; docketNumber: string }> {
   await db();
   const district = input.districtCode ? await District.findOne({ code: input.districtCode }).lean() : null;
@@ -45,6 +47,7 @@ export async function startInteraction(input: {
           stateId: state?._id,
           districtId: district?._id,
           status: "NEW",
+          isDemo: input.isDemo === true,
         });
       } catch (err) {
         if ((err as { code?: number }).code !== 11000 || input.docketNumber) throw err; // retry only generated numbers
@@ -62,6 +65,7 @@ export async function startInteraction(input: {
     mode: "SAFETY_ONLY", // analysis is off until consent is recorded (AC-CON-01)
     apiClientId: input.apiClientId,
     externalRef: input.externalRef,
+    isDemo: input.isDemo === true,
   });
   await record({
     actorType: "API_CLIENT",

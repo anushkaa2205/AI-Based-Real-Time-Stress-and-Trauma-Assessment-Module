@@ -7,6 +7,7 @@
  * and never again.
  */
 import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { DemoMark } from "./demo-mark";
 
 interface UserRow {
   id: string;
@@ -23,6 +24,7 @@ interface ClientRow {
   keyPrefix: string;
   scopes: string[];
   rateLimitPerMin: number;
+  isDemo?: boolean;
   isActive: boolean;
 }
 interface ConfigRow {
@@ -118,7 +120,7 @@ export function AdminConsole({ districts }: { districts: { id: string; name: str
     const form = e.currentTarget;
     const f = new FormData(form);
     const scopes = ["interactions:write", "assessments:read", "stream:read"].filter((s) => f.get(s));
-    const r = await call<{ key: string }>("POST", "/api/v1/staff/admin/api-clients", { name: f.get("name"), scopes, rateLimitPerMin: Number(f.get("rpm") || 120) });
+    const r = await call<{ key: string }>("POST", "/api/v1/staff/admin/api-clients", { name: f.get("name"), scopes, rateLimitPerMin: Number(f.get("rpm") || 120), isDemo: f.get("isDemo") === "on" });
     say(r.ok, r.data, "API client created. Copy the key now; it is not shown again.");
     if (r.ok) {
       setSecrets([{ label: "API key", value: r.data.key }]);
@@ -283,6 +285,9 @@ export function AdminConsole({ districts }: { districts: { id: string; name: str
               Requests / min
               <input name="rpm" type="number" min={1} max={10000} defaultValue={120} className={`${input} w-24`} />
             </label>
+            <label className="flex items-center gap-1 text-xs" title="Everything this key creates is marked Demo on staff screens">
+              <input type="checkbox" name="isDemo" /> Demo input layer
+            </label>
             <button type="submit" className="btn btn-primary">
               Create key
             </button>
@@ -300,7 +305,9 @@ export function AdminConsole({ districts }: { districts: { id: string; name: str
             <tbody>
               {clients.map((c) => (
                 <tr key={c.id} className={`border-t border-border ${c.isActive ? "" : "text-muted-foreground line-through"}`}>
-                  <td className="p-1">{c.name}</td>
+                  <td className="p-1">
+                    {c.name} <DemoMark show={c.isDemo} />
+                  </td>
                   <td className="p-1 font-mono">{c.keyPrefix}</td>
                   <td className="p-1 text-xs">{c.scopes.join(", ")}</td>
                   <td className="p-1">{c.rateLimitPerMin}/min</td>

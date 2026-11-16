@@ -214,6 +214,7 @@ export function AnalyticsDashboard({ fixedDistrict }: { fixedDistrict: boolean }
   const [to, setTo] = useState("");
   const [channel, setChannel] = useState("");
   const [language, setLanguage] = useState("");
+  const [demo, setDemo] = useState<"include" | "exclude" | "only">("include");
   const [district, setDistrict] = useState("");
   const [interval, setInterval] = useState<"day" | "week">("day");
   const [summary, setSummary] = useState<Summary | null>(null);
@@ -229,12 +230,13 @@ export function AnalyticsDashboard({ fixedDistrict }: { fixedDistrict: boolean }
     if (to) p.set("to", to);
     if (channel) p.set("channel", channel);
     if (language) p.set("language", language);
+    if (demo !== "include") p.set("demo", demo); // M.7
     if (district && !fixedDistrict) {
       p.set("scope", "district");
       p.set("districtId", district);
     }
     return p.toString();
-  }, [from, to, channel, language, district, fixedDistrict]);
+  }, [from, to, channel, language, demo, district, fixedDistrict]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -327,6 +329,14 @@ export function AnalyticsDashboard({ fixedDistrict }: { fixedDistrict: boolean }
                 {l}
               </option>
             ))}
+          </select>
+        </label>
+        <label className="flex flex-col text-xs">
+          Demo cases
+          <select value={demo} onChange={(e) => setDemo(e.target.value as "include" | "exclude" | "only")} className={input} data-testid="filter-demo">
+            <option value="include">Included</option>
+            <option value="exclude">Excluded</option>
+            <option value="only">Only demo</option>
           </select>
         </label>
         <label className="flex flex-col text-xs">

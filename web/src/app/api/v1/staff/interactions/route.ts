@@ -16,7 +16,7 @@ export const GET = route({ auth: "staff", action: "case.list" }, async ({ user }
   const rows = await Interaction.find({ status: "ACTIVE", startedAt: { $gte: new Date(Date.now() - LIVE_WINDOW_MS) } })
     .sort({ startedAt: -1 })
     .limit(50)
-    .select("caseId channel uiLanguage startedAt operatorId")
+    .select("caseId channel uiLanguage startedAt operatorId isDemo")
     .lean();
   const [cases, users] = await Promise.all([
     Case.find({ _id: { $in: rows.map((r) => r.caseId) } })
@@ -35,6 +35,7 @@ export const GET = route({ auth: "staff", action: "case.list" }, async ({ user }
         id: String(r._id),
         caseId: String(r.caseId),
         docketNumber: c?.docketNumber ?? "",
+        isDemo: r.isDemo === true, // M.7
         channel: r.channel,
         language: r.uiLanguage,
         startedAt: new Date(r.startedAt).toISOString(),

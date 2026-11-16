@@ -31,6 +31,7 @@ interface Group {
   channel: string;
   language: string;
   band: RiskBand | null;
+  isDemo: boolean;
   interactions: number;
   criticalAlerts: number;
   ackSecs: number[];
@@ -41,12 +42,17 @@ interface Group {
   topDimensions: Record<string, number>;
 }
 
+/** Group key: day × district × channel × language × band × demo (task M.7). */
+function groupKey(districtId: string, channel: string, language: string, band: RiskBand | null, isDemo: boolean): string {
+  return [districtId, channel, language, band ?? "", isDemo ? "demo" : ""].join("|");
+}
+
 export async function rollupDay(day: Date, now: Date = new Date()): Promise<{ rows: number; interactions: number }> {
   const from = dayStart(day);
   const to = new Date(from.getTime() + DAY_MS);
 
   const interactions = await Interaction.find({ startedAt: { $gte: from, $lt: to } })
-    .select("caseId channel uiLanguage startedAt")
+    .select("caseId channel uiLanguage startedAt isDemo")
     .lean();
   const caseIds = [...new Set(interactions.map((i) => ID(i.caseId)))];
   const iids = interactions.map((i) => i._id);
@@ -90,7 +96,7 @@ export async function rollupDay(day: Date, now: Date = new Date()): Promise<{ ro
   for (const i of sorted) {
     const c = caseById.get(ID(i.caseId));
     const band = bandOf.get(ID(i._id)) ?? null;
-    const key = [ID(c?.districtId), i.channel, i.uiLanguage, band ?? ""].join("|");
+    const key = groupKey(ID(c?.districtId), i.channel, i.uiLanguage, band, i.isDemo === true);
     let g = groups.get(key);
     if (!g) {
       g = {
@@ -100,6 +106,7 @@ export async function rollupDay(day: Date, now: Date = new Date()): Promise<{ ro
         channel: i.channel,
         language: i.uiLanguage,
         band,
+        isDemo: i.isDemo === true, // M.7
         interactions: 0,
         criticalAlerts: 0,
         ackSecs: [],
@@ -122,7 +129,7 @@ export async function rollupDay(day: Date, now: Date = new Date()): Promise<{ ro
   const groupOfInteraction = new Map<string, Group>();
   for (const i of interactions) {
     const c = caseById.get(ID(i.caseId));
-    groupOfInteraction.set(ID(i._id), groups.get([ID(c?.districtId), i.channel, i.uiLanguage, bandOf.get(ID(i._id)) ?? ""].join("|"))!);
+    groupOfInteraction.set(ID(i._id), groups.get(groupKey(ID(c?.districtId), i.channel, i.uiLanguage, bandOf.get(ID(i._id)) ?? null, i.isDemo === true))!);
   }
   for (const a of alerts) {
     const g = groupOfInteraction.get(ID(a.interactionId));
@@ -148,6 +155,7 @@ export async function rollupDay(day: Date, now: Date = new Date()): Promise<{ ro
     channel: g.channel,
     language: g.language,
     band: g.band,
+    isDemo: g.isDemo,
     interactions: g.interactions,
     criticalAlerts: g.criticalAlerts,
     medianAckSec: median(g.ackSecs),

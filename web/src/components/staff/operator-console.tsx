@@ -11,11 +11,13 @@
  */
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { useRealtime } from "@/components/realtime/realtime-provider";
+import { DemoMark } from "./demo-mark";
 import { BandBadge } from "./band-badge";
 
 interface Live {
   id: string;
   docketNumber: string;
+  isDemo?: boolean;
   channel: string;
   language: string;
   startedAt: string;
@@ -227,7 +229,9 @@ function CallView({ live, onMessage }: { live: Live; onMessage: (m: string) => v
     <div className="flex flex-col gap-4" data-testid="call-view">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h2 className="font-mono text-xl font-semibold">{live.docketNumber}</h2>
+          <h2 className="flex items-center gap-2 font-mono text-xl font-semibold">
+            {live.docketNumber} <DemoMark show={live.isDemo} />
+          </h2>
           <p className="text-xs text-muted-foreground">
             {live.channel.replace(/_/g, " ").toLowerCase()} · {live.language}
           </p>
@@ -353,6 +357,7 @@ export function OperatorConsole({ me, queueChannels }: { me: string; queueChanne
               <li key={l.id} data-testid="live-row" className={`rounded-[4px] border bg-white p-2 text-sm ${selected === l.id ? "border-navy border-l-4" : "border-line"}`}>
                 <div className="flex items-center gap-2">
                   <span className="font-mono">{l.docketNumber}</span>
+                  <DemoMark show={l.isDemo} />
                   <BandBadge band={l.band} />
                 </div>
                 <p className="text-xs text-muted-foreground">
