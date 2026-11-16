@@ -19,7 +19,6 @@ const IndicatorSchema = new Schema(
       quoteEnc: String, // exact substring, verified (AC-NLP-05)
       voiceWindowId: { type: ObjectId, ref: "VoiceWindow" }, // ACOUSTIC_EVENT
       eventType: String,
-      itemCode: String, // SCREENER_ANSWER
       contextField: String, // CONTEXT_FIELD
     },
     negated: { type: Boolean, default: false }, // FR-NLP-08: kept for audit, not scored

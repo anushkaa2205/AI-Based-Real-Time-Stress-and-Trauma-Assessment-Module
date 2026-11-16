@@ -105,7 +105,7 @@ export function indicatorDto(
   const evidence: IndicatorDto["evidence"] =
     ev.type === "TEXT_SPAN" && ev.messageId
       ? { type: "TEXT_SPAN", messageId: ID(ev.messageId), spanStart: ev.spanStart ?? 0, spanEnd: ev.spanEnd ?? 0, quote }
-      : { type: (ev.type ?? "CONTEXT_FIELD") as "ACOUSTIC_EVENT" | "SCREENER_ANSWER" | "CONTEXT_FIELD" };
+      : { type: (ev.type ?? "CONTEXT_FIELD") as "ACOUSTIC_EVENT" | "CONTEXT_FIELD" };
   return {
     id: ID(d._id),
     dimension: d.dimension as IndicatorDto["dimension"],

@@ -1,15 +1,13 @@
 /**
  * Real-time channels and events (task 5.1, API_CONTRACTS §7). Pure.
  *
- * Two deliberate differences from §7, both for privacy (logged for the docs):
- *  - The victim's browser gets its OWN channel, `private-victim-{id}`, carrying
- *    only `emergency.show`. A shared channel would also deliver staff events
- *    with the SVI to the victim (CLAUDE.md rule 1).
+ * Staff channels only: calling systems get `emergency.show` from the integration SSE stream
+ * (API_CONTRACTS §6), never from a Pusher channel. One deliberate difference from §7, for privacy:
  *  - `transcript.appended` carries ids only, no message text: the transport may
  *    be a third-party service (Pusher); staff fetch the text over our own API.
  */
 import type { ReferralDto } from "@/contracts/staff";
-import type { EmergencyPanel } from "@/contracts/victim";
+import type { EmergencyPanel } from "@/contracts/interaction";
 import type { RiskBand, Role } from "@/models/enums";
 
 export const ONCALL = "private-oncall";
@@ -17,13 +15,11 @@ export const SUPERVISORS = "private-supervisors";
 export const QUEUE_NATIONAL = "private-queue-national";
 
 export const interactionChannel = (interactionId: string) => `private-interaction-${interactionId}`;
-export const victimChannel = (interactionId: string) => `private-victim-${interactionId}`;
 export const queueChannel = (districtId: string) => `private-queue-${districtId}`;
 export const roleChannel = (role: Role, districtId: string) => `private-role-${role}-${districtId}`;
 
 export type ParsedChannel =
   | { kind: "interaction"; id: string }
-  | { kind: "victim"; id: string }
   | { kind: "queue"; districtId: string | null }
   | { kind: "oncall" }
   | { kind: "supervisors" }
@@ -37,8 +33,6 @@ export function parseChannel(name: string): ParsedChannel | null {
   if (name === QUEUE_NATIONAL) return { kind: "queue", districtId: null };
   let m = new RegExp(`^private-interaction-(${OID})$`).exec(name);
   if (m) return { kind: "interaction", id: m[1]! };
-  m = new RegExp(`^private-victim-(${OID})$`).exec(name);
-  if (m) return { kind: "victim", id: m[1]! };
   m = new RegExp(`^private-queue-(${OID})$`).exec(name);
   if (m) return { kind: "queue", districtId: m[1]! };
   m = new RegExp(`^private-role-([A-Z_]+)-(${OID})$`).exec(name);

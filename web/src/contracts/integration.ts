@@ -1,7 +1,7 @@
 /** Integration API contracts (task 8.4, API_CONTRACTS §6, FR-API-01…04). */
 import { z } from "zod";
 import { Channel } from "./common";
-import { ConsentRequest, VictimLang } from "./victim";
+import { ConsentRequest, VictimLang } from "./interaction";
 
 export const IntegrationStart = z.object({
   channel: Channel,

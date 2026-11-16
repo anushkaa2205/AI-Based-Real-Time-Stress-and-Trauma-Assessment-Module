@@ -18,6 +18,8 @@ export const RETENTION_DAYS = 365;
 const DAY_MS = 86_400_000;
 export const PURGE_EVERY_MS = DAY_MS;
 const BATCH = 500;
+/** An interaction a calling system left open with no activity for this long is closed as ABANDONED (timeout). */
+export const STALE_AFTER_MS = DAY_MS;
 
 /** Pure: when content of an interaction that ended at `endedAt` must go. */
 export function retentionUntil(endedAt: Date, days = RETENTION_DAYS): Date {
@@ -48,13 +50,14 @@ export async function purgeDue(now: Date = new Date()): Promise<PurgeResult> {
   await db();
   const r: PurgeResult = { closedAbandoned: 0, interactionsPurged: 0, quotesCleared: 0, summariesCleared: 0, notesCleared: 0, audioDeleted: 0 };
 
-  // 1. Open sessions whose token expired: close them so their retention starts.
-  const stale = await Interaction.find({ status: "ACTIVE", sessionExpiresAt: { $lt: now } })
-    .select("_id sessionExpiresAt")
+  // 1. Interactions a calling system never ended (no activity for STALE_AFTER_MS): close them so
+  //    their retention starts. There are no victim sessions any more (task M.2).
+  const stale = await Interaction.find({ status: "ACTIVE", updatedAt: { $lt: new Date(now.getTime() - STALE_AFTER_MS) } })
+    .select("_id updatedAt")
     .limit(BATCH)
     .lean();
   for (const i of stale) {
-    const endedAt = i.sessionExpiresAt ? new Date(i.sessionExpiresAt) : now;
+    const endedAt = i.updatedAt ? new Date(new Date(i.updatedAt).getTime() + STALE_AFTER_MS) : now;
     const res = await Interaction.updateOne({ _id: i._id, status: "ACTIVE" }, { $set: { status: "ABANDONED", endedAt } });
     if (res.modifiedCount) {
       r.closedAbandoned += 1;

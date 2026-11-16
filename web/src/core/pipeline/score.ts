@@ -2,16 +2,16 @@
  * Score an interaction and persist the result (shared by the message pipeline,
  * indicator review (task 5.4) and the rescore job (task 5.7)).
  *
- *   stored indicators + screeners + context → assess → assessment → case rank →
+ *   stored indicators + context → assess → assessment → case rank →
  *   recommendations → alert → real-time events (returned; published after commit)
  *
  * Runs inside the caller's transaction. Without analysis consent (SAFETY_ONLY)
- * no SVI is calculated (AC-CON-03): only life-safety overrides can raise the band.
+ * no SVI is calculated (AC-CON-03): only life-safety overrides (from the safety lexicon and
+ * from case details in NHAA's record) can raise the band.
  */
-import { toVictimLang } from "@/contracts/victim";
 import type { ClientSession, Types } from "mongoose";
 import { record } from "@/core/audit/record";
-import { allowsScreeners, allowsTextAnalysis } from "@/core/consent/mode";
+import { allowsAnyAnalysis, allowsTextAnalysis } from "@/core/consent/mode";
 import { dueAt, evaluateRecommendations, type Proposal } from "@/core/recommendations/evaluate";
 import { LEXICON_VERSION } from "@/core/safety-lexicon/engine";
 import { assess } from "@/core/scoring/assess";
@@ -19,13 +19,10 @@ import { bandRank, maxBand } from "@/core/scoring/bands";
 import { contextSignals, type CaseContextInput } from "@/core/scoring/context";
 import { applyOverrides, flagsFrom } from "@/core/scoring/overrides";
 import type { CaseFact, IndicatorInput, OverrideFlag, RiskBand, ScoringConfig } from "@/core/scoring/types";
-import { screenerSignals, type ScreenerResponseInput } from "@/core/screeners/score";
-import { emergencyPanel } from "@/core/victim/emergency";
 import {
   ONCALL,
   interactionChannel,
   queueChannelsFor,
-  victimChannel,
   type CaseEventData,
   type OutboundEvent,
 } from "@/lib/realtime/channels";
@@ -35,7 +32,7 @@ import { Types as MTypes, type HydratedDocument } from "mongoose";
 const ID = (v: unknown) => String(v);
 const isObjectId = (s: string | null | undefined): s is string => !!s && /^[a-f0-9]{24}$/.test(s);
 
-export type Trigger = "TEXT_MESSAGE" | "VOICE_WINDOW" | "SCREENER" | "CONTEXT_UPDATE" | "INDICATOR_REVIEW" | "CONFIG_RESCORE";
+export type Trigger = "TEXT_MESSAGE" | "VOICE_WINDOW" | "CONTEXT_UPDATE" | "INDICATOR_REVIEW" | "CONFIG_RESCORE";
 
 /** Turns stored indicator docs into scoring input. */
 export function toInput(doc: {
@@ -62,15 +59,6 @@ export function toInput(doc: {
     flags: (doc.flags ?? []) as OverrideFlag[],
     ...(doc.label ? { label: doc.label } : {}),
   };
-}
-
-export function screenerResponsesOf(i: { screenerResponses?: unknown }): ScreenerResponseInput[] {
-  return ((i.screenerResponses ?? []) as ScreenerResponseInput[]).map((r) => ({
-    instrument: r.instrument,
-    itemCode: r.itemCode,
-    value: r.value ?? null,
-    skipped: r.skipped ?? false,
-  }));
 }
 
 /** IMMEDIATE is the most urgent; NONE the least. */
@@ -215,8 +203,6 @@ export async function scoreInteraction(
   const prevBand = (caseDoc.currentBand ?? null) as RiskBand | null;
   const ctx = (interaction.context ?? {}) as CaseContextInput;
   const lexiconActive = opts.lexiconActive ?? [];
-  const responses = screenerResponsesOf(interaction);
-  const safetyOnlyResponses = responses.filter((r) => r.instrument === "SAFETY_CHECK");
   const events: OutboundEvent[] = [];
   let newBand: RiskBand | null = prevBand;
   let reason = "";
@@ -226,9 +212,10 @@ export async function scoreInteraction(
   // newer than that decision, so the same old evidence cannot undo it. New danger still raises.
   const lastOverrideAt = caseDoc.bandOverrides?.length ? new Date(caseDoc.bandOverrides.at(-1)!.at).getTime() : null;
   const isNew = (at: unknown) => lastOverrideAt === null || (at instanceof Date || typeof at === "string" ? new Date(at).getTime() > lastOverrideAt : false);
-  const recentResponses = lastOverrideAt === null ? responses : responses.filter((_, i) => isNew(interaction.screenerResponses[i]?.at));
+  const context = contextSignals(ctx);
+  const contextIsNew = isNew((interaction.context as { updatedAt?: Date } | undefined)?.updatedAt);
 
-  if (allowsTextAnalysis(mode) || allowsScreeners(mode)) {
+  if (allowsAnyAnalysis(mode)) {
     const limitedConfidence = opts.limitedConfidence ?? (opts.aiDegraded === true || caseDoc.limitedConfidence === true);
     const stored = await Indicator.find({ interactionId: interaction._id, status: { $ne: "REJECTED" } })
       .select("dimension source score confidence negated status review flags label createdAt")
@@ -236,20 +223,17 @@ export async function scoreInteraction(
       .lean();
     // Without text consent the lexicon still protects life: its flags count, its scores do not.
     const lexiconFlagsOnly: IndicatorInput[] = !allowsTextAnalysis(mode) ? lexiconActive.map((i) => ({ ...i, score: 0, confidence: 0 })) : [];
-    const screener = screenerSignals(allowsScreeners(mode) ? responses : safetyOnlyResponses);
-    const context = contextSignals(ctx);
     const storedFacts = allowsTextAnalysis(mode) ? ((interaction.caseFacts ?? []) as CaseFact[]) : [];
-    const facts = [...new Set<CaseFact>([...screener.facts, ...context.facts, ...storedFacts])];
+    const facts = [...new Set<CaseFact>([...context.facts, ...storedFacts])];
 
-    const indicators = [...stored.map(toInput), ...lexiconFlagsOnly, ...screener.indicators, ...context.indicators];
+    const indicators = [...stored.map(toInput), ...lexiconFlagsOnly, ...context.indicators];
     let flags: Set<OverrideFlag> | undefined;
     if (lastOverrideAt !== null) {
       const recent = [
         ...stored.filter((d) => isNew(d.createdAt)).map(toInput),
         ...lexiconFlagsOnly,
         ...lexiconActive,
-        ...screenerSignals(allowsScreeners(mode) ? recentResponses : recentResponses.filter((r) => r.instrument === "SAFETY_CHECK")).indicators,
-        ...(isNew(ctx && (interaction.context as { updatedAt?: Date } | undefined)?.updatedAt) ? context.indicators : []),
+        ...(contextIsNew ? context.indicators : []),
       ];
       flags = flagsFrom(recent);
     }
@@ -336,9 +320,9 @@ export async function scoreInteraction(
       },
     });
   } else {
-    // SAFETY_ONLY: overrides from the lexicon and the safety check, no SVI.
-    const safetyResponses = lastOverrideAt === null ? safetyOnlyResponses : recentResponses.filter((r) => r.instrument === "SAFETY_CHECK");
-    const flags = new Set<OverrideFlag>([...flagsFrom(lexiconActive), ...flagsFrom(screenerSignals(safetyResponses).indicators)]);
+    // SAFETY_ONLY: no SVI. Life-safety overrides still fire from what the person says (lexicon) and
+    // from case details in NHAA's record (e.g. accusedNearby → OV-2); they only ever raise (rule 5).
+    const flags = new Set<OverrideFlag>([...flagsFrom(lexiconActive), ...flagsFrom(contextIsNew ? context.indicators : [])]);
     const locked = (caseDoc.overrideLockedBand ?? null) as RiskBand | null;
     const r = applyOverrides("LOW", flags, config.safetyOverrides, locked);
     if (r.fired.length) {
@@ -347,7 +331,7 @@ export async function scoreInteraction(
       caseDoc.bandRank = bandRank(newBand);
       caseDoc.overrideLockedBand = r.lockedBand ?? undefined;
       const rule = config.safetyOverrides.find((o) => o.id === r.fired[0]);
-      reason = `Safety check only (no analysis consent): ${rule?.label.en ?? r.fired[0]} (${r.fired.join(", ")})`;
+      reason = `Safety lexicon / case details only (no analysis consent): ${rule?.label.en ?? r.fired[0]} (${r.fired.join(", ")})`;
       await record(
         {
           actorType: opts.actor.type,
@@ -366,11 +350,6 @@ export async function scoreInteraction(
     events.push(
       ...(await raiseAlertIfNeeded(session, { caseDoc, interactionId: interaction._id, prev: prevBand, next: newBand, reason }, config, now)),
     );
-  }
-  if (newBand === "CRITICAL" && prevBand !== "CRITICAL") {
-    // The victim's own channel carries only the emergency panel (rule 1).
-    const lang = toVictimLang(interaction.uiLanguage);
-    events.push({ channel: victimChannel(ID(interaction._id)), event: "emergency.show", data: { emergency: emergencyPanel(lang) } });
   }
   const districtId = caseDoc.districtId ? ID(caseDoc.districtId) : null;
   for (const channel of queueChannelsFor(districtId)) {

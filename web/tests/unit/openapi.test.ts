@@ -14,11 +14,11 @@ function routeFile(path: string): string {
 describe("OpenAPI document (task 8.5)", () => {
   const doc = openApiDocument();
 
-  it("is OpenAPI 3.1 with every operation and the three auth schemes", () => {
+  it("is OpenAPI 3.1 with every operation and the two auth schemes (no victim session)", () => {
     expect(doc.openapi).toBe("3.1.0");
     const count = Object.values(doc.paths).reduce((n, p) => n + Object.keys(p).length, 0);
     expect(count).toBe(OPERATIONS.length);
-    expect(Object.keys(doc.components.securitySchemes)).toEqual(["apiKey", "staffSession", "victimSession"]);
+    expect(Object.keys(doc.components.securitySchemes)).toEqual(["apiKey", "staffSession"]);
   });
 
   it("documents request bodies from the Zod contracts", () => {

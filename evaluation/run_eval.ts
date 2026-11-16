@@ -1,7 +1,11 @@
 /**
  * Evaluation runner (tasks E.1/E.2 baseline and 4.10; the full pipeline runner is E.5).
  * Run from web/:
- *   npm run eval                 rules only (lexicon + screeners + context), like fallback mode
+ *   npm run eval                 rules only (lexicon + context), like fallback mode
+ *
+ * Scenarios are conversations: only the person's turns are scored; operator questions are
+ * context (FR-CH-02, task M.4). In AI mode the previous operator turn is not yet passed to the
+ * model (gap V7, task M.9).
  *   npm run eval -- --mode=ai    adds the analysis service (needs it running; answers are cached)
  *
  * Same scoring code as the pipeline, without the database. Writes
@@ -20,9 +24,7 @@ import { assess } from "@/core/scoring/assess";
 import { contextSignals, type CaseContextInput } from "@/core/scoring/context";
 import { DEFAULT_CONFIG } from "@/core/scoring/defaultConfig";
 import type { CaseFact, IndicatorInput } from "@/core/scoring/types";
-import { ITEM_BY_CODE } from "@/core/screeners/items";
-import { screenerSignals } from "@/core/screeners/score";
-import { ScenarioSchema, type Scenario } from "@/contracts/evaluation";
+import { ScenarioSchema, victimTexts, type Scenario } from "@/contracts/evaluation";
 
 const ROOT = dirname(fileURLToPath(import.meta.url));
 const BANDS = ["LOW", "MODERATE", "HIGH", "CRITICAL"] as const;
@@ -44,7 +46,7 @@ async function run(s: Scenario) {
   const t0 = performance.now();
   const indicators: IndicatorInput[] = [];
   const facts = new Set<CaseFact>();
-  for (const m of s.messages) {
+  for (const m of victimTexts(s)) {
     const lx = lexiconSignals(m);
     indicators.push(...lx.indicators);
     lx.facts.forEach((f) => facts.add(f));
@@ -60,15 +62,9 @@ async function run(s: Scenario) {
       }
     }
   }
-  const responses = s.screeners.map((r) => ({
-    instrument: ITEM_BY_CODE.get(r.itemCode)!.instrument,
-    itemCode: r.itemCode,
-    value: r.value,
-  }));
-  const sc = screenerSignals(responses);
   const cx = contextSignals(toContext(s.context));
-  indicators.push(...sc.indicators, ...cx.indicators);
-  [...sc.facts, ...cx.facts].forEach((f) => facts.add(f));
+  indicators.push(...cx.indicators);
+  cx.facts.forEach((f) => facts.add(f));
 
   const draft = assess({ indicators, config: DEFAULT_CONFIG, limitedConfidence: MODE !== "ai" });
   const recs = evaluateRecommendations(
@@ -106,10 +102,7 @@ async function main() {
     const parsed = ScenarioSchema.safeParse(JSON.parse(readFileSync(join(dir, f), "utf8")));
     if (!parsed.success) errors.push(`${f}: ${parsed.error.issues.map((i) => `${i.path.join(".")} ${i.message}`).join("; ")}`);
     else if (parsed.data.id !== f.replace(".json", "")) errors.push(`${f}: id does not match file name`);
-    else {
-      for (const r of parsed.data.screeners) if (!ITEM_BY_CODE.has(r.itemCode)) errors.push(`${f}: unknown item ${r.itemCode}`);
-      scenarios.push(parsed.data);
-    }
+    else scenarios.push(parsed.data);
   }
   if (errors.length) {
     console.error(`Invalid scenarios:\n${errors.join("\n")}`);

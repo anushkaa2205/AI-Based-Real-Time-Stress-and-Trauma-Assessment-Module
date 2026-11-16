@@ -74,7 +74,6 @@ interface CaseDetail {
   context?: Json;
   interactions: { id: string; channel: string; startedAt: string; endedAt: string | null; status: string }[];
   latestAssessment: Assessment | null;
-  screenerScores?: { instrument: string; total: number; maxTotal: number; isPositive: boolean }[];
   recommendations: {
     id: string;
     type: string;
@@ -407,11 +406,6 @@ export function CaseDetailView({ caseId }: { caseId: string }) {
               {Object.entries(c.context)
                 .map(([k, v]) => `${k}: ${String(v)}`)
                 .join(" · ")}
-            </p>
-          )}
-          {!!c.screenerScores?.length && (
-            <p>
-              {c.screenerScores.map((s) => `${s.instrument} ${s.total}/${s.maxTotal}${s.isPositive ? " (positive)" : ""}`).join(" · ")}
             </p>
           )}
         </div>

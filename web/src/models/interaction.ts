@@ -1,7 +1,7 @@
 /** `interactions` collection (split from docs/models.ts, task 1.2). */
 import { Schema, type InferSchemaType, type Types } from "mongoose";
 import { getModel, ObjectId, base } from "./_shared";
-import { CHANNELS, INTERACTION_STATUSES, ASSESSMENT_MODES, CONSENT_ACTIONS, INSTRUMENTS, RISK_BANDS } from "./enums";
+import { CHANNELS, INTERACTION_STATUSES, ASSESSMENT_MODES, CONSENT_ACTIONS, RISK_BANDS } from "./enums";
 
 /** Optional context for EXTREME_VULNERABILITY (FR-CH-08, FR-IND-02).
  *  Deliberately NO caste/community field (C-ETH-03). */
@@ -43,29 +43,6 @@ const ConsentEntrySchema = new Schema(
   { _id: true },
 );
 
-const ScreenerResponseSchema = new Schema(
-  {
-    instrument: { type: String, enum: INSTRUMENTS, required: true },
-    itemCode: { type: String, required: true }, // "PHQ2_1", "SAFETY_ACCUSED_NEARBY"
-    value: { type: Number, default: null }, // null when skipped
-    skipped: { type: Boolean, default: false },
-    at: { type: Date, default: Date.now },
-  },
-  { _id: false },
-);
-
-const ScreenerScoreSchema = new Schema(
-  {
-    instrument: { type: String, enum: INSTRUMENTS, required: true },
-    total: { type: Number, required: true },
-    maxTotal: { type: Number, required: true },
-    isPositive: { type: Boolean, required: true }, // above the screening cut-off
-    itemsAnswered: { type: Number, required: true },
-    computedAt: { type: Date, default: Date.now },
-  },
-  { _id: false },
-);
-
 /** Copy of the latest assessment's headline values, for fast reads */
 const AssessmentHeadSchema = new Schema(
   {
@@ -78,6 +55,8 @@ const AssessmentHeadSchema = new Schema(
   { _id: false },
 );
 
+// Removed 16 Nov 2026 (task M.2): sessionTokenHash, sessionExpiresAt, flowState, screenerResponses,
+// screenerScores. scripts/drop-screener-data.ts clears them from older synthetic documents.
 const InteractionSchema = new Schema(
   {
     caseId: { type: ObjectId, ref: "Case", required: true, index: true },
@@ -96,21 +75,14 @@ const InteractionSchema = new Schema(
     externalRef: String,
     apiClientId: { type: ObjectId, ref: "ApiClient" },
 
-    // Victim session (FR-CH-09): only the SHA-256 of the token is stored
-    sessionTokenHash: { type: String, select: false },
-    sessionExpiresAt: Date,
-
     // Counters for ordered child documents (incremented atomically with $inc)
     messageSeq: { type: Number, default: 0 },
     assessmentSeq: { type: Number, default: 0 },
 
-    flowState: { type: Schema.Types.Mixed }, // conversation engine state
     voiceBaseline: { type: Schema.Types.Mixed }, // speaker baseline (FR-VOI-03)
 
     context: { type: CaseContextSchema, default: () => ({}) },
     consents: { type: [ConsentEntrySchema], default: [] },
-    screenerResponses: { type: [ScreenerResponseSchema], default: [] },
-    screenerScores: { type: [ScreenerScoreSchema], default: [] },
     current: { type: AssessmentHeadSchema },
 
     startedAt: { type: Date, default: Date.now },
@@ -121,7 +93,6 @@ const InteractionSchema = new Schema(
   },
   base,
 );
-InteractionSchema.index({ sessionTokenHash: 1 }, { unique: true, partialFilterExpression: { sessionTokenHash: { $type: "string" } } });
 InteractionSchema.index({ status: 1, startedAt: -1 });
 
 export const Interaction = getModel("Interaction", InteractionSchema, "interactions");

@@ -13,14 +13,13 @@ import { resolve } from "node:path";
 import "./load-env";
 import mongoose from "mongoose";
 import { capacity, summarise, type StatRow } from "@/core/analytics/aggregate";
+import { victimTexts } from "@/contracts/evaluation";
 import { loadScenarios } from "@/core/admin/simulate";
 import { lexiconSignals } from "@/core/safety-lexicon/engine";
 import { assess } from "@/core/scoring/assess";
 import { contextSignals, type CaseContextInput } from "@/core/scoring/context";
 import { DEFAULT_CONFIG } from "@/core/scoring/defaultConfig";
 import type { IndicatorInput, RiskBand } from "@/core/scoring/types";
-import { ITEM_BY_CODE } from "@/core/screeners/items";
-import { screenerSignals } from "@/core/screeners/score";
 import { db } from "@/lib/db";
 import { DailyStat } from "@/models";
 
@@ -58,12 +57,11 @@ export function simulateQueue(jobs: Job[], pick: (waiting: Job[]) => Job): Map<s
 
 function bandOf(s: ReturnType<typeof loadScenarios>[number]) {
   const indicators: IndicatorInput[] = [];
-  for (const m of s.messages) indicators.push(...lexiconSignals(m).indicators);
-  const responses = s.screeners.map((r) => ({ instrument: ITEM_BY_CODE.get(r.itemCode)!.instrument, itemCode: r.itemCode, value: r.value }));
+  for (const m of victimTexts(s)) indicators.push(...lexiconSignals(m).indicators);
   const ctx = { ...s.context } as Record<string, unknown>;
   if (s.context.offenceCategory) ctx.isSexualOffence = s.context.offenceCategory === "SEXUAL_VIOLENCE";
   if (s.context.ageGroup) ctx.isMinor = s.context.ageGroup === "UNDER_18";
-  indicators.push(...screenerSignals(responses).indicators, ...contextSignals(ctx as CaseContextInput).indicators);
+  indicators.push(...contextSignals(ctx as CaseContextInput).indicators);
   return assess({ indicators, config: DEFAULT_CONFIG, limitedConfidence: true });
 }
 

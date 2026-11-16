@@ -23,8 +23,8 @@ export const INTERACTION_STATUSES = ["ACTIVE", "ENDED", "ABANDONED"] as const;
 export const ASSESSMENT_MODES = ["SAFETY_ONLY", "TEXT_ONLY", "VOICE_ONLY", "FULL"] as const;
 export const CONSENT_ACTIONS = ["GRANTED", "UPDATED", "WITHDRAWN"] as const;
 export const MESSAGE_SENDERS = ["VICTIM", "SYSTEM", "OPERATOR"] as const;
-export const MESSAGE_MODALITIES = ["TEXT", "VOICE_TRANSCRIPT", "IVR_KEYPRESS"] as const;
-export const INSTRUMENTS = ["SAFETY_CHECK", "PHQ2", "GAD2", "PCPTSD5", "CSSRS_SCREEN"] as const;
+/** IVR_KEYPRESS removed 16 Nov 2026: the module accepts text and voice only (FR-CH-01). */
+export const MESSAGE_MODALITIES = ["TEXT", "VOICE_TRANSCRIPT"] as const;
 
 /** The eight risk dimensions (FR-IND-01) */
 export const DIMENSIONS = [
@@ -39,8 +39,9 @@ export const DIMENSIONS = [
 ] as const;
 export type Dimension = (typeof DIMENSIONS)[number];
 
-export const SIGNAL_SOURCES = ["TEXT_NLP", "SAFETY_LEXICON", "VOICE", "SCREENER", "CONTEXT"] as const;
-export const EVIDENCE_TYPES = ["TEXT_SPAN", "ACOUSTIC_EVENT", "SCREENER_ANSWER", "CONTEXT_FIELD"] as const;
+/** SCREENER removed in scoring config v3 (task M.3). */
+export const SIGNAL_SOURCES = ["TEXT_NLP", "SAFETY_LEXICON", "VOICE", "CONTEXT"] as const;
+export const EVIDENCE_TYPES = ["TEXT_SPAN", "ACOUSTIC_EVENT", "CONTEXT_FIELD"] as const;
 export const INDICATOR_STATUSES = ["ACTIVE", "CONFIRMED", "REJECTED", "ADJUSTED"] as const;
 export const RISK_BANDS = ["LOW", "MODERATE", "HIGH", "CRITICAL"] as const;
 export type RiskBand = (typeof RISK_BANDS)[number];
@@ -48,7 +49,6 @@ export const BAND_RANK: Record<RiskBand, number> = { LOW: 1, MODERATE: 2, HIGH: 
 export const ASSESSMENT_TRIGGERS = [
   "TEXT_MESSAGE",
   "VOICE_WINDOW",
-  "SCREENER",
   "CONTEXT_UPDATE",
   "INDICATOR_REVIEW",
   "CONFIG_RESCORE",
@@ -70,6 +70,7 @@ export const REFERRAL_STATUSES = ["PENDING", "ACCEPTED", "IN_PROGRESS", "DONE", 
 export const ALERT_LEVELS = ["CRITICAL", "HIGH"] as const;
 export const ALERT_STATUSES = ["OPEN", "ACKNOWLEDGED", "RESOLVED"] as const;
 export const FOLLOW_UP_STATUSES = ["SCHEDULED", "DONE", "MISSED", "CANCELLED"] as const;
+/** VICTIM_SESSION is no longer written (no victim sessions); kept so older hash-chained audit entries stay valid. */
 export const ACTOR_TYPES = ["USER", "VICTIM_SESSION", "API_CLIENT", "SYSTEM"] as const;
 export const JOB_TYPES = ["alert.escalate", "followup.remind", "retention.purge", "rescore", "stats.rollup"] as const;
 

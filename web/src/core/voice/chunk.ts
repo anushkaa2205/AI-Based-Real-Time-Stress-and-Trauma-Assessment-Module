@@ -9,12 +9,12 @@
  */
 import { randomUUID } from "node:crypto";
 import { after } from "next/server";
-import { AudioFields, AudioResponse, type VictimLang } from "@/contracts/victim";
+import { AudioFields, AudioResponse, type VictimLang } from "@/contracts/interaction";
 import { analyzeAudio } from "@/core/analysis-client/client";
 import { allowsVoiceAnalysis } from "@/core/consent/mode";
 import { runDue } from "@/core/jobs/runDue";
 import { VOICE_QUIET_MS, runPipeline } from "@/core/pipeline/run";
-import { emergencyPanel, shouldShowEmergency } from "@/core/victim/emergency";
+import { emergencyPanel, shouldShowEmergency } from "@/core/interactions/emergency";
 import { ApiError } from "@/lib/problem";
 import { Case, Interaction, VoiceWindow } from "@/models";
 

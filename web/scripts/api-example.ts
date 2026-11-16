@@ -1,24 +1,12 @@
 /**
  * `npm run api:example -- [--base http://localhost:3000]` (task 8.4, AC-API-01).
  * Runs a full interaction through the integration API with a docket number:
- * start (with consent) → safety answers → message → SVI → recommendations → close.
+ * start (with consent) → the chatbot's question (OPERATOR turn) → the person's messages → SVI →
+ * recommendations → close. The module never asks questions itself (PRODUCT_VISION.md §5).
  * The key comes from INTEGRATION_API_KEY or the newest `.seed-output/api-client-*.txt`.
  * Synthetic text only. Prints statuses and the SVI/band (this is a staff-side integration).
  */
-import { readdirSync, readFileSync, statSync } from "node:fs";
-import { resolve } from "node:path";
-
-function apiKey(): string {
-  if (process.env.INTEGRATION_API_KEY) return process.env.INTEGRATION_API_KEY;
-  const dir = resolve(__dirname, "../.seed-output");
-  const files = readdirSync(dir)
-    .filter((f) => f.startsWith("api-client-"))
-    .map((f) => resolve(dir, f))
-    .sort((a, b) => statSync(b).mtimeMs - statSync(a).mtimeMs);
-  const key = files[0] ? /key:\s+(\S+)/.exec(readFileSync(files[0], "utf8"))?.[1] : undefined;
-  if (!key) throw new Error("No API key. Run: npm run api:client -- --name \"Demo\"");
-  return key;
-}
+import { apiKey } from "./integration-key";
 
 const i = process.argv.indexOf("--base");
 const BASE = (i > 0 ? process.argv[i + 1] : undefined) ?? "http://localhost:3000";
@@ -48,8 +36,8 @@ async function main() {
   });
   const id = String(start.interactionId);
   console.log(`  docket ${String(start.docketNumber)}, mode ${String(start.mode)}`);
-  await call("POST", `/interactions/${id}/screeners`, { instrument: "SAFETY_CHECK", itemCode: "SAFETY_SAFE_NOW", value: 1 });
-  await call("POST", `/interactions/${id}/screeners`, { instrument: "SAFETY_CHECK", itemCode: "SAFETY_ACCUSED_NEARBY", value: 0 });
+  await call("POST", `/interactions/${id}/messages`, { text: "Are you safe right now?", sender: "OPERATOR" });
+  await call("POST", `/interactions/${id}/messages`, { text: "Yes, I am at home with my sister.", sender: "VICTIM" });
   await call("POST", `/interactions/${id}/messages`, { text: "Since the complaint the village shop will not sell to us and I cannot sleep.", sender: "VICTIM" });
   const a = await call("GET", `/interactions/${id}/assessment`);
   console.log(`  SVI ${String(a.svi)}, band ${String(a.band)}`);

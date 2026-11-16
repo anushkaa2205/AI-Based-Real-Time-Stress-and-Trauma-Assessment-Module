@@ -26,8 +26,6 @@ const PUBLIC = new Set([
   "v1/staff/auth/totp/route.ts", // second step of sign-in
   "v1/staff/auth/logout/route.ts",
   "v1/staff/health/route.ts", // no data
-  "v1/victim/interactions/route.ts", // start a session (rate limited per IP)
-  "v1/victim/consent-notices/[version]/route.ts", // the notice text itself
 ]);
 
 describe("every API route is guarded (task 9.5)", () => {
@@ -57,14 +55,18 @@ describe("every API route is guarded (task 9.5)", () => {
         } else if (f.path.startsWith("v1/integration/")) {
           expect(h.opts, `${h.method}: API key`).toMatch(/auth: "api"/);
           expect(h.opts, `${h.method}: names a scope`).toMatch(/scope: "[a-z:]+"/);
-        } else if (f.path.startsWith("v1/victim/")) {
-          expect(h.opts, `${h.method}: victim session`).toMatch(/auth: "victim"/);
         } else {
           throw new Error(`unknown route group: ${f.path}`);
         }
       }
     });
   }
+
+  it("has no victim API and no endpoint for structured answers (FR-CH-01, FR-API-05, AC-CH-07)", () => {
+    expect(files.filter((f) => f.path.startsWith("v1/victim/")).map((f) => f.path)).toEqual([]);
+    expect(files.filter((f) => /screeners|next\/route|callback-request/.test(f.path)).map((f) => f.path)).toEqual([]);
+    for (const f of files) expect(f.src, f.path).not.toMatch(/auth: "victim"/);
+  });
 
   it("police and welfare can only reach referral endpoints (rule 8)", async () => {
     const { access } = await import("@/core/policies/rbac");

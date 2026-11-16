@@ -18,7 +18,7 @@ export async function loadCaseResource(caseId: string) {
   await db();
   const [caseDoc, interactions, escalated] = await Promise.all([
     Case.findById(caseId).lean(),
-    Interaction.find({ caseId }).sort({ startedAt: 1 }).select("operatorId consents channel uiLanguage startedAt endedAt status mode context screenerScores").lean(),
+    Interaction.find({ caseId }).sort({ startedAt: 1 }).select("operatorId consents channel uiLanguage startedAt endedAt status mode context").lean(),
     Alert.exists({ caseId, escalationLevel: { $gte: ESCALATED_LEVEL } }),
   ]);
   if (!caseDoc) throw new ApiError("NOT_FOUND");

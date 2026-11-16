@@ -216,7 +216,6 @@ const detail: CaseDetailDto = {
   context: { ongoingThreats: true },
   interactions: [],
   latestAssessment: assessment,
-  screenerScores: [{ instrument: "PHQ2", total: 4, maxTotal: 6, isPositive: true }],
   recommendations: [],
   openAlerts: [],
   bandOverrides: [],
@@ -246,10 +245,10 @@ describe("role serialisers", () => {
     expect(out.latestAssessment).toHaveProperty("dimensions");
   });
 
-  it("strips narrative, context, screeners and breakdown for district officers", () => {
+  it("strips narrative, context and breakdown for district officers", () => {
     const out = serializeCaseDetail(userOf("DISTRICT_OFFICER"), detail, { districtId: "d1" });
     const json = JSON.stringify(out);
-    for (const field of ["summary", "context", "screenerScores", "dimensions", "topEvidence", "explanation"]) {
+    for (const field of ["summary", "context", "dimensions", "topEvidence", "explanation"]) {
       expect(json).not.toContain(`"${field}"`);
     }
     expect(out.latestAssessment).toEqual({ id: id(1), interactionId: id(2), seq: 3, svi: 81, band: "CRITICAL", createdAt: now });

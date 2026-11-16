@@ -1,7 +1,4 @@
 import type { NextConfig } from "next";
-import createNextIntlPlugin from "next-intl/plugin";
-
-const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 const isDev = process.env.NODE_ENV !== "production";
 
@@ -30,7 +27,7 @@ const securityHeaders = [
   { key: "X-Frame-Options", value: "DENY" },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "no-referrer" },
-  // Microphone only for our own pages (voice channel, task 7.1)
+  // Microphone only for our own pages (demo live microphone, task M.12)
   { key: "Permissions-Policy", value: "camera=(), geolocation=(), microphone=(self)" },
 ];
 
@@ -50,13 +47,6 @@ const nextConfig: NextConfig = {
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
-  // The victim intake pages live under /portal; old /<locale> links and installed apps keep working.
-  async redirects() {
-    return [
-      { source: "/:locale(en|hi|mr|ta|bn)", destination: "/portal/:locale", permanent: false },
-      { source: "/:locale(en|hi|mr|ta|bn)/:path*", destination: "/portal/:locale/:path*", permanent: false },
-    ];
-  },
 };
 
-export default withNextIntl(nextConfig);
+export default nextConfig;

@@ -5,42 +5,40 @@
  *   indicators → score (fuse → SVI → band → overrides) → assessment → case rank →
  *   recommendations → alert → real-time events after commit
  *
+ * Input is what the person said or wrote (text, or a voice window and its transcript), sent by a
+ * calling NHAA system through the integration API; there is no question flow (PRODUCT_VISION §5).
  * Everything for one turn is written in ONE MongoDB transaction. The safety
  * lexicon runs on every message in every mode (CLAUDE.md rules 4/6). The AI is a
  * second, independent path; if it fails the turn is scored by rules only, marked
  * limited confidence and a `rescore` job is queued (NFR-REL-01).
  * Logs never contain victim text (rule 9).
  */
-import { toVictimLang, type VictimLang } from "@/contracts/victim";
 import { randomUUID } from "node:crypto";
 import mongoose, { type Types } from "mongoose";
 import { TEXT_TIMEOUT_MS, analyzeText, defaultDeps } from "@/core/analysis-client/client";
 import { checkAnalysis, type CheckedAnalysis } from "@/core/analysis-client/guardrails";
 import type { AnalyzeAudioResponse } from "@/core/analysis-client/schema";
-import { allowsScreeners, allowsTextAnalysis, allowsVoiceAnalysis, currentConsent, resolveMode } from "@/core/consent/mode";
-import { flowStateOf, type FlowState } from "@/core/conversation/flow";
+import { allowsTextAnalysis, allowsVoiceAnalysis, currentConsent, resolveMode } from "@/core/consent/mode";
 import { encrypt } from "@/core/privacy/crypto";
 import { redact } from "@/core/privacy/redact";
 import { LEXICON_VERSION, lexiconSignals } from "@/core/safety-lexicon/engine";
 import { activeConfig } from "@/core/scoring/activeConfig";
 import { isMinor, type CaseContextInput } from "@/core/scoring/context";
 import { fuseEmotion, voiceSignals } from "@/core/scoring/voice";
-import { scoreAll, type ScreenerResponseInput } from "@/core/screeners/score";
-import { shouldShowEmergency } from "@/core/victim/emergency";
+import { shouldShowEmergency } from "@/core/interactions/emergency";
 import { db } from "@/lib/db";
 import { ApiError } from "@/lib/problem";
 import { interactionChannel, type OutboundEvent } from "@/lib/realtime/channels";
 import { publish } from "@/lib/realtime/publish";
 import { Case, Indicator, Interaction, Job, Message, VoiceWindow, type AssessmentMode } from "@/models";
-import { scoreInteraction, screenerResponsesOf, type Trigger } from "./score";
+import { scoreInteraction, type Trigger } from "./score";
 
 export type { Trigger };
 
 export interface RunInput {
   interactionId: string;
-  trigger: "TEXT_MESSAGE" | "SCREENER" | "CONTEXT_UPDATE" | "VOICE_WINDOW";
-  message?: { text: string; promptKey?: string; idempotencyKey?: string };
-  screener?: ScreenerResponseInput;
+  trigger: "TEXT_MESSAGE" | "CONTEXT_UPDATE" | "VOICE_WINDOW";
+  message?: { text: string; idempotencyKey?: string };
   context?: CaseContextInput;
   /** One analysed voice window (task 7.5); its transcript, if any, is `message`. */
   voice?: { windowIndex: number; startMs: number; analysis: AnalyzeAudioResponse | null };
@@ -54,32 +52,15 @@ export interface RunInput {
   deferAi?: boolean;
 }
 
-/** What the route needs to pick the next prompt, so it does not read the database again. */
-export interface TurnFacts {
-  consentGiven: boolean;
-  mode: AssessmentMode;
-  answered: Map<string, number | null>;
-  state: FlowState;
-  lang: VictimLang;
-}
-
 export interface RunResult {
   messageId: string | null;
   voiceWindowId?: string | null;
   showEmergencyPanel: boolean;
   replayed: boolean;
-  /** null only for an idempotent replay */
-  turn: TurnFacts | null;
 }
 
 const ID = (v: unknown) => String(v);
 const AUDIO_EVENT_TYPES = new Set(["CRYING", "SOBBING", "SIGH", "LONG_SILENCE", "SHARP_BREATH"]);
-
-function answeredOf(responses: ScreenerResponseInput[]): Map<string, number | null> {
-  const m = new Map<string, number | null>();
-  for (const r of responses) m.set(r.itemCode, r.skipped || r.value === null ? null : r.value);
-  return m;
-}
 
 const isDuplicateIdempotencyKey = (err: unknown) => {
   const e = err as { code?: number; keyPattern?: Record<string, unknown> };
@@ -116,11 +97,8 @@ export async function runPipeline(input: RunInput): Promise<RunResult> {
   if (!pre) throw new ApiError("NOT_FOUND");
   if (pre.status !== "ACTIVE") throw new ApiError("INTERACTION_ENDED");
   // Consent step first, even "no to everything", so nothing is processed before the notice (AC-CON-01).
-  if (!pre.consents?.length) throw new ApiError("CONSENT_REQUIRED", "Please answer the consent question first.");
-  if (input.screener && input.screener.instrument !== "SAFETY_CHECK" && !allowsScreeners(pre.mode)) {
-    throw new ApiError("CONSENT_REQUIRED", "This question needs your consent.");
-  }
-  if (input.voice && !allowsVoiceAnalysis(pre.mode)) throw new ApiError("CONSENT_REQUIRED", "Voice needs your consent.");
+  if (!pre.consents?.length) throw new ApiError("CONSENT_REQUIRED", "No consent has been recorded for this interaction.");
+  if (input.voice && !allowsVoiceAnalysis(pre.mode)) throw new ApiError("CONSENT_REQUIRED", "Voice analysis consent has not been given for this interaction.");
   if (existing) {
     const msgId = input.voice ? ((existing as { messageId?: unknown }).messageId ?? null) : existing._id;
     return replayOf(input.interactionId, msgId ? ID(msgId) : null);
@@ -160,7 +138,7 @@ export async function runPipeline(input: RunInput): Promise<RunResult> {
   }
 
   const session = await mongoose.startSession();
-  let result: RunResult = { messageId: null, showEmergencyPanel: false, replayed: false, turn: null };
+  let result: RunResult = { messageId: null, showEmergencyPanel: false, replayed: false };
   let events: OutboundEvent[] = [];
   try {
     await session.withTransaction(
@@ -170,7 +148,6 @@ export async function runPipeline(input: RunInput): Promise<RunResult> {
         if (interaction.status !== "ACTIVE") throw new ApiError("INTERACTION_ENDED");
         const caseDoc = await Case.findById(interaction.caseId).session(session);
         if (!caseDoc) throw new ApiError("NOT_FOUND");
-        const flow: FlowState = flowStateOf(interaction.flowState);
         const turnEvents: OutboundEvent[] = [];
 
         // --- 1. apply the new signal -------------------------------------------------
@@ -190,14 +167,12 @@ export async function runPipeline(input: RunInput): Promise<RunResult> {
                 translationEnc: ai?.translationEnc ?? undefined,
                 language,
                 emotion: ai ? ai.checked.emotion : undefined,
-                promptKey: input.message.promptKey,
                 idempotencyKey: input.message.idempotencyKey,
               },
             ],
             { session },
           );
           messageId = msg!._id;
-          if (!input.voice) flow.narrativeTurns += 1;
           if (ai && !interaction.detectedLanguages.includes(ai.checked.language)) interaction.detectedLanguages.push(ai.checked.language);
           // Ids only: the text is fetched over our own API (privacy, see lib/realtime/channels.ts).
           turnEvents.push({
@@ -207,13 +182,8 @@ export async function runPipeline(input: RunInput): Promise<RunResult> {
           });
         }
 
-        if (input.screener) {
-          interaction.screenerResponses.push({ ...input.screener, at: now });
-          interaction.screenerScores = scoreAll(screenerResponsesOf(interaction)).map((s) => ({ ...s, computedAt: now })) as never;
-        }
         if (input.context) {
           interaction.context = { ...(interaction.context ?? {}), ...input.context, updatedAt: now } as never;
-          flow.contextDone = true;
         }
 
         // Mode can change when the context reveals a minor without guardian consent (FR-CON-05).
@@ -297,7 +267,6 @@ export async function runPipeline(input: RunInput): Promise<RunResult> {
 
         // --- 2. store this turn's indicators and facts (consent re-checked at write time) ---
         const lexiconActive = (lexicon?.indicators ?? []).filter((i) => !i.negated);
-        if (lexiconActive.some((i) => i.dimension === "SUICIDAL_IDEATION")) flow.suicideSignal = true;
         if (messageId && allowsTextAnalysis(mode)) {
           const newIndicators: Record<string, unknown>[] = [];
           for (const i of lexicon?.indicators ?? []) {
@@ -360,15 +329,13 @@ export async function runPipeline(input: RunInput): Promise<RunResult> {
           trigger: input.trigger,
           now,
           config,
-          actor: { type: "VICTIM_SESSION", id: ID(interaction._id) },
+          actor: { type: "SYSTEM", id: ID(interaction._id) }, // the module scores; the input came from a calling system
           lexiconActive,
           nlpVersion: ai?.checked.modelVersion ?? null,
           aiDegraded: aiDegraded && !!messageId && allowsTextAnalysis(mode),
         });
 
         caseDoc.lastActivityAt = now;
-        interaction.flowState = flow;
-        interaction.markModified("flowState");
         await interaction.save({ session });
         await caseDoc.save({ session });
 
@@ -378,13 +345,6 @@ export async function runPipeline(input: RunInput): Promise<RunResult> {
           voiceWindowId: voiceWindowId ? ID(voiceWindowId) : null,
           showEmergencyPanel: shouldShowEmergency(scored.band),
           replayed: false,
-          turn: {
-            consentGiven: interaction.consents.length > 0,
-            mode,
-            answered: answeredOf(screenerResponsesOf(interaction)),
-            state: flow,
-            lang: toVictimLang(interaction.uiLanguage),
-          },
         };
       },
       { readConcern: { level: "snapshot" }, writeConcern: { w: "majority" } },
@@ -409,5 +369,5 @@ export async function runPipeline(input: RunInput): Promise<RunResult> {
 async function replayOf(interactionId: string, messageId: string | null): Promise<RunResult> {
   const interaction = await Interaction.findById(interactionId).select("caseId").lean();
   const caseDoc = interaction ? await Case.findById(interaction.caseId).select("currentBand").lean() : null;
-  return { messageId, showEmergencyPanel: shouldShowEmergency(caseDoc?.currentBand), replayed: true, turn: null };
+  return { messageId, showEmergencyPanel: shouldShowEmergency(caseDoc?.currentBand), replayed: true };
 }

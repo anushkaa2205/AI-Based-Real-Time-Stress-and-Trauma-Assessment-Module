@@ -10,7 +10,7 @@
  */
 import { loadOwned } from "@/core/integration/owned";
 import { latestAssessment } from "@/core/integration/assessment";
-import { emergencyPanel } from "@/core/victim/emergency";
+import { emergencyPanel } from "@/core/interactions/emergency";
 import { route } from "@/lib/route";
 import { Assessment, Recommendation } from "@/models";
 

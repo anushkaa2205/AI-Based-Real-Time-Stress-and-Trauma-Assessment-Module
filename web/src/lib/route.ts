@@ -4,8 +4,8 @@
  *   request id → CSRF origin check → authenticate → rate limit →
  *   authorise (core/policies) → validate (Zod contract) → handler → problem+json on error
  * Logs carry the request id, route and error code only, never bodies (NFR-REL-03).
- * Victim sessions (task 3.2) are bound to the interaction in the URL; integrating systems
- * use `Authorization: ApiKey …` with scopes and a per-key rate limit (task 8.4).
+ * Calling NHAA systems use `Authorization: ApiKey …` with scopes and a per-key rate limit
+ * (task 8.4); there is no victim session (PRODUCT_VISION.md §5, task M.2).
  */
 import { randomBytes } from "node:crypto";
 import type { NextRequest } from "next/server";
@@ -17,12 +17,11 @@ import { db } from "@/lib/db";
 import { ApiError, problemResponse } from "@/lib/problem";
 import { LIMITS, checkRateLimit, mongoRateLimitStore, rateKey, rateLimitHeaders, type Limit } from "@/lib/ratelimit";
 import { currentStaff, type StaffUser } from "@/lib/staff-session";
-import { loadVictimSession, type VictimSession } from "@/lib/victim-session";
 import { ApiClient } from "@/models";
 
 export type { StaffUser };
 
-type AuthMode = "staff" | "public" | "victim" | "api";
+type AuthMode = "staff" | "public" | "api";
 
 export interface ApiCaller {
   id: string;
@@ -38,8 +37,6 @@ export interface RouteContext<A extends AuthMode, B extends z.ZodType, Q extends
   body: z.output<B>;
   query: z.output<Q>;
   user: A extends "staff" ? StaffUser : null;
-  /** Victim session bound to the interaction in the URL (auth: "victim") */
-  victim: A extends "victim" ? VictimSession : null;
   /** Integrating system (auth: "api") */
   client: A extends "api" ? ApiCaller : null;
   /** Resource-level check; throws 403 when not allowed. Returns the access level. */
@@ -156,24 +153,7 @@ export function route<A extends AuthMode, B extends z.ZodType = z.ZodUndefined, 
         if (opts.scope && !client.scopes.includes(opts.scope)) throw new ApiError("SCOPE_MISSING", `This key needs the ${opts.scope} scope`);
       }
 
-      // Victim routes: the session check and the per-session counter are independent, so they
-      // run in parallel (one database round trip instead of two). The counter is keyed by the
-      // interaction in the URL; a request with a bad token still fails the session check.
-      let victim: VictimSession | null = null;
-      let victimCount: Promise<Awaited<ReturnType<typeof checkRateLimit>>> | null = null;
-      if (opts.auth === "victim") {
-        await db();
-        if (opts.rateLimit !== false && !opts.rateLimit) {
-          victimCount = checkRateLimit(mongoRateLimitStore, rateKey("route", `victim:${String(params.id)}`), LIMITS.victimSession, Date.now());
-        }
-        [victim] = await Promise.all([loadVictimSession(req, params.id), victimCount]);
-      }
-
-      if (victimCount) {
-        const result = await victimCount;
-        headers = rateLimitHeaders(result);
-        if (!result.allowed) throw new ApiError("RATE_LIMITED", undefined, { headers });
-      } else if (opts.rateLimit !== false && (opts.rateLimit || user || victim)) {
+      if (opts.rateLimit !== false && (opts.rateLimit || user)) {
         const rl = opts.rateLimit || { limit: LIMITS.staff, key: (_r: NextRequest, u: StaffUser | null) => `staff:${u?.id}` };
         await db();
         const result = await checkRateLimit(mongoRateLimitStore, rateKey("route", rl.key(req, user)), rl.limit, Date.now());
@@ -193,7 +173,6 @@ export function route<A extends AuthMode, B extends z.ZodType = z.ZodUndefined, 
         body,
         query,
         user,
-        victim,
         client: client ? { id: client.id, name: client.name, scopes: client.scopes } : null,
         authorize(action: Action, resource?: PolicyResource): Access {
           const level = user ? access(user, action, resource) : null;

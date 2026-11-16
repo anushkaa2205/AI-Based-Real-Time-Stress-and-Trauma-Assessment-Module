@@ -15,7 +15,6 @@ const MessageSchema = new Schema(
     emotion: { label: String, confidence: Number },
     language: String,
     sttConfidence: Number,
-    promptKey: String, // SYSTEM messages: i18n key of the scripted prompt
     idempotencyKey: String,
     purgeAt: Date, // TTL: automatic deletion after retention period
   },

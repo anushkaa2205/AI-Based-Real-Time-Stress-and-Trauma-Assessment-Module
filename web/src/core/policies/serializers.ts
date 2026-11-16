@@ -93,13 +93,12 @@ export function serializeCaseDetail(user: PolicyUser, c: CaseDetailDto, resource
     bandOverrides: c.bandOverrides,
     assignedTo: c.assignedTo,
   };
-  if (level === "reduced") return shaped; // §5.2: no summary, context, screeners, dimensions, evidence
+  if (level === "reduced") return shaped; // §5.2: no summary, context, dimensions, evidence
   return {
     ...shaped,
     summary: c.summary,
     summaryTranslated: c.summaryTranslated,
     context: c.context,
-    screenerScores: c.screenerScores,
   };
 }
 

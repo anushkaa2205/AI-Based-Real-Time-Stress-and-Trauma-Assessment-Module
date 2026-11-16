@@ -1,17 +1,15 @@
 /**
  * Simulate a scoring config against the evaluation set (task 8.6, FR-SVI-06, API_CONTRACTS §5.9).
- * Rules only (safety lexicon, screeners, context), the same code path as fallback mode, so it is
+ * Rules only (safety lexicon on the person's turns, case context), the same code path as fallback mode, so it is
  * deterministic and needs no AI calls. Nothing is written. Synthetic scenarios only.
  */
 import { readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { ScenarioSchema, type Scenario } from "@/contracts/evaluation";
+import { ScenarioSchema, victimTexts, type Scenario } from "@/contracts/evaluation";
 import { lexiconSignals } from "@/core/safety-lexicon/engine";
 import { assess } from "@/core/scoring/assess";
 import { contextSignals, type CaseContextInput } from "@/core/scoring/context";
 import type { IndicatorInput, ScoringConfig } from "@/core/scoring/types";
-import { ITEM_BY_CODE } from "@/core/screeners/items";
-import { screenerSignals } from "@/core/screeners/score";
 
 const BANDS = ["LOW", "MODERATE", "HIGH", "CRITICAL"] as const;
 const DETECT = 0.5;
@@ -39,9 +37,8 @@ function toContext(raw: Scenario["context"]): CaseContextInput {
 export function simulate(scenarios: readonly Scenario[], config: ScoringConfig): Simulation {
   const rows = scenarios.map((s) => {
     const indicators: IndicatorInput[] = [];
-    for (const m of s.messages) indicators.push(...lexiconSignals(m).indicators);
-    const responses = s.screeners.map((r) => ({ instrument: ITEM_BY_CODE.get(r.itemCode)!.instrument, itemCode: r.itemCode, value: r.value }));
-    indicators.push(...screenerSignals(responses).indicators, ...contextSignals(toContext(s.context)).indicators);
+    for (const m of victimTexts(s)) indicators.push(...lexiconSignals(m).indicators);
+    indicators.push(...contextSignals(toContext(s.context)).indicators);
     const d = assess({ indicators, config, limitedConfidence: true });
     return { expected: s.expected, band: d.band, suicidal: (d.dimensions.SUICIDAL_IDEATION?.score ?? 0) >= DETECT };
   });
@@ -65,6 +62,6 @@ export function loadScenarios(dir = resolve(process.cwd(), "../evaluation/scenar
     .sort()
     .flatMap((f) => {
       const parsed = ScenarioSchema.safeParse(JSON.parse(readFileSync(join(dir, f), "utf8")));
-      return parsed.success && parsed.data.screeners.every((r) => ITEM_BY_CODE.has(r.itemCode)) ? [parsed.data] : [];
+      return parsed.success ? [parsed.data] : [];
     });
 }

@@ -7,7 +7,7 @@ import { IntegrationMessage } from "@/contracts/integration";
 import { loadOwned } from "@/core/integration/owned";
 import { runPipeline } from "@/core/pipeline/run";
 import { encrypt } from "@/core/privacy/crypto";
-import { emergencyPanel } from "@/core/victim/emergency";
+import { emergencyPanel } from "@/core/interactions/emergency";
 import { ApiError } from "@/lib/problem";
 import { route } from "@/lib/route";
 import { Interaction, Message } from "@/models";

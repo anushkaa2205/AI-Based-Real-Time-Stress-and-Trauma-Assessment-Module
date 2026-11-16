@@ -1,7 +1,6 @@
 /**
  * Who may subscribe to which channel (task 5.1). Same policies as the REST API
- * (API_CONTRACTS §7: "applies the §4 policies"). Staff only here; the victim's
- * own emergency channel is handled with the victim session (task 6.2).
+ * (API_CONTRACTS §7: "applies the §4 policies"). Staff only; there are no victim channels.
  */
 import { loadInteractionResource } from "@/core/cases/resource";
 import { access, listScope } from "@/core/policies/rbac";
@@ -12,8 +11,6 @@ export async function staffCanSubscribe(user: StaffUser, channel: string): Promi
   const c = parseChannel(channel);
   if (!c) return false;
   switch (c.kind) {
-    case "victim":
-      return false;
     case "oncall":
       return access(user, "alert.read") === "full";
     case "supervisors":

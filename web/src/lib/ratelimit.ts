@@ -14,10 +14,6 @@ export interface Limit {
 export const LIMITS = {
   /** Staff: 300 requests/min per user */
   staff: { limit: 300, windowMs: 60_000 },
-  /** Victim: 30 requests/min per session */
-  victimSession: { limit: 30, windowMs: 60_000 },
-  /** Victim: 10 new sessions/hour per IP */
-  victimSessionsPerIp: { limit: 10, windowMs: 3_600_000 },
   /** Staff login attempts: 10/min per IP and per e-mail */
   login: { limit: 10, windowMs: 60_000 },
 } as const satisfies Record<string, Limit>;

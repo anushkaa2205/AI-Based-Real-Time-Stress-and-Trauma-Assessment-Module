@@ -1,19 +1,21 @@
 "use client";
 
 /**
- * "Speak instead" (task 7.1, FR-CH-03, C-TEC-04, NFR-REL-02).
+ * Live microphone recorder (task 7.1, FR-CH-03, C-TEC-04, NFR-REL-02). Kept for the demo input
+ * layer (task M.12); not used by any page yet. It knows nothing about the module's API: the
+ * caller passes `send`, which delivers one window (the demo relays it server-side with its own
+ * API key, so no key ever reaches the browser) and returns the HTTP response.
  *
  * Records in 5-second windows. Each window is a complete, separately decodable file
  * (the recorder is restarted every 5 s, because MediaRecorder timeslices after the
  * first are not playable on their own). Windows upload in order with retries.
  * A clear recording indicator is always visible, with Mute and Stop.
  * If the microphone is refused, voice consent is missing, or voice analysis keeps
- * failing, it stops and the page offers typing instead. Nothing about risk is shown
- * except the emergency panel (CLAUDE.md rule 1).
+ * failing, it stops and calls `onFallback`. Nothing about risk is shown except the
+ * emergency options (CLAUDE.md rule 1).
  */
-import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
-import type { EmergencyPanel } from "@/contracts/victim";
+import type { EmergencyPanel } from "@/contracts/interaction";
 
 const WINDOW_MS = 5_000;
 const RETRIES = [500, 1_500];
@@ -63,18 +65,46 @@ function pickMime(): string {
   return "";
 }
 
-export function VoiceRecorder({
+export interface RecorderLabels {
+  speak: string;
+  recording: string;
+  muted: string;
+  sending: string;
+  heard: string;
+  mute: string;
+  unmute: string;
+  stop: string;
+}
+
+const ENGLISH: RecorderLabels = {
+  speak: "Start speaking",
+  recording: "Recording",
+  muted: "Muted",
+  sending: "Sending…",
+  heard: "What we heard",
+  mute: "Mute",
+  unmute: "Unmute",
+  stop: "Stop",
+};
+
+export function LiveRecorder({
   interactionId,
+  send,
   onEmergency,
   onFinished,
   onFallback,
+  labels = ENGLISH,
 }: {
+  /** Used only to keep window numbers unique across recordings of one interaction. */
   interactionId: string;
+  /** Delivers one window (fields `audio`, `windowIndex`, `startMs`); null on network failure. */
+  send: (form: FormData) => Promise<Response | null>;
   onEmergency: (panel: EmergencyPanel) => void;
   onFinished: () => Promise<void>;
-  onFallback: (messageKey: "micRefused" | "unavailable" | "needsConsent") => void;
+  onFallback: (reason: "micRefused" | "unavailable" | "needsConsent") => void;
+  labels?: RecorderLabels;
 }) {
-  const t = useTranslations("voice");
+  const t = (k: keyof RecorderLabels) => labels[k];
   const [phase, setPhase] = useState<"idle" | "recording" | "finishing">("idle");
   const [muted, setMuted] = useState(false);
   const [elapsed, setElapsed] = useState(0);
@@ -111,7 +141,7 @@ export function VoiceRecorder({
     form.append("windowIndex", String(windowIndex));
     form.append("startMs", String(startMs));
     for (let attempt = 0; ; attempt++) {
-      const res = await fetch(`/api/v1/victim/interactions/${interactionId}/audio`, { method: "POST", body: form, credentials: "same-origin" }).catch(() => null);
+      const res = await send(form).catch(() => null);
       if (res?.status === 202) {
         const r = (await res.json()) as AudioReply;
         if (r.transcript) setHeard((h) => [...h, r.transcript!]);

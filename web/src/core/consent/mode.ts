@@ -38,5 +38,5 @@ export function resolveMode(consent: ConsentChoices | null, opts: { isMinor: boo
 
 export const allowsTextAnalysis = (mode: AssessmentMode): boolean => mode === "FULL" || mode === "TEXT_ONLY";
 export const allowsVoiceAnalysis = (mode: AssessmentMode): boolean => mode === "FULL" || mode === "VOICE_ONLY";
-/** Screeners beyond the safety check are analysis too: only with some analysis consent. */
-export const allowsScreeners = (mode: AssessmentMode): boolean => mode !== "SAFETY_ONLY";
+/** Any analysis consent at all (text or voice): the assessment is scored; otherwise only safety overrides apply (AC-CON-03). */
+export const allowsAnyAnalysis = (mode: AssessmentMode): boolean => mode !== "SAFETY_ONLY";

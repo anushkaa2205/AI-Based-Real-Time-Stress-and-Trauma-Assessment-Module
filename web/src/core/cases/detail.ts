@@ -59,12 +59,6 @@ export async function caseDetail(user: StaffUser, loaded: Awaited<ReturnType<typ
       status: i.status,
     })),
     latestAssessment: latest ? assessmentDto(latest) : null,
-    screenerScores: (lastInteraction?.screenerScores ?? []).map((s) => ({
-      instrument: s.instrument,
-      total: s.total,
-      maxTotal: s.maxTotal,
-      isPositive: s.isPositive,
-    })),
     recommendations: recs.map((r) => recommendationDto(r, names)),
     openAlerts: alerts.map((a) => ({ id: ID(a._id), level: a.level as "CRITICAL" | "HIGH", createdAt: iso(a.createdAt) })),
     bandOverrides: (caseDoc.bandOverrides ?? []).map((o) => ({

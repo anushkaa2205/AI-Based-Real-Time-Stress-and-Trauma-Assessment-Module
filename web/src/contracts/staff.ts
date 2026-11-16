@@ -115,9 +115,6 @@ export const CaseDetailDto = z.object({
     z.object({ id: ObjectIdStr, channel: Channel, startedAt: Iso, endedAt: Iso.nullable(), status: z.string() }),
   ),
   latestAssessment: z.union([AssessmentDto, AssessmentSummaryDto]).nullable(),
-  screenerScores: z
-    .array(z.object({ instrument: z.string(), total: z.number(), maxTotal: z.number(), isPositive: z.boolean() }))
-    .optional(),
   recommendations: z.array(z.unknown()),
   openAlerts: z.array(z.object({ id: ObjectIdStr, level: z.enum(["CRITICAL", "HIGH"]), createdAt: Iso })),
   bandOverrides: z.array(z.unknown()),
@@ -171,7 +168,7 @@ export const IndicatorDto = z.object({
   label: z.string().nullable(),
   evidence: z.union([
     z.object({ type: z.literal("TEXT_SPAN"), messageId: ObjectIdStr, spanStart: z.number(), spanEnd: z.number(), quote: z.string().nullable() }),
-    z.object({ type: z.enum(["ACOUSTIC_EVENT", "SCREENER_ANSWER", "CONTEXT_FIELD"]) }).loose(),
+    z.object({ type: z.enum(["ACOUSTIC_EVENT", "CONTEXT_FIELD"]) }).loose(),
   ]),
   review: z.object({ score: z.number().nullable(), reason: z.string(), by: UserRef, at: Iso }).nullable(),
   modelVersion: z.string(),

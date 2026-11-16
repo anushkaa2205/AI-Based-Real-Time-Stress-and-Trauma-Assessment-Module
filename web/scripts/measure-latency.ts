@@ -1,12 +1,14 @@
 /**
  * `npm run measure:latency -- [--base http://localhost:3001] [--runs 50]` (task 9.1, AC-SVI-02, NFR-PERF-01).
- * Sends synthetic victim messages through the full pipeline (lexicon + AI + scoring + transaction)
+ * Sends synthetic messages from the person through the integration API and the full pipeline (lexicon + AI + scoring + transaction)
  * and reports p50/p95/max of the time until the response (the SVI is committed before it returns).
  * Run against a PRODUCTION build (`npm run build && npm run start -- -p 3001`) with the analysis
- * service up. Writes evaluation/reports/latency.json. Prints timings only.
+ * service up. Needs an integration API key (see scripts/integration-key.ts). Writes
+ * evaluation/reports/latency.json. Prints timings only.
  */
 import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { apiKey } from "./integration-key";
 
 const arg = (n: string) => {
   const i = process.argv.indexOf(`--${n}`);
@@ -31,28 +33,29 @@ const pct = (xs: number[], p: number) => {
 };
 
 async function session() {
-  const ip = `198.51.100.${Math.floor(Math.random() * 200) + 1}`;
-  const h = { "content-type": "application/json", "x-forwarded-for": ip };
-  const start = await fetch(`${BASE}/api/v1/victim/interactions`, { method: "POST", headers: h, body: JSON.stringify({ channel: "CHATBOT", language: "en", districtCode: "MH-PUN" }) });
-  const cookie = start.headers.get("set-cookie")?.split(";")[0] ?? "";
+  const headers = { "content-type": "application/json", authorization: `ApiKey ${apiKey()}` };
+  const consent = { noticeVersion: "2026-11-v1", language: "en", textAnalysis: true, voiceAnalysis: false, shareWithCounsellor: true, followUpContact: false };
+  const start = await fetch(`${BASE}/api/v1/integration/interactions`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({ channel: "CHATBOT", language: "en", districtCode: "MH-PUN", consent }),
+  });
   const { interactionId } = (await start.json()) as { interactionId: string };
-  const headers = { ...h, cookie };
-  const post = (path: string, body: unknown) => fetch(`${BASE}/api/v1/victim/interactions/${interactionId}${path}`, { method: "POST", headers, body: JSON.stringify(body) });
-  await post("/consent", { noticeVersion: "2026-11-v1", language: "en", textAnalysis: true, voiceAnalysis: false, shareWithCounsellor: true, followUpContact: false });
-  await post("/screeners", { instrument: "SAFETY_CHECK", itemCode: "SAFETY_SAFE_NOW", value: 1 });
+  const post = (path: string, body: unknown) =>
+    fetch(`${BASE}/api/v1/integration/interactions/${interactionId}${path}`, { method: "POST", headers, body: JSON.stringify(body) });
   return post;
 }
 
 async function main() {
   const times: number[] = [];
   let failures = 0;
-  // A few messages per session, like a real conversation (the per-session rate limit is 30/min).
+  // A few messages per interaction, like a real conversation (the key's own rate limit applies).
   let post = await session();
   for (let i = 0; i < RUNS; i++) {
     if (i > 0 && i % 4 === 0) post = await session();
     const text = TEMPLATES[i % TEMPLATES.length]!.replace("{n}", String(Date.now() % 100000));
     const t0 = performance.now();
-    const r = await post("/messages", { text, promptKey: "flow.narrative.open" });
+    const r = await post("/messages", { text, sender: "VICTIM" });
     const ms = performance.now() - t0;
     if (r.ok) times.push(ms);
     else failures++;

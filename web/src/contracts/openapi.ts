@@ -6,9 +6,9 @@
 import { z } from "zod";
 import * as I from "./integration";
 import * as S from "./staff";
-import * as V from "./victim";
+import * as V from "./interaction";
 
-type Auth = "none" | "victim" | "staff" | "api";
+type Auth = "none" | "staff" | "api";
 interface Op {
   method: "get" | "post" | "put" | "patch";
   path: string;
@@ -24,24 +24,10 @@ interface Op {
   sse?: boolean;
 }
 
-const v = "/api/v1/victim/interactions/{id}";
 const st = "/api/v1/staff";
 const ig = "/api/v1/integration/interactions";
 
 export const OPERATIONS: Op[] = [
-  // §3 victim
-  { method: "post", path: "/api/v1/victim/interactions", tag: "Victim", summary: "Start a session", auth: "none", body: V.StartRequest, response: V.StartResponse, status: 201 },
-  { method: "get", path: "/api/v1/victim/consent-notices/{version}", tag: "Victim", summary: "Consent notice text", auth: "none", response: V.ConsentNotice },
-  { method: "post", path: `${v}/consent`, tag: "Victim", summary: "Grant or update consent", auth: "victim", body: V.ConsentRequest, response: V.ConsentResponse },
-  { method: "post", path: `${v}/consent/withdraw`, tag: "Victim", summary: "Withdraw consent", auth: "victim", body: V.WithdrawRequest, response: V.WithdrawResponse },
-  { method: "get", path: `${v}/next`, tag: "Victim", summary: "Current scripted prompt", auth: "victim", response: V.NextResponse },
-  { method: "post", path: `${v}/messages`, tag: "Victim", summary: "Send text", auth: "victim", body: V.MessageRequest, response: V.MessageResponse },
-  { method: "post", path: `${v}/audio`, tag: "Victim", summary: "Send a 5-second voice chunk (multipart: audio, windowIndex, startMs)", auth: "victim", multipart: true, response: V.AudioResponse, status: 202 },
-  { method: "post", path: `${v}/screeners`, tag: "Victim", summary: "Answer a screener or safety question", auth: "victim", body: V.ScreenerRequest, response: V.TurnResponse },
-  { method: "put", path: `${v}/context`, tag: "Victim", summary: "Optional vulnerability facts", auth: "victim", body: V.ContextRequest, response: V.TurnResponse },
-  { method: "post", path: `${v}/language`, tag: "Victim", summary: "Change language", auth: "victim", body: V.LanguageRequest, response: V.LanguageResponse },
-  { method: "post", path: `${v}/callback-request`, tag: "Victim", summary: "Ask for a call back (phone stored only in the PII vault)", auth: "victim", body: V.CallbackRequest, response: V.CallbackResponse, status: 201 },
-  { method: "post", path: `${v}/end`, tag: "Victim", summary: "End the session", auth: "victim", body: V.EndRequest, response: V.EndResponse },
 
   // §5 staff
   { method: "post", path: `${st}/auth/login`, tag: "Staff", summary: "Sign in (step 1)", auth: "none", body: S.LoginRequest, response: S.LoginResponse },
@@ -78,10 +64,10 @@ export const OPERATIONS: Op[] = [
 
   // §6 integration
   { method: "post", path: ig, tag: "Integration", summary: "Start an interaction (consent already collected)", auth: "api", scope: "interactions:write", body: I.IntegrationStart, status: 201 },
-  { method: "post", path: `${ig}/{id}/messages`, tag: "Integration", summary: "Send text", auth: "api", scope: "interactions:write", body: I.IntegrationMessage, status: 201 },
-  { method: "post", path: `${ig}/{id}/audio`, tag: "Integration", summary: "Send a voice chunk (as §3.7)", auth: "api", scope: "interactions:write", multipart: true, response: V.AudioResponse, status: 202 },
-  { method: "post", path: `${ig}/{id}/screeners`, tag: "Integration", summary: "Screener answer", auth: "api", scope: "interactions:write", body: V.ScreenerRequest, status: 201 },
-  { method: "put", path: `${ig}/{id}/context`, tag: "Integration", summary: "Context facts", auth: "api", scope: "interactions:write", body: V.ContextRequest },
+  { method: "post", path: `${ig}/{id}/messages`, tag: "Integration", summary: "Send a text message (sender VICTIM is scored; OPERATOR is context only)", auth: "api", scope: "interactions:write", body: I.IntegrationMessage, status: 201 },
+  { method: "post", path: `${ig}/{id}/audio`, tag: "Integration", summary: "Send a 5-second audio window (multipart: audio, windowIndex, startMs)", auth: "api", scope: "interactions:write", multipart: true, response: V.AudioResponse, status: 202 },
+  { method: "put", path: `${ig}/{id}/context`, tag: "Integration", summary: "Case details from NHAA's record", auth: "api", scope: "interactions:write", body: V.ContextRequest },
+  { method: "post", path: `${ig}/{id}/consent/withdraw`, tag: "Integration", summary: "Withdraw consent (analysis stops, stored audio deleted)", auth: "api", scope: "interactions:write", body: V.WithdrawRequest, response: V.WithdrawResponse },
   { method: "get", path: `${ig}/{id}/assessment`, tag: "Integration", summary: "Current SVI, band and top dimensions", auth: "api", scope: "assessments:read" },
   { method: "get", path: `${ig}/{id}/recommendations`, tag: "Integration", summary: "Recommendations", auth: "api", scope: "assessments:read" },
   { method: "get", path: `${ig}/{id}/stream`, tag: "Integration", summary: "Server-Sent Events: assessment.updated, emergency.show, recommendation.created", auth: "api", scope: "stream:read", sse: true },
@@ -114,7 +100,7 @@ export function openApiDocument(serverUrl = "/") {
       tags: [op.tag],
       summary: op.summary + (op.scope ? ` (scope: ${op.scope})` : ""),
       parameters: [...params, ...(op.query ? queryParams(op.query) : [])],
-      security: op.auth === "none" ? [] : [{ [op.auth === "api" ? "apiKey" : op.auth === "staff" ? "staffSession" : "victimSession"]: [] }],
+      security: op.auth === "none" ? [] : [{ [op.auth === "api" ? "apiKey" : "staffSession"]: [] }],
       responses: {
         [String(op.status ?? 200)]: op.sse
           ? { description: "Event stream", content: { "text/event-stream": { schema: { type: "string" } } } }
@@ -144,17 +130,16 @@ export function openApiDocument(serverUrl = "/") {
       title: "NHAA stress and trauma assessment API",
       version: "1.0.0",
       description:
-        "SIH26093. Victim API (scripted, no scores ever returned), staff API (role-based, audited) and integration API for NHAA systems. Generated from the Zod contracts.",
+        "SIH26093. A plug-in assessment module: the integration API (text and audio from NHAA's systems; the only input) and the staff API (role-based, audited). Generated from the Zod contracts.",
     },
     servers: [{ url: serverUrl }],
-    tags: ["Victim", "Staff", "Cases", "Interactions", "Alerts", "Referrals", "Analytics", "Integration"].map((name) => ({ name })),
+    tags: ["Integration", "Staff", "Cases", "Interactions", "Alerts", "Referrals", "Analytics"].map((name) => ({ name })),
     paths,
     components: {
       schemas: { Problem: PROBLEM },
       securitySchemes: {
         apiKey: { type: "apiKey", in: "header", name: "Authorization", description: "ApiKey <prefix>.<secret>" },
         staffSession: { type: "apiKey", in: "cookie", name: "authjs.session-token", description: "Staff sign-in with TOTP" },
-        victimSession: { type: "apiKey", in: "cookie", name: "nhaa_vs", description: "Random session token bound to one interaction" },
       },
     },
   };

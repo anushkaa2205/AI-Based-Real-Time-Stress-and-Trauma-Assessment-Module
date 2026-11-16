@@ -2,6 +2,10 @@
  * Evaluation scenario format (task E.1, AC-EVAL-01).
  * One JSON file per scenario in evaluation/scenarios/. Synthetic, respectful,
  * non-graphic (C-DAT-01, C-DAT-03). Labels need two team members to agree.
+ *
+ * Each scenario is a conversation (task M.4, PRODUCT_VISION.md §5): a plain string is the
+ * person's turn; `{ sender: "OPERATOR", text }` is a question from NHAA's chatbot or operator.
+ * Only the person's turns are scored (FR-CH-02). There are no structured answers.
  */
 import { z } from "zod";
 
@@ -27,6 +31,8 @@ const Support = z.enum([
   "INFORMATION",
 ]);
 
+const Turn = z.strictObject({ sender: z.enum(["OPERATOR", "VICTIM"]), text: z.string().min(1) });
+
 export const ScenarioSchema = z
   .object({
     id: z.string().regex(/^S\d{3}$/),
@@ -36,17 +42,22 @@ export const ScenarioSchema = z
     gender: z.enum(["F", "M", "OTHER", "UNDISCLOSED"]),
     summary: z.string().min(5),
     context: z.record(z.string(), z.union([z.boolean(), z.string()])).default({}),
-    screeners: z.array(z.object({ itemCode: z.string(), value: z.number().int().min(0).max(3) })).default([]),
-    messages: z.array(z.string().min(1)).default([]),
+    messages: z.array(z.union([z.string().min(1), Turn])).default([]),
     expected: z.object({
       band: Band,
       indicators: z.array(Dimension),
       recommendations: z.array(Support),
     }),
-    tags: z.array(z.enum(["negation", "dialect", "voice", "indirect", "context-only", "screener-only"])).default([]),
+    /** "short-answer": the risk is mainly in short replies to operator questions (gap V7) */
+    tags: z.array(z.enum(["negation", "dialect", "voice", "indirect", "context-only", "short-answer"])).default([]),
     /** Names or initials of the team members who agreed on the labels (need 2) */
     reviewedBy: z.array(z.string()).default([]),
   })
   .strict();
 
 export type Scenario = z.infer<typeof ScenarioSchema>;
+
+/** The person's own words, in order: the only text that is scored (operator turns are context). */
+export function victimTexts(s: Pick<Scenario, "messages">): string[] {
+  return s.messages.flatMap((m) => (typeof m === "string" ? [m] : m.sender === "VICTIM" ? [m.text] : []));
+}
