@@ -381,7 +381,7 @@ export const AdminUserPatch = z.object({
 
 export const ApiClientCreate = z.object({
   name: z.string().trim().min(2).max(100),
-  scopes: z.array(z.enum(["interactions:write", "assessments:read", "stream:read"])).min(1),
+  scopes: z.array(z.enum(["interactions:write", "assessments:read", "stream:read", "indicators:read"])).min(1),
   rateLimitPerMin: z.number().int().min(1).max(10_000).default(120),
   /** Task M.7: the demo input layer's client; everything it creates is tagged demo */
   isDemo: z.boolean().default(false),

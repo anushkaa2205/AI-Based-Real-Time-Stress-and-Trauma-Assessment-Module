@@ -6,6 +6,7 @@ import { z } from "zod";
 import { Dimension, IndicatorStatus } from "@/contracts/common";
 import { indicatorDto, userNames } from "@/core/cases/dto";
 import { loadInteractionResource } from "@/core/cases/resource";
+import { windowTimes } from "@/core/integration/indicators";
 import { route } from "@/lib/route";
 import { Indicator } from "@/models";
 
@@ -20,6 +21,7 @@ export const GET = route(
     if (query.status) filter.status = query.status;
     const rows = await Indicator.find(filter).sort({ createdAt: 1 }).limit(1000).lean();
     const names = await userNames(rows.map((r) => r.review?.byUserId));
-    return { items: rows.map((r) => indicatorDto(r, names)) };
+    const windows = await windowTimes(rows); // voice evidence: where in the call (M.5)
+    return { items: rows.map((r) => indicatorDto(r, names, windows)) };
   },
 );

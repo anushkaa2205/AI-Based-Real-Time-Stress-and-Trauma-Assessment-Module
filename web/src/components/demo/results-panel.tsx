@@ -237,9 +237,16 @@ export function ResultsPanel({
                 {i.evidence.type === "TEXT_SPAN" && i.evidence.quote ? (
                   <blockquote className="mt-1 border-l-[3px] border-[#c9a227] bg-[#fbf6e4] px-2.5 py-1 text-[0.85rem] leading-snug">&ldquo;{i.evidence.quote}&rdquo;</blockquote>
                 ) : i.evidence.type === "ACOUSTIC_EVENT" ? (
-                  <p className="mt-0.5 text-xs text-muted-foreground">Voice cue{i.label ? `: ${i.label}` : ""} (see the voice windows for where in the call)</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    Voice cue{i.label ? `: ${i.label}` : i.evidence.cue ? `: ${lower(i.evidence.cue)}` : ""}
+                    {i.evidence.startMs !== undefined && i.evidence.endMs !== undefined && (
+                      <span className="ml-1 font-mono text-ink-2">
+                        at {clock(i.evidence.startMs)}–{clock(i.evidence.endMs)}
+                      </span>
+                    )}
+                  </p>
                 ) : i.evidence.type === "CONTEXT_FIELD" ? (
-                  <p className="mt-0.5 text-xs text-muted-foreground">From the case details NHAA sent</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">From the case details NHAA sent{i.evidence.field ? ` (${i.evidence.field})` : ""}</p>
                 ) : i.label ? (
                   <p className="mt-0.5 text-xs text-muted-foreground">{i.label}</p>
                 ) : null}

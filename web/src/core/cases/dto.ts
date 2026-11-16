@@ -86,12 +86,23 @@ export function indicatorDto(
     status?: string | null;
     flags?: string[] | null;
     label?: string | null;
-    evidence?: { type?: string | null; messageId?: unknown; spanStart?: number | null; spanEnd?: number | null; quoteEnc?: string | null } | null;
+    evidence?: {
+      type?: string | null;
+      messageId?: unknown;
+      spanStart?: number | null;
+      spanEnd?: number | null;
+      quoteEnc?: string | null;
+      voiceWindowId?: unknown;
+      eventType?: string | null;
+      contextField?: string | null;
+    } | null;
     review?: { score?: number | null; reason?: string | null; byUserId?: unknown; at?: unknown } | null;
     modelVersion: string;
     createdAt?: unknown;
   },
   names: Map<string, string>,
+  /** Voice window id → place in the call (task M.5: time positions for voice evidence) */
+  windows: Map<string, { windowIndex: number; startMs: number; endMs: number }> = new Map(),
 ): IndicatorDto {
   const ev = d.evidence ?? {};
   let quote: string | null = null;
@@ -105,7 +116,13 @@ export function indicatorDto(
   const evidence: IndicatorDto["evidence"] =
     ev.type === "TEXT_SPAN" && ev.messageId
       ? { type: "TEXT_SPAN", messageId: ID(ev.messageId), spanStart: ev.spanStart ?? 0, spanEnd: ev.spanEnd ?? 0, quote }
-      : { type: (ev.type ?? "CONTEXT_FIELD") as "ACOUSTIC_EVENT" | "CONTEXT_FIELD" };
+      : ev.type === "ACOUSTIC_EVENT"
+        ? {
+            type: "ACOUSTIC_EVENT",
+            cue: ev.eventType ?? null,
+            ...(ev.voiceWindowId && windows.has(ID(ev.voiceWindowId)) ? windows.get(ID(ev.voiceWindowId)) : {}),
+          }
+        : { type: "CONTEXT_FIELD", field: ev.contextField ?? null };
   return {
     id: ID(d._id),
     dimension: d.dimension as IndicatorDto["dimension"],

@@ -33,7 +33,7 @@ export interface IndicatorView {
   negated: boolean;
   flags: string[];
   label: string | null;
-  evidence: { type: string; messageId?: string; quote?: string | null };
+  evidence: { type: string; messageId?: string; quote?: string | null; cue?: string | null; startMs?: number; endMs?: number; field?: string | null };
   modelVersion: string;
   createdAt: string;
 }
