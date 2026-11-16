@@ -72,11 +72,3 @@ export const AnalyzeAudioResponse = z.object({
     .optional(),
 });
 export type AnalyzeAudioResponse = z.infer<typeof AnalyzeAudioResponse>;
-
-/** POST /v1/demo/generate (task M.13, demo layer only): a synthetic chatbot conversation. */
-export const GenerateResponse = z.object({
-  turns: z.array(z.object({ speaker: z.enum(["CHATBOT", "PERSON"]), text: z.string().min(1).max(400) })).min(1).max(12),
-  synthetic: z.literal(true),
-  modelVersion: z.string(),
-});
-export type GenerateResponse = z.infer<typeof GenerateResponse>;

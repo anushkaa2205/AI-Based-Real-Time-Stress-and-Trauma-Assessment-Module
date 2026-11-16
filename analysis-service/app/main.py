@@ -26,7 +26,6 @@ from app.http import close_all, shared_client
 from app.security import verify
 from app.text.analyze import analyze_text, summarize
 from app.text.cache import DiskCache
-from app.text.generate import GenerateError, generate_conversation
 from app.text.llm import FallbackLLM, GeminiProvider, GroqProvider, LLMError
 
 
@@ -177,25 +176,6 @@ async def summarize_route(
         return await summarize(llm, cache, data)
     except LLMError as e:
         print(f"[summarize] model unavailable: {e}")
-        return problem(503, "MODEL_UNAVAILABLE", "Model unavailable")
-
-
-@app.post("/v1/demo/generate")
-async def generate_route(
-    request: Request,
-    settings: Annotated[Settings, Depends(get_settings)],
-    llm: Annotated[FallbackLLM, Depends(get_llm)],
-):
-    """Demo input layer only (task M.13): a synthetic chatbot conversation, labelled synthetic."""
-    data = await signed_json(request, settings)
-    if isinstance(data, JSONResponse):
-        return data
-    try:
-        return await generate_conversation(llm, data)
-    except GenerateError as e:
-        return problem(422, "VALIDATION_FAILED", str(e))
-    except LLMError as e:
-        print(f"[demo/generate] model unavailable: {e}")
         return problem(503, "MODEL_UNAVAILABLE", "Model unavailable")
 
 
