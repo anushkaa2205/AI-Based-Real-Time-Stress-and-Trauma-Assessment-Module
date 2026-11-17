@@ -8,7 +8,11 @@
  * ordered, not categories); text stays in ink colours; every chart has hover detail and a
  * table view; filters sit in one row above the charts.
  */
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEnumLabel } from "./use-labels";
+import { CHANNELS } from "@/models/enums";
+import { SITE_LOCALES } from "@/i18n/locale";
 
 type Band = "LOW" | "MODERATE" | "HIGH" | "CRITICAL";
 type Cell<T> = { value: T | null; suppressed: boolean };
@@ -47,25 +51,13 @@ interface Cap {
 }
 
 const BANDS: Band[] = ["LOW", "MODERATE", "HIGH", "CRITICAL"];
-const BAND_LABEL: Record<Band, string> = { LOW: "Low", MODERATE: "Moderate", HIGH: "High", CRITICAL: "Critical" };
-const DIM: Record<string, string> = {
-  SUICIDAL_IDEATION: "Suicidal thoughts",
-  INTIMIDATION: "Intimidation",
-  SEVERE_TRAUMA: "Trauma",
-  EXTREME_VULNERABILITY: "Vulnerability",
-  FEAR_ANXIETY: "Fear / anxiety",
-  DEPRESSION: "Low mood",
-  SOCIAL_ISOLATION: "Isolation",
-  ACUTE_STRESS: "Acute stress",
-};
-const lower = (s: string) => s.replace(/_/g, " ").toLowerCase();
 const show = (c: Cell<number | null> | undefined) => (!c ? "–" : c.suppressed ? "<5" : c.value === null ? "–" : c.value.toLocaleString("en-IN"));
-const duration = (c: Cell<number | null>) => {
-  if (c.suppressed) return "<5 alerts";
-  if (c.value === null) return "–";
-  const s = c.value;
-  return s < 90 ? `${s} s` : s < 5400 ? `${Math.round(s / 60)} min` : `${(s / 3600).toFixed(1)} h`;
-};
+
+/** Band names in the site language. */
+function useBandLabel(): (b: Band) => string {
+  const e = useEnumLabel();
+  return (b) => e("bands", b);
+}
 
 /** One theme (plan §9.6): charts use the brand colour and the band colours only. */
 const VIZ_STYLE = `
@@ -93,12 +85,14 @@ function Tile({ label, value, hint, testId }: { label: string; value: string; hi
 }
 
 function Legend() {
+  const t = useTranslations("staff.analytics");
+  const bandLabel = useBandLabel();
   return (
-    <ul className="flex flex-wrap gap-3 text-xs text-[var(--ink-2)]" aria-label="Risk bands">
+    <ul className="flex flex-wrap gap-3 text-xs text-[var(--ink-2)]" aria-label={t("bands")}>
       {BANDS.map((b) => (
         <li key={b} className="flex items-center gap-1">
           <span aria-hidden className="inline-block h-2.5 w-2.5 rounded-sm" style={{ background: `var(--band-${b})` }} />
-          {BAND_LABEL[b]}
+          {bandLabel(b)}
         </li>
       ))}
     </ul>
@@ -107,6 +101,8 @@ function Legend() {
 
 /** Horizontal bars, one per band, direct-labelled; suppressed bands drawn as a dashed outline. */
 function BandBars({ byBand, total }: { byBand: Record<Band, Cell<number>>; total: Cell<number> }) {
+  const t = useTranslations("staff.analytics");
+  const bandLabel = useBandLabel();
   const max = Math.max(1, ...BANDS.map((b) => byBand[b].value ?? 0));
   const anySuppressed = total.suppressed || BANDS.some((b) => byBand[b].suppressed);
   const notAssessed = anySuppressed ? null : (total.value ?? 0) - BANDS.reduce((s, b) => s + (byBand[b].value ?? 0), 0);
@@ -116,8 +112,8 @@ function BandBars({ byBand, total }: { byBand: Record<Band, Cell<number>>; total
         const c = byBand[b];
         const w = c.suppressed ? 0 : ((c.value ?? 0) / max) * 100;
         return (
-          <div key={b} className="group grid grid-cols-[5.5rem_1fr_3.5rem] items-center gap-2 text-sm" title={`${BAND_LABEL[b]}: ${show(c)} interactions`}>
-            <span className="text-[var(--ink-2)]">{BAND_LABEL[b]}</span>
+          <div key={b} className="group grid grid-cols-[5.5rem_1fr_3.5rem] items-center gap-2 text-sm" title={t("barTitle", { band: bandLabel(b), n: show(c) })}>
+            <span className="text-[var(--ink-2)]">{bandLabel(b)}</span>
             <div className="relative h-4 border-l border-[var(--axis)]">
               {c.suppressed ? (
                 <span className="absolute inset-y-0 left-0 w-6 rounded-r border border-dashed border-[var(--ink-muted)]" aria-hidden />
@@ -131,7 +127,7 @@ function BandBars({ byBand, total }: { byBand: Record<Band, Cell<number>>; total
       })}
       {notAssessed !== null && notAssessed > 0 && (
         <p className="text-xs text-[var(--ink-muted)]">
-          {notAssessed < 5 ? "<5" : notAssessed} not assessed yet (sessions that ended before any question was answered).
+          {t("notAssessed", { n: notAssessed < 5 ? "<5" : String(notAssessed) })}
         </p>
       )}
     </div>
@@ -141,7 +137,9 @@ function BandBars({ byBand, total }: { byBand: Record<Band, Cell<number>>; total
 /** Stacked bars per period (one axis, 2px surface gaps between segments), hover shows the breakdown. */
 function TrendChart({ items }: { items: Trend[] }) {
   const [hover, setHover] = useState<number | null>(null);
-  if (!items.length) return <p className="text-sm text-[var(--ink-muted)]">No data in this range yet.</p>;
+  const tr = useTranslations("staff.analytics");
+  const bandLabel = useBandLabel();
+  if (!items.length) return <p className="text-sm text-[var(--ink-muted)]">{tr("noData")}</p>;
   const totals = items.map((t) => BANDS.reduce((s, b) => s + (t.byBand[b].value ?? 0), 0));
   const max = Math.max(1, ...totals);
   const h = 160;
@@ -157,7 +155,7 @@ function TrendChart({ items }: { items: Trend[] }) {
             onFocus={() => setHover(i)}
             onBlur={() => setHover(null)}
             tabIndex={0}
-            aria-label={`${t.period}: ${BANDS.map((b) => `${BAND_LABEL[b]} ${show(t.byBand[b])}`).join(", ")}`}
+            aria-label={`${t.period}: ${BANDS.map((b) => `${bandLabel(b)} ${show(t.byBand[b])}`).join(", ")}`}
           >
             {BANDS.map((b, bi) => {
               const v = t.byBand[b].value ?? 0;
@@ -172,7 +170,7 @@ function TrendChart({ items }: { items: Trend[] }) {
                   <p key={b} className="flex justify-between text-[var(--ink-2)]">
                     <span className="flex items-center gap-1">
                       <span aria-hidden className="inline-block h-2 w-2 rounded-sm" style={{ background: `var(--band-${b})` }} />
-                      {BAND_LABEL[b]}
+                      {bandLabel(b)}
                     </span>
                     <span className="tabular-nums text-[var(--ink-1)]">{show(t.byBand[b])}</span>
                   </p>
@@ -187,7 +185,7 @@ function TrendChart({ items }: { items: Trend[] }) {
         <span>{items.at(-1)!.period}</span>
       </div>
       <Legend />
-      <p className="text-xs text-[var(--ink-muted)]">Bands with fewer than 5 interactions in a period are left out of the bars and shown as “&lt;5”.</p>
+      <p className="text-xs text-[var(--ink-muted)]">{tr("lt5Note")}</p>
     </div>
   );
 }
@@ -211,6 +209,16 @@ export function AnalyticsDashboard({ fixedDistrict }: { fixedDistrict: boolean }
   const [cap, setCap] = useState<Cap[]>([]);
   const [tableView, setTableView] = useState(false);
   const [loading, setLoading] = useState(true);
+  const t = useTranslations("staff.analytics");
+  const langNames = useTranslations("languageNames");
+  const e = useEnumLabel();
+  const bandLabel = useBandLabel();
+  const duration = (c: Cell<number | null>) => {
+    if (c.suppressed) return t("lt5Alerts");
+    if (c.value === null) return "–";
+    const s = c.value;
+    return s < 90 ? t("sec", { n: s }) : s < 5400 ? t("min", { n: Math.round(s / 60) }) : t("hours", { n: (s / 3600).toFixed(1) });
+  };
 
   const qs = useMemo(() => {
     const p = new URLSearchParams();
@@ -260,7 +268,7 @@ export function AnalyticsDashboard({ fixedDistrict }: { fixedDistrict: boolean }
     summary && !summary.referralsCreated.suppressed && !summary.referralsDone.suppressed && (summary.referralsCreated.value ?? 0) > 0
       ? `${Math.round((100 * (summary.referralsDone.value ?? 0)) / summary.referralsCreated.value!)}%`
       : summary?.referralsCreated.suppressed
-        ? "<5 referrals"
+        ? t("lt5Referrals")
         : "–";
   const heatMax = Math.max(0, ...heat.map((x) => x.criticalPer1000 ?? 0));
 
@@ -269,20 +277,20 @@ export function AnalyticsDashboard({ fixedDistrict }: { fixedDistrict: boolean }
     <div className="viz-root flex flex-col gap-6">
       <style>{VIZ_STYLE}</style>
 
-      <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => e.preventDefault()} aria-label="Filters">
+      <form className="flex flex-wrap items-end gap-3" onSubmit={(ev) => ev.preventDefault()} aria-label={t("filters")}>
         <label className="flex flex-col text-xs">
-          From
-          <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className={input} />
+          {t("from")}
+          <input type="date" value={from} onChange={(ev) => setFrom(ev.target.value)} className={input} />
         </label>
         <label className="flex flex-col text-xs">
-          To
-          <input type="date" value={to} onChange={(e) => setTo(e.target.value)} className={input} />
+          {t("to")}
+          <input type="date" value={to} onChange={(ev) => setTo(ev.target.value)} className={input} />
         </label>
         {!fixedDistrict && (
           <label className="flex flex-col text-xs">
-            District
-            <select value={district} onChange={(e) => setDistrict(e.target.value)} className={input} data-testid="filter-district">
-              <option value="">All in my scope</option>
+            {t("district")}
+            <select value={district} onChange={(ev) => setDistrict(ev.target.value)} className={input} data-testid="filter-district">
+              <option value="">{t("allScope")}</option>
               {districtOptions.map((d) => (
                 <option key={d.id} value={d.id}>
                   {d.name}
@@ -292,80 +300,74 @@ export function AnalyticsDashboard({ fixedDistrict }: { fixedDistrict: boolean }
           </label>
         )}
         <label className="flex flex-col text-xs">
-          Channel
-          <select value={channel} onChange={(e) => setChannel(e.target.value)} className={input}>
-            <option value="">All</option>
-            {["PORTAL", "CHATBOT", "VOICE_CALL", "IVRS", "MOBILE_APP", "OPERATOR_ASSISTED", "API"].map((c) => (
+          {t("channel")}
+          <select value={channel} onChange={(ev) => setChannel(ev.target.value)} className={input}>
+            <option value="">{t("all")}</option>
+            {CHANNELS.map((c) => (
               <option key={c} value={c}>
-                {lower(c)}
+                {e("channels", c)}
               </option>
             ))}
           </select>
         </label>
         <label className="flex flex-col text-xs">
-          Language
-          <select value={language} onChange={(e) => setLanguage(e.target.value)} className={input}>
-            <option value="">All</option>
-            {[
-              ["en", "English"],
-              ["hi", "Hindi"],
-              ["mr", "Marathi"],
-              ["ta", "Tamil"],
-              ["bn", "Bengali"],
-            ].map(([v, l]) => (
+          {t("language")}
+          <select value={language} onChange={(ev) => setLanguage(ev.target.value)} className={input}>
+            <option value="">{t("all")}</option>
+            {SITE_LOCALES.map((v) => (
               <option key={v} value={v}>
-                {l}
+                {langNames(v)}
               </option>
             ))}
           </select>
         </label>
         <label className="flex flex-col text-xs">
-          Demo cases
-          <select value={demo} onChange={(e) => setDemo(e.target.value as "include" | "exclude" | "only")} className={input} data-testid="filter-demo">
-            <option value="include">Included</option>
-            <option value="exclude">Excluded</option>
-            <option value="only">Only demo</option>
+          {t("demoCases")}
+          <select value={demo} onChange={(ev) => setDemo(ev.target.value as "include" | "exclude" | "only")} className={input} data-testid="filter-demo">
+            <option value="include">{t("included")}</option>
+            <option value="exclude">{t("excluded")}</option>
+            <option value="only">{t("onlyDemo")}</option>
           </select>
         </label>
         <label className="flex flex-col text-xs">
-          Trend by
-          <select value={interval} onChange={(e) => setInterval(e.target.value as "day" | "week")} className={input}>
-            <option value="day">Day</option>
-            <option value="week">Week</option>
+          {t("trendBy")}
+          <select value={interval} onChange={(ev) => setInterval(ev.target.value as "day" | "week")} className={input}>
+            <option value="day">{t("day")}</option>
+            <option value="week">{t("week")}</option>
           </select>
         </label>
         <a href={`/api/v1/staff/analytics/export.csv?${qs}`} className="btn btn-secondary" data-testid="export-csv">
-          Export CSV
+          {t("export")}
         </a>
         <label className="flex items-center gap-1 text-xs">
-          <input type="checkbox" checked={tableView} onChange={(e) => setTableView(e.target.checked)} /> Table view
+          <input type="checkbox" checked={tableView} onChange={(ev) => setTableView(ev.target.checked)} /> {t("tableView")}
         </label>
       </form>
 
-      {loading && !summary && <p className="text-sm text-[var(--ink-muted)]">Loading…</p>}
+      {loading && !summary && <p className="text-sm text-[var(--ink-muted)]">{t("loading")}</p>}
       {summary && (
         <>
           <p className="text-xs text-[var(--ink-muted)]">
-            {summary.from} to {summary.to}. Anonymised daily totals; any number under 5 is hidden as “&lt;5”.
+            {t("range", { from: summary.from, to: summary.to })}
           </p>
-          <section className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6" aria-label="Headline numbers">
-            <Tile label="Interactions" value={show(summary.interactions)} testId="tile-interactions" />
-            <Tile label="Critical alerts" value={show(summary.criticalAlerts)} />
-            <Tile label="Median time to acknowledge" value={duration(summary.medianAckSec)} hint="Critical alerts" />
-            <Tile label="Median time to first response" value={duration(summary.medianFirstResponseSec)} hint="first staff action on the case" />
-            <Tile label="Referral completion" value={completion} hint={`${show(summary.referralsDone)} of ${show(summary.referralsCreated)} done`} />
-            <Tile label="Missed deadlines" value={show(summary.slaBreaches)} hint="referrals past their due time" />
+          <section className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6" aria-label={t("headline")}>
+            <Tile label={t("interactions")} value={show(summary.interactions)} testId="tile-interactions" />
+            <Tile label={t("criticalAlerts")} value={show(summary.criticalAlerts)} />
+            <Tile label={t("medianAck")} value={duration(summary.medianAckSec)} hint={t("criticalAlerts")} />
+            <Tile label={t("medianFirst")} value={duration(summary.medianFirstResponseSec)} hint={t("firstAction")} />
+            <Tile label={t("completion")} value={completion} hint={t("doneOf", { done: show(summary.referralsDone), total: show(summary.referralsCreated) })} />
+            <Tile label={t("missed")} value={show(summary.slaBreaches)} hint={t("pastDue")} />
           </section>
 
           <div className="grid gap-6 lg:grid-cols-2">
             <section className="card card-pad flex flex-col gap-3">
-              <h2 className="section-title">Interactions by risk band</h2>
+              <h2 className="section-title">{t("byBand")}</h2>
               {tableView ? (
                 <table className="text-sm">
                   <tbody>
                     {BANDS.map((b) => (
                       <tr key={b}>
-                        <td className="pr-4">{BAND_LABEL[b]}</td>
+                        <td className="pr-4">{bandLabel(b)}</td>
                         <td className="tabular-nums">{show(summary.byBand[b])}</td>
                       </tr>
                     ))}
@@ -376,30 +378,30 @@ export function AnalyticsDashboard({ fixedDistrict }: { fixedDistrict: boolean }
               )}
             </section>
             <section className="card card-pad flex flex-col gap-3">
-              <h2 className="section-title">Trend</h2>
+              <h2 className="section-title">{t("trend")}</h2>
               {tableView ? (
                 <table className="text-sm">
                   <thead>
                     <tr>
-                      <th className="pr-3 text-left">Period</th>
+                      <th className="pr-3 text-left">{t("period")}</th>
                       {BANDS.map((b) => (
                         <th key={b} className="pr-3 text-right">
-                          {BAND_LABEL[b]}
+                          {bandLabel(b)}
                         </th>
                       ))}
-                      <th className="text-left">Most common signs</th>
+                      <th className="text-left">{t("commonSigns")}</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {trend.map((t) => (
-                      <tr key={t.period}>
-                        <td className="pr-3">{t.period}</td>
+                    {trend.map((p) => (
+                      <tr key={p.period}>
+                        <td className="pr-3">{p.period}</td>
                         {BANDS.map((b) => (
                           <td key={b} className="pr-3 text-right tabular-nums">
-                            {show(t.byBand[b])}
+                            {show(p.byBand[b])}
                           </td>
                         ))}
-                        <td className="text-xs">{t.topDimensions.map((d) => `${DIM[d.dimension] ?? d.dimension} ${Math.round(d.share * 100)}%`).join(", ") || "–"}</td>
+                        <td className="text-xs">{p.topDimensions.map((d) => `${e("dimensions", d.dimension)} ${Math.round(d.share * 100)}%`).join(", ") || "–"}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -411,14 +413,14 @@ export function AnalyticsDashboard({ fixedDistrict }: { fixedDistrict: boolean }
           </div>
 
           <section className="card card-pad flex flex-col gap-3">
-            <h2 className="section-title">Districts: High and Critical per 1000 interactions</h2>
+            <h2 className="section-title">{t("heatTitle")}</h2>
             <table className="text-sm" data-testid="heatmap">
               <thead>
                 <tr className="text-left text-xs text-[var(--ink-2)]">
-                  <th className="p-1">District</th>
-                  <th className="p-1 text-right">Interactions</th>
-                  <th className="p-1 text-right">Critical / 1000</th>
-                  <th className="p-1 text-right">High / 1000</th>
+                  <th className="p-1">{t("district")}</th>
+                  <th className="p-1 text-right">{t("interactions")}</th>
+                  <th className="p-1 text-right">{t("critPer")}</th>
+                  <th className="p-1 text-right">{t("highPer")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -438,7 +440,7 @@ export function AnalyticsDashboard({ fixedDistrict }: { fixedDistrict: boolean }
                 {!heat.length && (
                   <tr>
                     <td colSpan={4} className="p-1 text-[var(--ink-muted)]">
-                      No data in this range yet.
+                      {t("noData")}
                     </td>
                   </tr>
                 )}
@@ -447,15 +449,15 @@ export function AnalyticsDashboard({ fixedDistrict }: { fixedDistrict: boolean }
           </section>
 
           <section className="card card-pad flex flex-col gap-3">
-            <h2 className="section-title">Demand and capacity: referrals by district and support type</h2>
+            <h2 className="section-title">{t("capTitle")}</h2>
             <table className="text-sm" data-testid="capacity">
               <thead>
                 <tr className="text-left text-xs text-[var(--ink-2)]">
-                  <th className="p-1">District</th>
-                  <th className="p-1">Support</th>
-                  <th className="p-1 text-right">Requested</th>
-                  <th className="p-1 text-right">Done</th>
-                  <th className="p-1">Completion</th>
+                  <th className="p-1">{t("district")}</th>
+                  <th className="p-1">{t("support")}</th>
+                  <th className="p-1 text-right">{t("requested")}</th>
+                  <th className="p-1 text-right">{t("done")}</th>
+                  <th className="p-1">{t("completionCol")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -464,14 +466,14 @@ export function AnalyticsDashboard({ fixedDistrict }: { fixedDistrict: boolean }
                   return (
                     <tr key={`${x.districtId}-${x.supportType}`} className="border-t border-border">
                       <td className="p-1">{x.districtName}</td>
-                      <td className="p-1">{lower(x.supportType)}</td>
+                      <td className="p-1">{e("support", x.supportType)}</td>
                       <td className="p-1 text-right tabular-nums">{x.demand ?? "<5"}</td>
                       <td className="p-1 text-right tabular-nums">{x.completed ?? "<5"}</td>
                       <td className="p-1">
                         {pct === null ? (
-                          <span className="text-xs text-[var(--ink-muted)]">hidden (&lt;5)</span>
+                          <span className="text-xs text-[var(--ink-muted)]">{t("hidden")}</span>
                         ) : (
-                          <span className="flex items-center gap-2" title={`${pct}% done`}>
+                          <span className="flex items-center gap-2" title={t("pctDone", { n: pct })}>
                             <span className="relative inline-block h-2 w-24 rounded bg-[var(--grid)]">
                               <span className="absolute inset-y-0 left-0 rounded" style={{ width: `${pct}%`, background: "var(--band-MODERATE)" }} />
                             </span>
@@ -485,7 +487,7 @@ export function AnalyticsDashboard({ fixedDistrict }: { fixedDistrict: boolean }
                 {!cap.length && (
                   <tr>
                     <td colSpan={5} className="p-1 text-[var(--ink-muted)]">
-                      No referrals in this range.
+                      {t("noReferrals")}
                     </td>
                   </tr>
                 )}

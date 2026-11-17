@@ -4,6 +4,7 @@
  * Audit log viewer (task 8.6, FR-AUD-01/03): auditor only. Filters, newest first, and a check of
  * the whole hash chain. Metadata holds ids, versions and counts, never victim text.
  */
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 
 interface Entry {
@@ -24,6 +25,7 @@ export function AuditViewer() {
   const [filter, setFilter] = useState("");
   const [verify, setVerify] = useState<{ ok: boolean; checked: number; firstBrokenId?: string } | null>(null);
   const [busy, setBusy] = useState(false);
+  const t = useTranslations("staff.audit");
 
   const load = useCallback(async (qs: string, cursor?: string) => {
     const r = await fetch(`/api/v1/staff/admin/audit?${qs}${cursor ? `&cursor=${cursor}` : ""}`, { cache: "no-store" }).catch(() => null);
@@ -62,20 +64,20 @@ export function AuditViewer() {
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-3">
         <button type="button" onClick={runVerify} disabled={busy} className="btn btn-primary" data-testid="verify-chain">
-          {busy ? "Checking…" : "Verify the hash chain"}
+          {busy ? t("checking") : t("verify")}
         </button>
         {verify && (
           <p role="status" className={`text-sm font-semibold ${verify.ok ? "text-ok" : "text-danger"}`} data-testid="verify-result">
-            {verify.ok ? `✓ Intact: ${verify.checked} entries checked` : `✗ Broken at entry ${verify.firstBrokenId} (${verify.checked} checked)`}
+            {verify.ok ? t("intact", { n: verify.checked }) : t("broken", { id: verify.firstBrokenId ?? "?", n: verify.checked })}
           </p>
         )}
       </div>
       <form onSubmit={search} className="flex flex-wrap items-end gap-2">
         {[
-          ["action", "Action (e.g. case.view)"],
-          ["entityType", "Entity type"],
-          ["entityId", "Entity id"],
-          ["actorId", "Actor id"],
+          ["action", t("fAction")],
+          ["entityType", t("fEntityType")],
+          ["entityId", t("fEntityId")],
+          ["actorId", t("fActorId")],
         ].map(([k, l]) => (
           <label key={k} className="flex flex-col text-xs">
             {l}
@@ -83,25 +85,25 @@ export function AuditViewer() {
           </label>
         ))}
         <label className="flex flex-col text-xs">
-          From
+          {t("from")}
           <input name="from" type="date" className={input} />
         </label>
         <label className="flex flex-col text-xs">
-          To
+          {t("to")}
           <input name="to" type="date" className={input} />
         </label>
         <button type="submit" className="btn btn-secondary">
-          Search
+          {t("search")}
         </button>
       </form>
       <table className="text-sm" data-testid="audit-table">
         <thead>
           <tr className="text-left text-xs text-ink-3">
-            <th className="p-1">When</th>
-            <th className="p-1">Who</th>
-            <th className="p-1">Action</th>
-            <th className="p-1">On</th>
-            <th className="p-1">Details</th>
+            <th className="p-1">{t("when")}</th>
+            <th className="p-1">{t("who")}</th>
+            <th className="p-1">{t("action")}</th>
+            <th className="p-1">{t("on")}</th>
+            <th className="p-1">{t("details")}</th>
           </tr>
         </thead>
         <tbody>
@@ -126,7 +128,7 @@ export function AuditViewer() {
       </table>
       {next && (
         <button type="button" onClick={() => load(filter, next)} className="link self-start">
-          Load more
+          {t("loadMore")}
         </button>
       )}
     </div>
