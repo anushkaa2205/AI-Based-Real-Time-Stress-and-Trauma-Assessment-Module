@@ -5,9 +5,11 @@
  * docket, action, location hint, contact route, urgency, due time, status.
  * There is no narrative, SVI or indicator here, and the API never sends any (rule 8).
  */
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { useRealtime } from "@/components/realtime/realtime-provider";
 import { DemoMark } from "./demo-mark";
+import { useEnumLabel } from "./use-labels";
 
 interface Referral {
   id: string;
@@ -24,11 +26,10 @@ interface Referral {
   createdAt: string;
 }
 
-const lower = (s: string) => s.replace(/_/g, " ").toLowerCase();
-const NEXT: Partial<Record<Referral["status"], { to: Referral["status"]; label: string }>> = {
-  PENDING: { to: "ACCEPTED", label: "Accept" },
-  ACCEPTED: { to: "IN_PROGRESS", label: "Start" },
-  IN_PROGRESS: { to: "DONE", label: "Mark done" },
+const NEXT: Partial<Record<Referral["status"], { to: Referral["status"]; label: "accept" | "start" | "markDone" }>> = {
+  PENDING: { to: "ACCEPTED", label: "accept" },
+  ACCEPTED: { to: "IN_PROGRESS", label: "start" },
+  IN_PROGRESS: { to: "DONE", label: "markDone" },
 };
 const OPEN = new Set(["PENDING", "ACCEPTED", "IN_PROGRESS"]);
 const POLL_MS = 15_000;
@@ -37,7 +38,7 @@ export function ReferralQueue({
   channels,
   query = "",
   canUpdate,
-  emptyText = "No referrals.",
+  emptyText,
   title,
 }: {
   channels: string[];
@@ -50,13 +51,15 @@ export function ReferralQueue({
   const [msg, setMsg] = useState<string | null>(null);
   const [declining, setDeclining] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
+  const t = useTranslations("staff.referrals");
+  const e = useEnumLabel();
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/v1/staff/referrals${query}`, { cache: "no-store" }).catch(() => null);
     if (res?.ok) setItems(((await res.json()) as { items: Referral[] }).items);
-    else if (res) setMsg("Could not load referrals.");
+    else if (res) setMsg(t("loadFailed"));
     setNow(Date.now());
-  }, [query]);
+  }, [query, t]);
 
   useEffect(() => {
     const first = setTimeout(load, 0);
@@ -77,7 +80,7 @@ export function ReferralQueue({
       body: JSON.stringify(body),
     }).catch(() => null);
     const data = (await res?.json().catch(() => ({}))) as { detail?: string; title?: string } | undefined;
-    setMsg(res?.ok ? `Referral ${lower(body.status ?? "")}.` : (data?.detail ?? data?.title ?? "Update failed"));
+    setMsg(res?.ok ? t("updated", { status: e("referralStatus", body.status ?? "") }) : (data?.detail ?? data?.title ?? t("updateFailed")));
     setDeclining(null);
     void load();
   }
@@ -91,9 +94,9 @@ export function ReferralQueue({
         </p>
       )}
       {items === null ? (
-        <p className="text-ink-3">Loading…</p>
+        <p className="text-ink-3">{t("loading")}</p>
       ) : items.length === 0 ? (
-        <div className="empty">{emptyText}</div>
+        <div className="empty">{emptyText ?? t("empty")}</div>
       ) : (
         <ul className="flex flex-col gap-2" data-testid="referrals">
           {items.map((r) => {
@@ -104,33 +107,32 @@ export function ReferralQueue({
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="num font-medium text-ink">{r.docketNumber}</span>
                   <DemoMark show={r.isDemo} />
-                  <span className="tag">{lower(r.type)}</span>
-                  <span className={`tag ${r.urgency === "IMMEDIATE" || r.urgency === "WITHIN_15_MIN" ? "tag-danger" : ""}`}>{lower(r.urgency)}</span>
-                  <span className={`tag ${r.status === "DONE" ? "tag-ok" : r.status === "DECLINED" ? "" : "tag-brand"}`}>{lower(r.status)}</span>
+                  <span className="tag">{e("support", r.type)}</span>
+                  <span className={`tag ${r.urgency === "IMMEDIATE" || r.urgency === "WITHIN_15_MIN" ? "tag-danger" : ""}`}>{e("urgency", r.urgency)}</span>
+                  <span className={`tag ${r.status === "DONE" ? "tag-ok" : r.status === "DECLINED" ? "" : "tag-brand"}`}>{e("referralStatus", r.status)}</span>
                   {r.dueAt && (
                     <span className={`text-xs ${overdue ? "font-semibold text-danger" : "text-ink-3"}`}>
-                      {overdue ? "Overdue since " : "Due "}
-                      {new Date(r.dueAt).toLocaleString()}
+                      {overdue ? t("overdueSince", { when: new Date(r.dueAt).toLocaleString() }) : t("due", { when: new Date(r.dueAt).toLocaleString() })}
                     </span>
                   )}
                 </div>
                 <p className="mt-1 text-ink">
-                  <strong className="text-ink-2">Action:</strong> {r.actionRequested}
+                  <strong className="text-ink-2">{t("action")}</strong> {r.actionRequested}
                 </p>
                 {r.locationHint && (
                   <p>
-                    <strong>Where:</strong> {r.locationHint}
+                    <strong>{t("where")}</strong> {r.locationHint}
                   </p>
                 )}
                 <p>
-                  <strong>Contact:</strong> {r.contactRoute}
+                  <strong>{t("contact")}</strong> {r.contactRoute}
                 </p>
-                {r.outcomeNote && <p className="text-xs text-ink-3">Outcome: {r.outcomeNote}</p>}
+                {r.outcomeNote && <p className="text-xs text-ink-3">{t("outcome", { text: r.outcomeNote })}</p>}
                 {canUpdate && OPEN.has(r.status) && (
                   <div className="flex flex-wrap items-center gap-2">
                     {next && (
                       <button type="button" className="btn btn-primary btn-sm" onClick={() => update(r.id, { status: next.to })}>
-                        {next.label}
+                        {t(next.label)}
                       </button>
                     )}
                     {declining === r.id ? (
@@ -141,14 +143,14 @@ export function ReferralQueue({
                           void update(r.id, { status: "DECLINED", declinedReason: String(new FormData(e.currentTarget).get("reason") ?? "") });
                         }}
                       >
-                        <input name="reason" placeholder="Reason for declining" className="field text-xs" />
+                        <input name="reason" placeholder={t("declineReason")} className="field text-xs" />
                         <button type="submit" className="btn btn-secondary btn-sm">
-                          Decline
+                          {t("decline")}
                         </button>
                       </form>
                     ) : (
                       <button type="button" className="btn btn-secondary btn-sm" onClick={() => setDeclining(r.id)}>
-                        Decline…
+                        {t("declineOpen")}
                       </button>
                     )}
                   </div>

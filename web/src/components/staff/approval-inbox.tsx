@@ -6,10 +6,12 @@
  * Auto-triggered emergency support is listed separately for its review afterwards.
  */
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { BandBadge } from "./band-badge";
 import { RecommendationActions, type RecLike } from "./recommendation-actions";
 import { DemoMark } from "./demo-mark";
+import { useEnumLabel } from "./use-labels";
 
 interface Item extends RecLike {
   caseId: string;
@@ -22,11 +24,12 @@ interface Item extends RecLike {
   legalBasis?: string;
 }
 
-const lower = (s: string) => s.replace(/_/g, " ").toLowerCase();
 const POLL_MS = 15_000;
 const PAGE = 50;
 
 function List({ items, caseHref, onDone }: { items: Item[]; caseHref: string | null; onDone: (m: string) => void }) {
+  const e = useEnumLabel();
+  const t = useTranslations("staff");
   return (
     <ul className="flex flex-col gap-2">
       {items.map((r) => (
@@ -41,13 +44,13 @@ function List({ items, caseHref, onDone }: { items: Item[]; caseHref: string | n
             )}
             <DemoMark show={r.isDemo} />
             <BandBadge band={r.band} />
-            <strong>{lower(r.type)}</strong>
-            <span className="text-xs">{lower(r.urgency)}</span>
-            <span className="text-xs text-ink-3">→ {lower(r.responsibleRole)}</span>
-            {r.dueAt && <span className="text-xs text-ink-3">due {new Date(r.dueAt).toLocaleString()}</span>}
+            <strong>{e("support", r.type)}</strong>
+            <span className="text-xs">{e("urgency", r.urgency)}</span>
+            <span className="text-xs text-ink-3">→ {e("roles", r.responsibleRole)}</span>
+            {r.dueAt && <span className="text-xs text-ink-3">{t("approvals.due", { when: new Date(r.dueAt).toLocaleString() })}</span>}
           </div>
           <p className="text-xs text-ink-3">{r.reason}</p>
-          {r.legalBasis && <p className="text-xs text-ink-3">Basis: {r.legalBasis}</p>}
+          {r.legalBasis && <p className="text-xs text-ink-3">{t("case.basis", { text: r.legalBasis })}</p>}
           <RecommendationActions rec={r} onDone={onDone} />
         </li>
       ))}
@@ -62,6 +65,7 @@ export function ApprovalInbox({ caseHref, showReviews = true }: { caseHref: stri
   /** Pages of PAGE items shown; "Load more" adds one, so no proposal is ever out of reach. */
   const [pages, setPages] = useState(1);
   const [hasMore, setHasMore] = useState(false);
+  const t = useTranslations("staff");
 
   const load = useCallback(async () => {
     const get = async (q: string, maxPages: number) => {
@@ -106,22 +110,25 @@ export function ApprovalInbox({ caseHref, showReviews = true }: { caseHref: stri
       )}
       {showReviews && reviews.length > 0 && (
         <section className="flex flex-col gap-2">
-          <h2 className="section-title">Emergency support to review ({reviews.length})</h2>
+          <h2 className="section-title">{t("approvals.reviewTitle", { n: reviews.length })}</h2>
           <List items={reviews} caseHref={caseHref} onDone={done} />
         </section>
       )}
       <section className="flex flex-col gap-2">
-        <h2 className="section-title">Waiting for approval{proposed ? ` (${proposed.length})` : ""}</h2>
+        <h2 className="section-title">
+          {t("approvals.waiting")}
+          {proposed ? ` (${proposed.length})` : ""}
+        </h2>
         {proposed === null ? (
-          <div className="skeleton h-16 w-full" aria-busy="true" />
+          <div className="skeleton h-16 w-full" aria-busy="true" aria-label={t("common.loading")} />
         ) : proposed.length === 0 ? (
-          <div className="empty">Nothing is waiting for approval</div>
+          <div className="empty">{t("approvals.empty")}</div>
         ) : (
           <List items={proposed} caseHref={caseHref} onDone={done} />
         )}
         {hasMore && (
           <button type="button" onClick={() => setPages((n) => n + 1)} className="link self-start text-sm" data-testid="inbox-more">
-            Load more
+            {t("approvals.loadMore")}
           </button>
         )}
       </section>

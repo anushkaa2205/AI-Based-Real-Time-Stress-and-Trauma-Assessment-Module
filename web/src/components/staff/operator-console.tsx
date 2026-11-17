@@ -9,10 +9,13 @@
  * suggested next questions (scripted), and "type what the caller said".
  * Everything refreshes on real-time events for that interaction.
  */
+import { Mic } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { useRealtime } from "@/components/realtime/realtime-provider";
 import { DemoMark } from "./demo-mark";
 import { BandBadge } from "./band-badge";
+import { useEnumLabel } from "./use-labels";
 
 interface Live {
   id: string;
@@ -65,16 +68,6 @@ interface Suggestion {
   reason: string;
 }
 
-const DIM: Record<string, string> = {
-  SUICIDAL_IDEATION: "Suicidal thoughts",
-  INTIMIDATION: "Intimidation",
-  SEVERE_TRAUMA: "Trauma",
-  EXTREME_VULNERABILITY: "Vulnerability",
-  FEAR_ANXIETY: "Fear / anxiety",
-  DEPRESSION: "Low mood",
-  SOCIAL_ISOLATION: "Isolation",
-  ACUTE_STRESS: "Acute stress",
-};
 const EMO_COLOR: Record<string, string> = {
   fear: "bg-[#e9e3f3] text-[#3b2d5c]",
   sadness: "bg-[#e1e8f1] text-[#263c5a]",
@@ -91,15 +84,16 @@ async function getJson<T>(url: string): Promise<T | null> {
 }
 
 function Gauge({ svi, band }: { svi: number | null; band: string | null }) {
+  const t = useTranslations("staff.operator");
   const v = Math.max(0, Math.min(100, svi ?? 0));
   return (
     <div className="flex flex-col gap-1" data-testid="svi-gauge" data-svi={svi ?? ""}>
       <div className="flex items-baseline gap-2">
         <span className="text-4xl font-bold tabular-nums">{svi ?? "–"}</span>
-        <span className="text-sm text-ink-3">SVI</span>
+        <span className="text-sm text-ink-3">{t("svi")}</span>
         <BandBadge band={band} />
       </div>
-      <div className="relative h-3 w-full rounded bg-surface-2" role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={v} aria-label="SVI">
+      <div className="relative h-3 w-full rounded bg-surface-2" role="meter" aria-valuemin={0} aria-valuemax={100} aria-valuenow={v} aria-label={t("svi")}>
         {[30, 55, 75].map((t) => (
           <span key={t} className="absolute top-0 h-3 w-px bg-foreground/40" style={{ left: `${t}%` }} />
         ))}
@@ -110,28 +104,29 @@ function Gauge({ svi, band }: { svi: number | null; band: string | null }) {
 }
 
 function VoiceStrip({ windows }: { windows: Win[] }) {
-  if (!windows.length) return <p className="text-sm text-ink-3">No voice yet.</p>;
+  const t = useTranslations("staff.operator");
+  if (!windows.length) return <p className="text-sm text-ink-3">{t("noVoice")}</p>;
   const last = windows.slice(-24);
   const pitches = last.map((w) => w.pitch?.meanHz ?? 0).filter((x) => x > 0);
   const lo = Math.min(...pitches, 400);
   const hi = Math.max(...pitches, 80);
   return (
     <div className="flex flex-col gap-2" data-testid="voice-strip">
-      <div className="flex items-end gap-1" aria-label="Pitch and pauses per 5-second window">
+      <div className="flex items-end gap-1" aria-label={t("pitchAria")}>
         {last.map((w) => {
           const h = w.pitch ? 8 + (36 * (w.pitch.meanHz - lo)) / Math.max(1, hi - lo) : 4;
           return (
-            <div key={w.windowIndex} className="flex w-6 flex-col items-center gap-0.5" title={`Window ${w.windowIndex}: pitch ${w.pitch?.meanHz ?? "–"} Hz (spread ${w.pitch?.stdHz ?? "–"}), ${w.pauses.count} pauses, longest ${(w.pauses.maxMs / 1000).toFixed(1)} s, ${w.speechRateWpm ?? "–"} wpm`}>
+            <div key={w.windowIndex} className="flex w-6 flex-col items-center gap-0.5" title={t("windowTitle", { n: w.windowIndex, hz: w.pitch?.meanHz ?? "–", sd: w.pitch?.stdHz ?? "–", pauses: w.pauses.count, longest: (w.pauses.maxMs / 1000).toFixed(1), wpm: w.speechRateWpm ?? "–" })}>
               <span className="w-3 rounded-t bg-foreground/70" style={{ height: `${h}px` }} />
               <span className="w-3 rounded-[1px] bg-brand" style={{ height: `${Math.round(w.pauses.silenceRatio * 16) + 1}px` }} />
             </div>
           );
         })}
       </div>
-      <p className="text-xs text-ink-3">Dark bars: pitch. Blue bars: share of silence. Hover for details.</p>
+      <p className="text-xs text-ink-3">{t("barsHint")}</p>
       {last.at(-1) && (
         <p className="text-sm">
-          Latest window: {last.at(-1)!.pauses.count} pauses (longest {(last.at(-1)!.pauses.maxMs / 1000).toFixed(1)} s), {last.at(-1)!.speechRateWpm ?? "–"} words/min
+          {t("latest", { pauses: last.at(-1)!.pauses.count, longest: (last.at(-1)!.pauses.maxMs / 1000).toFixed(1), wpm: last.at(-1)!.speechRateWpm ?? "–" })}
           {last.at(-1)!.events.length ? ` · ${last.at(-1)!.events.map((e) => e.type.toLowerCase().replace(/_/g, " ")).join(", ")}` : ""}
         </p>
       )}
@@ -140,11 +135,14 @@ function VoiceStrip({ windows }: { windows: Win[] }) {
 }
 
 function EmotionTimeline({ points }: { points: EmoPoint[] }) {
-  if (!points.length) return <p className="text-sm text-ink-3">No emotion signals yet.</p>;
+  const t = useTranslations("staff.operator");
+  const en = useTranslations("staff.enums.emotions");
+  const emo = (label: string) => (en.has(label) ? en(label) : label);
+  if (!points.length) return <p className="text-sm text-ink-3">{t("noEmotion")}</p>;
   const rows: [string, keyof EmoPoint][] = [
-    ["Text", "text"],
-    ["Voice", "voice"],
-    ["Fused", "fused"],
+    [t("rowText"), "text"],
+    [t("rowVoice"), "voice"],
+    [t("rowFused"), "fused"],
   ];
   return (
     <div className="flex flex-col gap-1 overflow-x-auto text-xs" data-testid="emotion-timeline">
@@ -154,8 +152,8 @@ function EmotionTimeline({ points }: { points: EmoPoint[] }) {
           {points.map((p, i) => {
             const e = p[key] as EmoPoint["text"];
             return (
-              <span key={i} title={e ? `${e.label} (${Math.round(e.confidence * 100)}%) at ${Math.round(p.atMs / 1000)} s` : "no signal"} className={`min-w-12 rounded px-1 text-center ${e ? (EMO_COLOR[e.label] ?? "bg-surface-2") : "text-ink-3"}`}>
-                {e ? e.label : "·"}
+              <span key={i} title={e ? t("emotionAt", { label: emo(e.label), pct: Math.round(e.confidence * 100), s: Math.round(p.atMs / 1000) }) : t("noSignal")} className={`min-w-12 rounded px-1 text-center ${e ? (EMO_COLOR[e.label] ?? "bg-surface-2") : "text-ink-3"}`}>
+                {e ? emo(e.label) : "·"}
               </span>
             );
           })}
@@ -174,6 +172,8 @@ function CallView({ live, onMessage }: { live: Live; onMessage: (m: string) => v
   const [emos, setEmos] = useState<EmoPoint[]>([]);
   const [sugs, setSugs] = useState<Suggestion[]>([]);
   const [busy, setBusy] = useState(false);
+  const t = useTranslations("staff.operator");
+  const e = useEnumLabel();
 
   const load = useCallback(async () => {
     const [cur, tr, ind, v, em, sg] = await Promise.all([
@@ -221,7 +221,7 @@ function CallView({ live, onMessage }: { live: Live; onMessage: (m: string) => v
     if (r?.ok) {
       form.reset();
       void load();
-    } else onMessage("Could not add what the caller said.");
+    } else onMessage(t("addFailed"));
   }
 
   const topInds = [...inds].sort((a, b) => b.score - a.score).slice(0, 12);
@@ -233,7 +233,7 @@ function CallView({ live, onMessage }: { live: Live; onMessage: (m: string) => v
             {live.docketNumber} <DemoMark show={live.isDemo} />
           </h2>
           <p className="text-xs text-ink-3">
-            {live.channel.replace(/_/g, " ").toLowerCase()} · {live.language}
+            {e("channels", live.channel)} · {live.language}
           </p>
         </div>
         <div className="w-64">
@@ -242,13 +242,13 @@ function CallView({ live, onMessage }: { live: Live; onMessage: (m: string) => v
       </div>
 
       <section className="card card-pad">
-        <h3 className="section-title mb-2">Suggested next questions</h3>
+        <h3 className="section-title mb-2">{t("suggested")}</h3>
         <ol className="flex flex-col gap-2" data-testid="suggestions">
           {sugs.map((s) => (
             <li key={s.key} className="text-sm">
               <p className="font-medium">{s.text}</p>
               {s.text !== s.textEn && <p className="text-xs text-ink-3">{s.textEn}</p>}
-              <p className="text-xs text-ink-3">Why: {s.reason}</p>
+              <p className="text-xs text-ink-3">{t("why", { reason: s.reason })}</p>
             </li>
           ))}
         </ol>
@@ -256,32 +256,32 @@ function CallView({ live, onMessage }: { live: Live; onMessage: (m: string) => v
 
       <div className="grid gap-4 lg:grid-cols-2">
         <section className="card card-pad flex flex-col gap-2">
-          <h3 className="section-title">Live transcript</h3>
+          <h3 className="section-title">{t("liveTranscript")}</h3>
           <ol className="flex max-h-80 flex-col gap-2 overflow-y-auto text-sm" data-testid="live-transcript" aria-live="polite">
             {msgs.map((m) => (
               <li key={m.id}>
                 <span className="text-xs text-ink-3">
-                  #{m.seq} {m.modality === "VOICE_TRANSCRIPT" ? "🎤" : ""}
+                  #{m.seq} {m.modality === "VOICE_TRANSCRIPT" ? <Mic className="inline size-3" aria-label={t("spoken")} /> : null}
                 </span>{" "}
                 {m.text}
                 {m.translation && <span className="block text-xs text-ink-3">EN: {m.translation}</span>}
               </li>
             ))}
-            {!msgs.length && <li className="text-ink-3">Nothing yet.</li>}
+            {!msgs.length && <li className="text-ink-3">{t("nothingYet")}</li>}
           </ol>
           <form onSubmit={typed} className="flex gap-2">
             <label htmlFor="op-text" className="sr-only">
-              Type what the caller said
+              {t("typeCaller")}
             </label>
-            <input id="op-text" name="text" maxLength={2000} placeholder="Type what the caller said" className="field flex-1" />
+            <input id="op-text" name="text" maxLength={2000} placeholder={t("typeCaller")} className="field flex-1" />
             <button type="submit" disabled={busy} className="btn btn-primary">
-              Add
+              {t("add")}
             </button>
           </form>
         </section>
 
         <section className="card card-pad flex flex-col gap-2">
-          <h3 className="text-sm font-semibold">Indicators</h3>
+          <h3 className="text-sm font-semibold">{t("indicators")}</h3>
           <ul className="flex flex-wrap gap-1" data-testid="indicator-chips">
             {topInds.map((i) => (
               <li
@@ -289,18 +289,18 @@ function CallView({ live, onMessage }: { live: Live; onMessage: (m: string) => v
                 className="tag border-line bg-white"
                 title={i.evidence.quote ? `"${i.evidence.quote}"` : (i.label ?? i.evidence.eventType ?? "")}
               >
-                {DIM[i.dimension] ?? i.dimension} {i.score.toFixed(2)} · {i.source === "VOICE" ? "voice" : i.source === "SAFETY_LEXICON" ? "safety rule" : i.source.toLowerCase()}
+                {e("dimensions", i.dimension)} {i.score.toFixed(2)} · {e("sources", i.source)}
               </li>
             ))}
-            {!topInds.length && <li className="text-sm text-ink-3">None yet.</li>}
+            {!topInds.length && <li className="text-sm text-ink-3">{t("noneYet")}</li>}
           </ul>
-          <h3 className="mt-2 text-sm font-semibold">Voice: pitch and pauses</h3>
+          <h3 className="mt-2 text-sm font-semibold">{t("voicePitch")}</h3>
           <VoiceStrip windows={wins} />
         </section>
       </div>
 
       <section className="card card-pad">
-        <h3 className="section-title mb-2">Emotion over the session</h3>
+        <h3 className="section-title mb-2">{t("emotionTitle")}</h3>
         <EmotionTimeline points={emos} />
       </section>
     </div>
@@ -311,6 +311,9 @@ export function OperatorConsole({ me, queueChannels }: { me: string; queueChanne
   const [live, setLive] = useState<Live[] | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
+  const t = useTranslations("staff.operator");
+  const tc = useTranslations("staff.common");
+  const e = useEnumLabel();
 
   const load = useCallback(async () => {
     const r = await getJson<{ items: Live[] }>("/api/v1/staff/interactions");
@@ -335,21 +338,21 @@ export function OperatorConsole({ me, queueChannels }: { me: string; queueChanne
       setSelected(id);
       setMsg(null);
       void load();
-    } else setMsg(data?.detail ?? "Could not take this call.");
+    } else setMsg(data?.detail ?? t("takeFailed"));
   }
 
   const current = live?.find((l) => l.id === selected) ?? null;
   return (
     <div className="grid gap-6 xl:grid-cols-[18rem_1fr]">
       <aside className="flex flex-col gap-2">
-        <h2 className="section-title">Live sessions</h2>
+        <h2 className="section-title">{t("liveSessions")}</h2>
         {msg && (
           <p role="status" className="text-sm text-danger">
             {msg}
           </p>
         )}
-        {live === null && <div className="skeleton h-16 w-full" aria-busy="true" />}
-        {live?.length === 0 && <div className="empty">No live sessions right now</div>}
+        {live === null && <div className="skeleton h-16 w-full" aria-busy="true" aria-label={tc("loading")} />}
+        {live?.length === 0 && <div className="empty">{t("noLive")}</div>}
         <ul className="flex flex-col gap-2" data-testid="live-sessions">
           {live?.map((l) => {
             const mine = l.operator?.id === me;
@@ -361,16 +364,16 @@ export function OperatorConsole({ me, queueChannels }: { me: string; queueChanne
                   <BandBadge band={l.band} />
                 </div>
                 <p className="text-xs text-ink-3">
-                  {l.channel.replace(/_/g, " ").toLowerCase()} · {l.language} · {l.operator ? `with ${l.operator.name}` : "unattended"}
+                  {e("channels", l.channel)} · {l.language} · {l.operator ? t("with", { name: l.operator.name }) : t("unattended")}
                 </p>
                 {mine ? (
                   <button type="button" className="link mt-1" onClick={() => setSelected(l.id)}>
-                    Open
+                    {t("open")}
                   </button>
                 ) : (
                   !l.operator && (
                     <button type="button" className="btn btn-primary btn-sm mt-1" onClick={() => take(l.id)}>
-                      Take call
+                      {t("take")}
                     </button>
                   )
                 )}
@@ -379,7 +382,7 @@ export function OperatorConsole({ me, queueChannels }: { me: string; queueChanne
           })}
         </ul>
       </aside>
-      <div>{current ? <CallView key={current.id} live={current} onMessage={setMsg} /> : <div className="empty">Take a call to see it live here</div>}</div>
+      <div>{current ? <CallView key={current.id} live={current} onMessage={setMsg} /> : <div className="empty">{t("takeHint")}</div>}</div>
     </div>
   );
 }
