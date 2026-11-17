@@ -72,7 +72,7 @@ web/                 Next.js app
   tests/             unit/ and e2e/
 analysis-service/    Python FastAPI (text and audio analysis)
 evaluation/          synthetic scenarios + run_eval.ts
-docs/                the documents above (FRONTEND_* and checklist.md are superseded)
+docs/                the documents above
 ```
 
 ## Commands

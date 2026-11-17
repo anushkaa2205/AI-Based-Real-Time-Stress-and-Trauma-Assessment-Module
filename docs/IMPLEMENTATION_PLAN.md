@@ -1,7 +1,7 @@
 # Implementation Plan
 ## AI-Based Real-Time Stress and Trauma Assessment Module (SIH26093)
 
-> Companion documents: `REQUIREMENTS.md` (requirement and acceptance IDs), `ARCHITECTURE.md`, `DATABASE.md`, `models.ts`, `API_CONTRACTS.md`, `TOOLS_AND_COSTS.md` (free-tier limits), `PRODUCT_VISION.md` (what the product is; Phase M). `FRONTEND_UX_PRODUCT_BRIEF.md`, `checklist.md` and `FRONTEND_AUDIT.md` are superseded. Project rules: `/CLAUDE.md`.
+> Companion documents: `REQUIREMENTS.md` (requirement and acceptance IDs), `ARCHITECTURE.md`, `DATABASE.md`, `models.ts`, `API_CONTRACTS.md`, `TOOLS_AND_COSTS.md` (free-tier limits), `PRODUCT_VISION.md` (what the product is; Phase M). The superseded Phase F documents (`FRONTEND_UX_PRODUCT_BRIEF.md`, `checklist.md`, `FRONTEND_AUDIT.md`) were deleted on 17 Nov 2026; git history keeps them. Project rules: `/CLAUDE.md`.
 
 ## Status
 

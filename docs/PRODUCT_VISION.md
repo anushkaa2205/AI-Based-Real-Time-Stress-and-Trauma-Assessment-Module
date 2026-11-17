@@ -158,7 +158,7 @@ Every demo case is a normal case inside the module, so it also shows up where it
 | `CLAUDE.md` | "What this project is" restated as a plug-in module; rules 1–12 stay. |
 | `REQUIREMENTS.md` | Scope: module plus integration API. FR-CH (portal, chatbot UI, IVRS page) and FR-SCR rewritten or moved to "demo only / out of scope"; new requirements for the demo modes and the result contract. |
 | `ARCHITECTURE.md`, `API_CONTRACTS.md`, `DATABASE.md`, `models.ts` | Integration API becomes the primary interface; add V1–V4. |
-| `FRONTEND_UX_PRODUCT_BRIEF.md`, `checklist.md`, `FRONTEND_AUDIT.md` | **Superseded.** They describe a victim-facing website. Phase F stops after F.2. |
+| `FRONTEND_UX_PRODUCT_BRIEF.md`, `checklist.md`, `FRONTEND_AUDIT.md` | **Superseded and deleted (17 Nov 2026).** They described a victim-facing website; Phase F stopped after F.2. Git history keeps them. |
 | `IMPLEMENTATION_PLAN.md` | New phase for the module contract and the demo input layer, replacing F.3–F.6. |
 | `EVALUATION_REPORT.md` | Re-run without question answers; add per-mode comparison. |
 
