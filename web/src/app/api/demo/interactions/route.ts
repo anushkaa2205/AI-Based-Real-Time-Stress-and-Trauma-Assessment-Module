@@ -1,10 +1,12 @@
 /**
- * POST /api/demo/interactions (API_CONTRACTS §6.5, task N.4). Starts a demo case by calling
+ * POST /api/demo/interactions (API_CONTRACTS §6.5, tasks N.4, P.4). Starts a demo case by calling
  * `POST /api/v1/integration/interactions` with the demo key, as an NHAA system would. The module
- * tags it demo from the key (M.7). Public: the browser is given a signed cookie naming its own
- * cases, and only `{ interactionId }` comes back (plan §7: nothing leaks; §8.3).
+ * tags it demo from the key (M.7). Phase P: the relay then reads the opening question from the
+ * module, records it as an OPERATOR turn and returns its text. Public: the browser is given a
+ * signed cookie naming its own cases, and only `{ interactionId, question }` comes back (plan §7).
  */
-import { DEMO_CHANNEL, DemoStart } from "@/contracts/demo";
+import { DEMO_CHANNEL, DemoStart, type DemoStarted } from "@/contracts/demo";
+import { askNext } from "@/core/demo/assistant";
 import { callModule } from "@/core/demo/client";
 import { checkDailyCap, lineIsBusy, publicDemoRoute, rememberOwned } from "@/core/demo/public";
 import { originOf } from "@/core/demo/route";
@@ -43,5 +45,8 @@ export const POST = publicDemoRoute({ body: DemoStart, limit: "start" }, async (
   });
   if (started.status !== 201 || !started.body?.interactionId) throw new ApiError("ANALYSIS_DEGRADED", "The module could not start a case");
   const id = started.body.interactionId;
-  return rememberOwned(req, Response.json({ interactionId: id }, { status: 201 }), id);
+  // The case exists now; if the opening question cannot be read, the person can still write or speak.
+  const question = await askNext(originOf(req), id).catch(() => null);
+  const out: DemoStarted = { interactionId: id, question };
+  return rememberOwned(req, Response.json(out, { status: 201 }), id);
 });

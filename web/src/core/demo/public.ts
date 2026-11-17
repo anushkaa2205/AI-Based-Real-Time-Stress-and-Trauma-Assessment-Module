@@ -13,7 +13,7 @@ import { newRequestId, route, type RouteContext, type RouteOptions } from "@/lib
 import { demoEnabled } from "./client";
 import { DEMO_LIMITS, OWN_COOKIE, OWN_MAX_AGE_SEC, decodeOwned, encodeOwned, ownKey, sameSite } from "./guard";
 
-export { DEMO_LIMITS, LIVE_IDLE_MS, MAX_LIVE_CALL_MS, MAX_MESSAGES_PER_CASE, lineIsBusy } from "./guard";
+export { DEMO_LIMITS, LIVE_IDLE_MS, MAX_CASE_MS, MAX_LIVE_CALL_MS, MAX_MESSAGES_PER_CASE, caseExpired, lineIsBusy, speechLeft } from "./guard";
 
 type Params = Record<string, string | string[] | undefined>;
 

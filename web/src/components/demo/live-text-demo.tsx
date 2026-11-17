@@ -1,15 +1,15 @@
 "use client";
 
 /**
- * Demo input 1, type a message (tasks M.11, N.7; NIVARA_FLOW_AND_UI_PLAN.md §6.3). A chat window
+ * Demo input 1, type a message (tasks M.11, N.7, P.4; NIVARA_FLOW_AND_UI_PLAN.md §6.3). A chat window
  * that plays the part of NHAA's chatbot: each message goes, one at a time, through /api/demo to the
- * module with the demo key. The person's messages are typed by the visitor; the chatbot's questions
- * are NHAA's scripted wording and arrive as OPERATOR turns, never scored. The module itself asks
- * nothing (rule 2), and the page shows only that each message was received (rule 1).
+ * module with the demo key. The visitor writes only the person's words; the assistant's questions are
+ * scripted, chosen by the module's rules and recorded by the server as OPERATOR turns (P-D4). The AI
+ * never writes them (rule 2), and the page shows nothing about the assessment (rule 1).
  */
 import { AlertCircle, Bot, Send, User } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
-import type { DemoReceipt } from "@/contracts/demo";
+import type { DemoNextQuestion, DemoQuestion, DemoReceipt } from "@/contracts/demo";
 import type { VictimLang } from "@/contracts/interaction";
 import { ConsentFields, DEFAULT_DISTRICT, DistrictSelect, FULL_CONSENT, LanguageSelect, type DemoConsent, type DistrictOption } from "./consent-fields";
 import { DemoShell } from "./demo-shell";
@@ -29,7 +29,7 @@ interface ChatLine {
 const TITLE = "Type a message";
 const LEAD = "Write as a person would in NHAA's chat. Each message goes to the module as it is; you get a docket ID at the end, never a score.";
 
-export function LiveTextDemo({ questions, districts }: { questions: Record<VictimLang, { key: string; text: string }[]>; districts: DistrictOption[] }) {
+export function LiveTextDemo({ districts }: { districts: DistrictOption[] }) {
   const demo = useDemoCase();
   const [language, setLanguage] = useState<VictimLang>("en");
   const [district, setDistrict] = useState(districts.some((d) => d.code === DEFAULT_DISTRICT) ? DEFAULT_DISTRICT : (districts[0]?.code ?? ""));
@@ -50,30 +50,39 @@ export function LiveTextDemo({ questions, districts }: { questions: Record<Victi
     e.preventDefault();
     const ok = await demo.start({ mode: "LIVE_TEXT", language, districtCode: district, consent });
     if (ok) {
-      setLines([]);
+      setLines(ok.question ? [assistantLine(ok.question)] : []);
       setTimeout(() => inputRef.current?.focus(), 0);
     }
   }
 
-  async function send(text: string, who: Sender) {
+  async function send(text: string) {
     if (!demo.interactionId || demo.phase !== "input" || !text.trim()) return;
     const key = `${Date.now()}-${lines.length}`;
-    setLines((ls) => [...ls, { key, sender: who, text: text.trim(), state: "sending" }]);
+    setLines((ls) => [...ls, { key, sender: "VICTIM", text: text.trim(), state: "sending" }]);
     const r = await demoFetch<DemoReceipt>(`/api/demo/interactions/${demo.interactionId}/messages`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ text: text.trim(), sender: who }),
+      body: JSON.stringify({ text: text.trim() }),
     });
-    setLines((ls) => ls.map((l) => (l.key === key ? { ...l, state: r.ok ? "sent" : "failed" } : l)));
+    const next = r.data?.question ?? null;
+    setLines((ls) => [...ls.map((l) => (l.key === key ? { ...l, state: r.ok ? ("sent" as const) : ("failed" as const) } : l)), ...(next ? [assistantLine(next)] : [])]);
     if (r.ok) demo.receipt(r.data);
     else demo.setError(messageFor(r.code, r.detail));
+  }
+
+  async function skip() {
+    if (!demo.interactionId || demo.phase !== "input") return;
+    const r = await demoFetch<DemoNextQuestion>(`/api/demo/interactions/${demo.interactionId}/next-question`, { method: "POST" });
+    const next = r.data?.question ?? null;
+    if (next) setLines((ls) => [...ls, assistantLine(next)]);
+    else if (!r.ok) demo.setError(messageFor(r.code, r.detail));
   }
 
   function submit(e: FormEvent) {
     e.preventDefault();
     const text = draft;
     setDraft("");
-    void send(text, "VICTIM");
+    void send(text);
   }
 
   function onKey(e: KeyboardEvent<HTMLTextAreaElement>) {
@@ -152,18 +161,9 @@ export function LiveTextDemo({ questions, districts }: { questions: Record<Victi
       </section>
 
       <div className="grid gap-3">
-        <details className="card group">
-          <summary className="cursor-pointer select-none px-4 py-3 text-sm font-semibold text-ink">Ask one of NHAA&apos;s scripted questions as the chatbot</summary>
-          <ul className="flex flex-wrap gap-2 border-t border-line p-3">
-            {questions[demo.language].map((q) => (
-              <li key={q.key}>
-                <button type="button" disabled={sending} onClick={() => void send(q.text, "OPERATOR")} className="btn btn-secondary btn-sm whitespace-normal text-left" data-testid={`q-${q.key}`}>
-                  {q.text}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </details>
+        <button type="button" disabled={sending} onClick={() => void skip()} className="btn btn-secondary btn-sm justify-self-start" data-testid="skip">
+          Skip this question
+        </button>
       </div>
 
       {demo.error && <ErrorLine text={demo.error} />}
@@ -175,6 +175,10 @@ export function LiveTextDemo({ questions, districts }: { questions: Record<Victi
       </div>
     </div>,
   );
+}
+
+function assistantLine(q: DemoQuestion): ChatLine {
+  return { key: `q-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, sender: "OPERATOR", text: q.text, state: "sent" };
 }
 
 export function ErrorLine({ text }: { text: string }) {

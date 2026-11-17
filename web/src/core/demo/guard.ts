@@ -5,13 +5,13 @@
  */
 import { createHmac, timingSafeEqual } from "node:crypto";
 import type { Limit } from "@/lib/ratelimit";
-import { LIVE_IDLE_MS } from "./limits";
+import { LIVE_IDLE_MS, MAX_CASE_MS, MAX_LIVE_CALL_MS, WINDOW_MS } from "./limits";
 
 /** Starting values from the plan (§7). Named here so they are easy to tune after the first deployment. */
 export const DEMO_LIMITS = {
   /** New cases per visitor */
   start: { limit: 5, windowMs: 10 * 60_000 },
-  /** Text messages per visitor */
+  /** Text messages and next-question requests together, per visitor (Phase P) */
   message: { limit: 30, windowMs: 60_000 },
   /** Live microphone windows per visitor: 5 s windows for a 3-minute call, with headroom */
   audio: { limit: 60, windowMs: 60_000 },
@@ -23,7 +23,7 @@ export const DEMO_LIMITS = {
   daily: { limit: 150, windowMs: 24 * 60 * 60_000 },
 } as const satisfies Record<string, Limit>;
 
-export { LIVE_IDLE_MS, MAX_LIVE_CALL_MS, MAX_MESSAGES_PER_CASE } from "./limits";
+export { LIVE_IDLE_MS, MAX_CASE_MS, MAX_LIVE_CALL_MS, MAX_MESSAGES_PER_CASE } from "./limits";
 
 export const OWN_COOKIE = "nivara_demo";
 const OWN_MAX = 20;
@@ -57,9 +57,19 @@ export function decodeOwned(cookie: string | undefined | null, key: Buffer): str
     .filter((id) => /^[a-f0-9]{24}$/.test(id));
 }
 
-/** The live microphone line rule (§7): busy while a call is active and had audio recently. */
+/** The live microphone line rule (§7): busy while a call is active and had any activity (window, message, next question) recently. */
 export function lineIsBusy(active: { updatedAt: Date } | null, nowMs: number, idleMs = LIVE_IDLE_MS): boolean {
   return !!active && nowMs - active.updatedAt.getTime() < idleMs;
+}
+
+/** Phase P (§7): a demo conversation ends itself after MAX_CASE_MS. */
+export function caseExpired(createdAt: Date, nowMs: number, maxMs = MAX_CASE_MS): boolean {
+  return nowMs - createdAt.getTime() >= maxMs;
+}
+
+/** Phase P (§7): Speak may send at most MAX_LIVE_CALL_MS of speech per case, counted from the windows already sent. */
+export function speechLeft(windowsSent: number, maxMs = MAX_LIVE_CALL_MS): boolean {
+  return windowsSent * WINDOW_MS < maxMs;
 }
 
 /** Same-site only (§7): a browser sends Origin on every POST; it must be this site. */

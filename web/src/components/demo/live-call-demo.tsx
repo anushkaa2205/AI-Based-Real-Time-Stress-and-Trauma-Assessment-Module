@@ -88,7 +88,7 @@ export function LiveCallDemo({ districts, canTakeOver }: { districts: DistrictOp
             interactionId={demo.interactionId}
             maxSeconds={MAX_LIVE_CALL_MS / 1000}
             send={(form) => fetch(`/api/demo/interactions/${demo.interactionId}/audio`, { method: "POST", body: form, credentials: "same-origin" }).catch(() => null)}
-            onEmergency={(panel) => demo.receipt({ ok: true, showEmergencyPanel: true, emergency: panel })}
+            onEmergency={(panel) => demo.receipt({ showEmergencyPanel: true, emergency: panel })}
             onFinished={() => demo.finish()}
             onFallback={(reason) =>
               setFallback(

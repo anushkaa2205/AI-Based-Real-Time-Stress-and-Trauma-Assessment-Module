@@ -6,7 +6,7 @@
  * anything about the assessment; the only risk signal it may show is the emergency panel (rule 1).
  */
 import { useCallback, useState } from "react";
-import type { DemoMode, DemoReceipt } from "@/contracts/demo";
+import type { DemoMode, DemoQuestion, DemoStarted } from "@/contracts/demo";
 import type { EmergencyPanel, VictimLang } from "@/contracts/interaction";
 import { consentRequest, type DemoConsent } from "./consent-fields";
 
@@ -22,11 +22,12 @@ export interface DemoCase {
   /** The problem code behind `error`, for pages that act on one (LINE_BUSY) */
   errorCode: string | null;
   busy: boolean;
-  start(input: { mode: DemoMode; language: VictimLang; districtCode: string; consent: DemoConsent; takeover?: boolean }): Promise<boolean>;
+  /** Starts the case; resolves to the assistant's opening question (or null), or false if it could not start. */
+  start(input: { mode: DemoMode; language: VictimLang; districtCode: string; consent: DemoConsent; takeover?: boolean }): Promise<{ question: DemoQuestion | null } | false>;
   finish(): Promise<void>;
   reset(): void;
   /** Reads a demo reply: records the emergency panel if the module raised it. */
-  receipt(r: DemoReceipt | null | undefined): void;
+  receipt(r: { showEmergencyPanel: boolean; emergency: EmergencyPanel | null } | null | undefined): void;
   setError(msg: string | null): void;
 }
 
@@ -71,7 +72,7 @@ export function useDemoCase(): DemoCase {
   const start = useCallback<DemoCase["start"]>(async (input) => {
     setBusy(true);
     setError(null);
-    const r = await demoFetch<{ interactionId: string }>("/api/demo/interactions", {
+    const r = await demoFetch<DemoStarted>("/api/demo/interactions", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({
@@ -91,7 +92,7 @@ export function useDemoCase(): DemoCase {
     setInteractionId(r.data.interactionId);
     setEmergency(null);
     setPhase("input");
-    return true;
+    return { question: r.data.question ?? null };
   }, [setError]);
 
   const finish = useCallback(async () => {
@@ -118,7 +119,7 @@ export function useDemoCase(): DemoCase {
     setError(null);
   }, [setError]);
 
-  const receipt = useCallback((r: DemoReceipt | null | undefined) => {
+  const receipt = useCallback<DemoCase["receipt"]>((r) => {
     if (r?.showEmergencyPanel && r.emergency) setEmergency(r.emergency);
   }, []);
 

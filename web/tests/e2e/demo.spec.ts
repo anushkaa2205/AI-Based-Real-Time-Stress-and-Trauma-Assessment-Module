@@ -81,11 +81,11 @@ test("demo responses never carry the assessment, request ids or timings; the lib
   const start = await page.request.post("/api/demo/interactions", { data: START });
   expect(start.status()).toBe(201);
   const s = (await start.json()) as Record<string, unknown>;
-  expect(Object.keys(s)).toEqual(["interactionId"]);
+  expect(Object.keys(s)).toEqual(["interactionId", "question"]);
   const id = String(s.interactionId);
-  const m = await page.request.post(`/api/demo/interactions/${id}/messages`, { data: { sender: "VICTIM", text: "They said they will come back tonight." } });
+  const m = await page.request.post(`/api/demo/interactions/${id}/messages`, { data: { text: "They said they will come back tonight." } });
   expect(m.status()).toBe(200);
-  expect(Object.keys((await m.json()) as object).sort()).toEqual(["emergency", "ok", "showEmergencyPanel"]);
+  expect(Object.keys((await m.json()) as object).sort()).toEqual(["emergency", "ok", "question", "showEmergencyPanel"]);
   expect((await page.request.get("/api/demo/library")).status()).toBe(404);
   expect((await page.request.post(`/api/demo/interactions/${id}/recording`, { data: { scenarioId: "S047" } })).status()).toBe(404);
   const end = await page.request.post(`/api/demo/interactions/${id}/end`);
