@@ -6,16 +6,16 @@ Read this file first in every session. It is the short version of the rules; the
 
 An **AI-based real-time stress and trauma assessment module** for victims and complainants contacting the National Helpline Against Atrocities (NHAA 14566). Problem statement: Smart India Hackathon 2026, **SIH26093**, Ministry of Social Justice and Empowerment. Built as a Next.js coursework project. Project name: **Nivara** (decided 16 Nov 2026).
 
-It is a **channel-independent, plug-in module** (`docs/PRODUCT_VISION.md`). NHAA's own systems (chatbot, helpline, IVRS, mobile app, portal, operator desk) hold the conversation with the person, obtain consent, and call the module through the **integration API** (`/api/v1/integration/*`), its only input. The module accepts exactly two inputs: **text messages and voice audio**. It never asks the person questions: there is no questionnaire, no structured answers and no key presses. Questions asked by NHAA's chatbot or operator arrive as `OPERATOR` turns or as speech; case details from NHAA's record arrive as metadata (`/context`).
+It is a **channel-independent, plug-in module** (`docs/PRODUCT_VISION.md`). NHAA's own systems (chatbot, helpline, IVRS, mobile app, portal, operator desk) hold the conversation with the person, obtain consent, and call the module through the **integration API** (`/api/v1/integration/*`), its only input. The module accepts exactly two inputs: **text messages and voice audio**. It never asks the person questions: there is no questionnaire, no structured answers and no key presses. It may *suggest* the next scripted question to a calling system's chatbot (`/next-question`, the same rules as the operator console's suggestions); the calling system decides whether to ask it. Questions asked by NHAA's chatbot or operator arrive as `OPERATOR` turns or as speech; case details from NHAA's record arrive as metadata (`/context`).
 
-From what the person says or writes, the module detects warning signs, calculates a **Stress Vulnerability Index (SVI, 0–100)**, assigns a risk band (Low / Moderate / High / Critical), recommends support, and puts the highest-risk people in front of a human responder first. The staff dashboards are kept as the reference consuming system. A detachable **demo input layer** presents the module through the same API: the public site (`/`, the three demo inputs, the tracking page) belongs to that layer, not to the module, and the module runs and is tested with it switched off. The module has no victim website of its own. **`docs/NIVARA_FLOW_AND_UI_PLAN.md` (Phase N) decides the website flow, the demo and the look; where it clashes with an older document, it wins.**
+From what the person says or writes, the module detects warning signs, calculates a **Stress Vulnerability Index (SVI, 0–100)**, assigns a risk band (Low / Moderate / High / Critical), recommends support, and puts the highest-risk people in front of a human responder first. The staff dashboards are kept as the reference consuming system. A detachable **demo input layer** presents the module through the same API: the public site, a reference portal built on Nivara (`/`, the portal journey Start → Before we begin → Write or speak → Conversation → Review → Registered, and the tracking page), belongs to that layer, not to the module, and the module runs and is tested with it switched off. The portal has **two inputs, Write (live text) and Speak (live microphone)**; it offers no recordings. Its assistant asks only scripted, pre-translated questions chosen by rules, and only the server records them as `OPERATOR` turns. The whole website, staff portals included, is multilingual (English by default). The module has no victim website of its own. **`docs/NIVARA_FLOW_AND_UI_PLAN.md` (Phases N and P) decides the website flow, the public pages, the demo layer, languages and the look; where it clashes with an older document, it wins.**
 
 ## Documents (source of truth)
 
 | File | Use it for |
 |---|---|
 | `docs/PRODUCT_VISION.md` | What the product is (a plug-in module, two inputs, no questionnaire). Wins over older documents on scope. |
-| `docs/NIVARA_FLOW_AND_UI_PLAN.md` | The public site flow, the three public demo inputs, tracking, login, the staff portals and the UI design (Phase N). Wins on those topics. |
+| `docs/NIVARA_FLOW_AND_UI_PLAN.md` | The public portal journey, its two inputs (Write, Speak), tracking, login, the staff portals, site-wide languages and the UI design (Phases N and P). Wins on those topics. |
 | `docs/REQUIREMENTS.md` | What to build. Requirement IDs (`FR-…`, `NFR-…`, `C-…`) and acceptance criteria (`AC-…`). SVI formula, safety overrides and recommendation rules are in its appendices. |
 | `docs/ARCHITECTURE.md` | How the parts fit: components, pipeline, flows, security, folder structure. |
 | `docs/DATABASE.md` + `docs/models.ts` | MongoDB collections, indexes, transactions, retention. `models.ts` is the reference schema; split it into `web/src/models/`. |
@@ -44,7 +44,7 @@ These come from the requirements and are the reason the design looks the way it 
 
 ## Tech stack
 
-- **Web:** Next.js 16 (App Router), React, TypeScript strict, Tailwind + shadcn/ui, `next-intl` (en, hi, mr, ta, bn), Zod
+- **Web:** Next.js 16 (App Router), React, TypeScript strict, Tailwind + shadcn/ui, `next-intl` (en default, hi, mr, ta, bn; the whole site switches, staff portals included), Zod
 - **Database:** MongoDB (Atlas, replica set) + Mongoose 9
 - **Auth:** Auth.js v5 for staff (credentials + TOTP); API keys for integrations (the module's only input)
 - **Real-time:** Pusher Channels Sandbox (SSE fallback locally)
@@ -59,15 +59,17 @@ These come from the requirements and are the reason the design looks the way it 
 
 ```
 web/                 Next.js app
-  src/app/           (public)/ home, demo/{text,call,recording}, track; login; (staff)/ portals;
+  src/app/           (public)/ home, start/{write,speak}, track; login; (staff)/ portals;
                      api/v1 (integration, staff) and api/demo (public demo relay)
   src/core/          interactions, consent, safety-lexicon, scoring, recommendations, operator,
                      cases, alerts, audit, privacy, policies, analysis-client, pipeline, demo/ (demo layer only)
-  src/components/    public/, demo/, staff/, ui/, audio/ (live recorder used by the Speak demo)
+  src/components/    public/, portal/ (the portal journey), staff/, ui/, audio/ (live recorder used by Speak)
   src/models/        Mongoose models (one file per collection)
   src/contracts/     Zod schemas = the API contracts
+  src/i18n/          next-intl request config (site language from the NEXT_LOCALE cookie)
   src/lib/           db.ts, realtime.ts, ratelimit.ts
-  messages/          emergency options + operator questions, per language
+  messages/          every public, portal, login and staff string, plus emergency options and
+                     operator questions, per language (en, hi, mr, ta, bn)
   scripts/           seed.ts, sync-indexes.ts, jobs.ts (local job loop)
   tests/             unit/ and e2e/
 analysis-service/    Python FastAPI (text and audio analysis)
@@ -93,7 +95,7 @@ Run from `web/` unless stated otherwise.
 | AI service setup (Windows, from `analysis-service/`) | `py -3.12 -m venv .venv` then `.venv\Scripts\activate` then `pip install -r requirements.txt` |
 | AI service run | `uvicorn app.main:app --reload --port 8000` |
 | Expose AI service for the deployed demo | `cloudflared tunnel --url http://localhost:8000` (copy the URL into `ANALYSIS_URL`) |
-| Create the demo key (`DEMO_API_KEY`, scopes include `status:read`) | `npm run api:client -- --demo` |
+| Create the demo key (`DEMO_API_KEY`, scopes include `status:read` and `questions:read`) | `npm run api:client -- --demo` |
 
 ## Coding conventions
 

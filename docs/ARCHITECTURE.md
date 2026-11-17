@@ -39,7 +39,7 @@
 ### Key decisions (ADR summary)
 | # | Decision | Alternatives considered | Why |
 |---|---|---|---|
-| ADR-1 | **Next.js (App Router) monolith** for the integration API, the staff dashboards (reference consuming system) and, later, the demo input layer | Separate React SPA + Express API | One codebase and one deploy; route handlers are enough for the API; server components keep sensitive data on the server. |
+| ADR-1 | **Next.js (App Router) monolith** for the integration API, the staff dashboards (reference consuming system) and the demo input layer (since Phase P a reference portal built on Nivara) | Separate React SPA + Express API | One codebase and one deploy; route handlers are enough for the API; server components keep sensitive data on the server. |
 | ADR-2 | **Separate Python FastAPI "analysis service"** for STT, acoustics, emotion and NLP | Doing everything in Node | The audio/ML ecosystem (Praat/parselmouth, librosa, Whisper, Hugging Face) is Python-first. |
 | ADR-3 | **The module never talks to the person.** NHAA's chatbot or operator holds the conversation; the module only analyses it. Text it returns for the person (emergency options) and questions it suggests to operators are scripted and pre-translated | An LLM chatbot that talks to the victim; a built-in questionnaire | Safety and predictability: a generative bot could say something harmful to a traumatised person. LLMs are used only for *analysis*. |
 | ADR-4 | **The AI outputs indicators; deterministic rules output SVI, bands and recommendations** | End-to-end model predicting the band | Explainability, auditability, tunable thresholds, and it works even when the model is down. |
@@ -65,7 +65,7 @@ flowchart LR
     SM["State admin /<br/>Ministry (DoSJE)"]
     SYS(("Assessment Module"))
     NHAA["NHAA systems<br/>(chatbot, helpline, IVRS,<br/>app / portal, operator desk)"]
-    DEMO["Demo input layer<br/>(detachable, Phase M)"]
+    DEMO["Demo input layer: reference portal<br/>(detachable; write, speak)"]
     AI["External AI APIs<br/>(Groq LLM + Whisper)"]
     EM["Emergency services<br/>112 · Tele-MANAS 14416"]
 
@@ -121,7 +121,7 @@ flowchart TB
 
 | Container | Responsibility | Technology | Scales by |
 |---|---|---|---|
-| **Calling systems** | NHAA's chatbot, helpline, IVRS, app or operator desk: own the person's interface and consent, call the integration API, show the returned emergency options. Not part of this repository. A detachable **demo input layer** (Phase M) plays this role for presentations. | Any HTTP client with an API key | Outside the module |
+| **Calling systems** | NHAA's chatbot, helpline, IVRS, app or operator desk: own the person's interface and consent, call the integration API, show the returned emergency options. Not part of this repository. A detachable **demo input layer** plays this role for presentations: since Phase P, a public reference portal built on Nivara with two inputs (write, speak), §6.6. | Any HTTP client with an API key | Outside the module |
 | **Staff UI** | Role-specific dashboards, live updates, approvals | Next.js server components + client islands, `pusher-js` | Static + CDN |
 | **API (route handlers)** | Integration API (API keys, the module's only input), staff API (Auth.js) | Next.js route handlers, Zod validation | Serverless instances |
 | **Core modules** | Interactions (start, consent, end), safety lexicon, scoring, recommendations, RBAC, privacy, audit | TypeScript libraries inside the Next app | With the API |
@@ -340,6 +340,42 @@ sequenceDiagram
 3. `stored_audio` documents are deleted and objects removed; a `retention.purge` job double-checks.
 4. The complaint itself (docket and context) stays, so redressal continues (FR-CON-03/04).
 
+### 6.6 Demo layer: the portal journey (Phase P)
+
+The public site is a **reference portal built on Nivara** (`NIVARA_FLOW_AND_UI_PLAN.md` §5–§8). It plays the part of an NHAA system: it reaches the module only through `/api/demo/*` → the integration API with the demo key, and the module runs and is tested with it switched off (FR-API-05). Two inputs, chosen once: **Write** (`/start/write`, channel `CHATBOT`) and **Speak** (`/start/speak`, channel `VOICE_CALL`, live microphone, `CALLER_ONLY` windows). No recordings.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant P as Person (browser, /start/*)
+    participant D as /api/demo/* (public relay)
+    participant API as /api/v1/integration (demo key)
+    participant M as Module (pipeline, suggest.ts)
+
+    P->>D: POST /interactions { mode, language, district, consent }
+    D->>API: POST /interactions
+    D->>API: GET /interactions/{id}/next-question
+    API->>M: suggest(asked = [], …) → opening
+    D->>API: POST /messages { sender: OPERATOR, text }
+    D-->>P: { interactionId, question: { text } }
+    loop until Finish, no question left, or 6 questions
+        P->>D: POST /messages { text } (Write) or /audio windows then /next-question (Speak)
+        D->>API: POST /messages (VICTIM) or /audio (CALLER_ONLY)
+        API->>M: safety lexicon → analysis → score (answer read with its question)
+        D->>API: GET /next-question → POST /messages { sender: OPERATOR }
+        D-->>P: { ok, showEmergencyPanel, emergency, question: { text } } (+ heard for Speak)
+    end
+    P->>D: Review: POST /messages { note }, then POST /end
+    D->>API: POST /end
+    D-->>P: { docketNumber }
+```
+
+- **Only the server records `OPERATOR` turns**, and only scripted questions the module returned; the public message body has no `sender` (FR-DEMO-04).
+- The next question comes from the same pure rules as the operator console (`core/operator/suggest.ts`), extended with the keys already asked (FR-API-07). The AI never writes or says anything to the person (rule 2).
+- The page shows the assistant's questions, the person's own words ("We heard: …" for Speak, and the Review step), the emergency options when raised, and the docket ID. Never a score, band or indicator (rule 1).
+- Safeguards (`core/demo/guard.ts`, `public.ts`, `limits.ts`): kill switch, same-site, per-visitor and daily limits, the `nivara_demo` own-cases cookie, per-case caps (40 messages, 6 questions, 3 min of speech, 15 min in all), one live call at a time, freed after 60 s with no activity.
+- **Languages (FR-LANG-07):** the site language lives in the `NEXT_LOCALE` cookie (no URL prefix), read by `next-intl` (`src/i18n/request.ts`, `NextIntlClientProvider` in `app/layout.tsx`). It switches the public pages, login and staff portals, and becomes the interaction's `language` when the interaction is created. `core/i18n/messages.ts` keeps serving the module's own server-side text.
+
 ---
 
 ## 7. Analysis service (AI)
@@ -547,7 +583,8 @@ flowchart LR
 | Auth | Auth.js v5 (credentials + TOTP via `otplib`) for staff; API keys for integrations |
 | Real-time | Pusher Channels (`pusher` server, `pusher-js` client); SSE fallback for local dev |
 | Rate limiting | MongoDB-backed fixed-window counters (Upstash free tier optional) |
-| Audio capture (demo input layer) | MediaRecorder (opus/webm, 5 s timeslice); recorder logic kept in `components/audio/` for the demo |
+| Audio capture (demo input layer) | MediaRecorder (opus/webm, 5 s timeslice); recorder logic kept in `components/audio/` for Speak on the portal |
+| Languages | `next-intl` (installed): site language in the `NEXT_LOCALE` cookie, `src/i18n/request.ts`, all strings in `messages/*.json` (en default, hi, mr, ta, bn) |
 | Analysis service | Python 3.12, FastAPI, Pydantic, `groq` SDK, silero-vad, praat-parselmouth, librosa, funasr (emotion2vec+), transformers (IndicConformer) |
 | Testing | Vitest (unit, scoring), Playwright (E2E per role), pytest (analysis), k6 (latency checks) |
 | Quality | ESLint, Prettier, Ruff, GitHub Actions CI |
@@ -564,10 +601,10 @@ flowchart LR
 │   ├── scripts/
 │   │   ├── seed.ts                     # demo users per role + synthetic cases
 │   │   └── sync-indexes.ts             # Model.syncIndexes() for every model (run on deploy)
-│   ├── messages/                       # emergency options + operator questions: en hi mr ta bn
+│   ├── messages/                       # every public, portal, login and staff string + emergency options + operator questions: en hi mr ta bn
 │   ├── src/
 │   │   ├── app/
-│   │   │   ├── (public)/               # Phase N: home page (demo starter hero), demo/{text,call,recording}, track/[docket]
+│   │   │   ├── (public)/               # Phase P: home page (Start hero), start/ (before we begin, how to share), start/{write,speak}, track/[docket]; old /demo/* URLs redirect to /start
 │   │   │   ├── (staff)/
 │   │   │   │   ├── operator/           # live call console
 │   │   │   │   ├── counsellor/         # queue, case/[id]
@@ -584,7 +621,7 @@ flowchart LR
 │   │   │       └── realtime/auth/
 │   │   ├── core/
 │   │   │   ├── interactions/           # start, consent, end, emergency copy, summary
-│   │   │   ├── operator/               # suggested questions for the operator
+│   │   │   ├── operator/               # suggested questions for the operator, and the next question for a calling system's chatbot
 │   │   │   ├── consent/
 │   │   │   ├── safety-lexicon/         # engine.ts + rules/{en,hi,hinglish,mr,ta,bn}.json
 │   │   │   ├── scoring/                # fuse.ts svi.ts bands.ts overrides.ts explain.ts
@@ -593,8 +630,9 @@ flowchart LR
 │   │   │   ├── privacy/                # redact.ts crypto.ts
 │   │   │   ├── policies/               # rbac.ts serializers.ts
 │   │   │   ├── analysis-client/
-│   │   │   └── demo/                   # demo layer only: wav.ts (M.8), library, client, guard + public (N.4 safeguards), districts
-│   │   ├── components/                 # public/ (navbar, footer, track), demo/ (three inputs, consent, confirmation), staff/, ui/, audio/
+│   │   │   └── demo/                   # demo layer only: client, guard + public + limits (safeguards), districts; wav.ts and library go in P.2 unless the evaluation set uses them (plan §8.1)
+│   │   ├── components/                 # public/ (header, footer, track), portal/ (journey steps, consent, chat, microphone, review, registered), staff/, ui/, audio/
+│   │   ├── i18n/                       # next-intl request config (site language from the NEXT_LOCALE cookie)
 │   │   ├── contracts/                  # Zod schemas = API contracts
 │   │   ├── lib/                        # db.ts (cached Mongoose connection), realtime.ts, ratelimit.ts
 │   │   └── models/                     # Mongoose models (one file per collection)
@@ -608,7 +646,7 @@ flowchart LR
 │   ├── scenarios/*.json
 │   ├── audio/
 │   └── run_eval.ts                     # band accuracy, recall, fairness report
-├── demo/library/                       # scenario library: library.json (scripts, expected labels); audio/ git-ignored
+├── demo/library/                       # scenario library (Phase M); no longer offered on the public site (Phase P), removed in P.2 unless the evaluation set uses it
 ├── docs/                               # REQUIREMENTS, ARCHITECTURE, DATABASE, API_CONTRACTS, TOOLS_AND_COSTS, IMPLEMENTATION_PLAN
 └── CLAUDE.md
 ```
@@ -634,4 +672,4 @@ flowchart LR
 | NFR-PERF | §5 latency budget, §6.2 window budget |
 | NFR-REL | §10.3 |
 | NFR-MNT | ADR-2, ADR-4, repository structure, tests |
-| NFR-ACC | Staff UI and the public pages (home, demo, track, login): WCAG 2.1 AA, checked with axe in the e2e suite. Victim-facing screens of NHAA's systems belong to the calling system. |
+| NFR-ACC | Staff UI and the public pages (home, the portal journey, track, login): WCAG 2.1 AA, checked with axe in the e2e suite. Victim-facing screens of NHAA's systems belong to the calling system. |

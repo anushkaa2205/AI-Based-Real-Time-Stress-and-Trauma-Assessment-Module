@@ -172,8 +172,21 @@ interface Page<T> { items: T[]; nextCursor: string | null }
 | Scoring configs | — | — | — | — | — | — | — | — | ✅ | ✅ (read) |
 | Users, API clients | — | — | — | — | — | — | — | — | ✅ | — |
 | Audit logs, chain verify | — | — | — | — | — | — | — | — | — | ✅ |
-| Demo input layer `/demo/*`, `/track`, `/api/demo/*` (public since Phase N, only when `DEMO_ENABLED`, §6.5) | public | public | public | public | public | public | public | public | public | public |
+| Demo input layer `/`, `/start`, `/start/write`, `/start/speak`, `/track`, `/api/demo/*` (public since Phase N, the portal journey since Phase P, only when `DEMO_ENABLED`, §6.5) | public | public | public | public | public | public | public | public | public | public |
 | Take the live demo line over (`demo.use`, §6.5) | — | ✅ | — | — | — | — | — | — | — | — |
+
+**Integration API keys** are not staff roles: they are authorised by **scope** (§6), checked in `core/integration` (`403 SCOPE_MISSING`), and only ever for the client's own interactions and cases (`404` otherwise):
+
+| Scope | Endpoints |
+|---|---|
+| `interactions:write` | `POST /interactions`, `/messages`, `/audio`, `PUT /context`, `/consent/withdraw`, `/end` |
+| `assessments:read` | `GET /assessment`, `GET /recommendations` |
+| `stream:read` | `GET /stream` |
+| `indicators:read` | `GET /indicators` (§6.4a) |
+| `status:read` | `GET /cases/{docket}/status` (§6.6) |
+| `questions:read` | `GET /interactions/{id}/next-question` (§6.7, Phase P) |
+
+The demo key's scopes include `interactions:write`, `status:read` and `questions:read` (`npm run api:client -- --demo` grants every scope unless `--scopes` is given).
 
 Rules enforced in `src/core/policies`:
 1. **Police and welfare roles have no route to case, interaction, message, indicator or assessment data.** Requests return `403` (AC-DSH-01).
@@ -273,7 +286,7 @@ For `DISTRICT_OFFICER` / `STATE_ADMIN` the response omits `summary`, `summaryTra
 | `GET` | `/interactions/{id}/voice?fromWindow=` | `{ items: [{ windowIndex, startMs, endMs, pauses, pitch, speechRateWpm, energy, events, emotion }] }` |
 | `GET` | `/interactions/{id}/emotions` | `{ items: [{ atMs, text: {label, confidence}, voice: {label, confidence}, fused: {label, confidence} }] }` (FR-EMO-03) |
 | `POST` | `/interactions/{id}/operator-message` | Operator types what the caller said during a live call: `{ text }` → same pipeline as integration `/messages` with `sender: "VICTIM"`; `201 { messageId }` |
-| `GET` | `/interactions/{id}/suggested-questions` | `{ items: [{ key, text, textEn, reason }] }` (operator console, FR-CH-04): scripted, pre-translated questions for the operator to ask **aloud**; safety questions first, then what the evidence points at. The module never asks them itself, and the answers arrive as speech. |
+| `GET` | `/interactions/{id}/suggested-questions` | `{ items: [{ key, text, textEn, reason }] }` (operator console, FR-CH-04): scripted, pre-translated questions for the operator to ask **aloud**; safety questions first, then what the evidence points at. The module never asks them itself, and the answers arrive as speech. The same rules serve a calling system's chatbot through integration `GET …/next-question` (§6.7). |
 
 ### 5.4 Indicator review (FR-IND-05)
 #### `PATCH /indicators/{id}`
@@ -364,6 +377,7 @@ Base: `/api/v1/integration`. **The module's only input interface** (FR-API-05), 
 | `stream:read` | Subscribe to the live stream of an interaction this client created |
 | `indicators:read` | Read indicators with their evidence for interactions this client created (§6.4a, task M.5). Granted only to systems that need it; never shown to the person |
 | `status:read` | Read a case's status and arranged support for cases this client created (§6.6, task N.3). Safe for a tracking page in the calling system |
+| `questions:read` | Read the next scripted question for the calling system's chatbot, for interactions this client created (§6.7, task P.3). Safe to show the person: scripted wording only |
 
 | Method | Path | Request → Response |
 |---|---|---|
@@ -376,6 +390,7 @@ Base: `/api/v1/integration`. **The module's only input interface** (FR-API-05), 
 | `GET` | `/interactions/{id}/recommendations` | `200 { items: RecommendationDto[] }` |
 | `GET` | `/interactions/{id}/indicators` | `200 { items: IntegrationIndicator[] }` (§6.4a), scope `indicators:read` |
 | `GET` | `/cases/{docket}/status` | `200 CaseStatusResponse` (§6.6), scope `status:read` |
+| `GET` | `/interactions/{id}/next-question` | `200 { question: { key, text } \| null }` (§6.7), scope `questions:read` |
 | `GET` | `/interactions/{id}/stream` | **Server-Sent Events**: `event: assessment.updated` / `event: emergency.show` / `event: recommendation.created`, with the payloads in §7 (FR-API-03) |
 | `POST` | `/interactions/{id}/end` | `{ reason }` → `200` |
 
@@ -388,7 +403,7 @@ data: {"interactionId":"6735a1f0c2a4b1e0f0a1in01","svi":81,"band":"CRITICAL","se
 
 Errors specific to integration: `401 INVALID_API_KEY`, `403 SCOPE_MISSING`, `404` for interactions created by another client, `429 RATE_LIMITED`.
 
-**Contract version (task M.6, gap V2).** Every integration response, errors included, carries `X-Contract-Version` (now `1.2`: `GET /cases/{docket}/status` added to 1.1, which had added `inputMethod` and `GET …/indicators` to 1.0). The path stays `/api/v1`; additions are backwards compatible, and a breaking change would mean `/api/v2`.
+**Contract version (task M.6, gap V2).** Every integration response, errors included, carries `X-Contract-Version` (now `1.3`: `GET /interactions/{id}/next-question` added to 1.2, which had added `GET /cases/{docket}/status` to 1.1, which had added `inputMethod` and `GET …/indicators` to 1.0). The path stays `/api/v1`; additions are backwards compatible, and a breaking change would mean `/api/v2`.
 
 ### 6.1 Consent
 The calling system obtains consent in its own workflow and sends it on start as `consent: ConsentRequest`:
@@ -442,7 +457,7 @@ Headers: `Idempotency-Key`. Optional `inputMethod` (task M.6): `"TEXT"` (typed, 
 **202 Accepted** `{ "windowIndex": 7, "transcript": "…", "analysed": true, "showEmergencyPanel": false, "emergency": null }`
 - Needs `voiceAnalysis` consent; otherwise **409** `CONSENT_REQUIRED`.
 - **Speaker separation (FR-VOI-10, task M.10).** For `MIXED` audio the analysis service labels each stretch of speech `OPERATOR` or `CALLER` (voice fingerprints, kept consistent across the call). Only the caller's words are scored and only the caller's speech is used for voice features; the operator's words are stored as an `OPERATOR` turn, so a spoken answer is read with the spoken question (FR-NLP-11). `transcript` in the response is the caller's words only. Until a second voice has been heard, nothing is discarded: all speech is scored as the caller's and that window's assessment is limited confidence (normal at the start of a call). When separation is not possible or not confident (voices too similar, too much speech too short to fingerprint, speaker model unavailable), the interaction's assessments are marked **limited confidence** from then on. Safety net: words labelled as the operator's that hold a first-person life-safety statement (not a question) are scored as the caller's and the call is marked limited (CLAUDE.md rule 4, NFR-ETH-05). The labels are anchored by the call's first window (`windowIndex` 0, operator first unless `firstSpeaker` says otherwise): if that window was never analysed (lost or timed out, so it may be retried), nothing tells the voices apart reliably, and every later window is analysed as the caller's own audio, with nothing dropped and the call limited confidence. `CALLER_ONLY` audio is used as it is; send it whenever the call system can.
-- The raw audio is never written to disk unless `audioRetention` is true (FR-VOI-09). A recorded file is cut into windows before sending (gap V4, Phase M).
+- The raw audio is never written to disk unless `audioRetention` is true (FR-VOI-09). A calling system sends a recorded file as 5 s windows, in order, with `inputMethod: RECORDED_AUDIO` (gap V4). The demo layer no longer offers recordings (Phase P, P-D3).
 
 ### 6.4 Case context
 Metadata from NHAA's own record, not something the person is asked (FR-CH-08). Every field optional; unknown → omit:
@@ -483,27 +498,34 @@ Staff review details (who, why) are not included. Like the assessment, this is f
 
 ### 6.5 Demo input layer (detachable; public; not part of the module)
 
-Pages and routes for anyone who visits the site (`NIVARA_FLOW_AND_UI_PLAN.md` §5–§8, tasks N.4, N.7, N.8). **Off unless `DEMO_ENABLED=true`**; when off, every `/demo` page, the `/track` pages and every `/api/demo/*` route answer `404`, the home page hides the demo starter, and the module is unchanged (FR-API-05). No sign-in is needed.
+Pages and routes for anyone who visits the site: a **reference portal built on Nivara** (`NIVARA_FLOW_AND_UI_PLAN.md` §5–§8; Phase N tasks N.4, N.7, N.8; Phase P tasks P.2, P.4, P.7). **Off unless `DEMO_ENABLED=true`**; when off, every portal page (`/start`, `/start/write`, `/start/speak`), the `/track` pages and every `/api/demo/*` route answer `404`, the home page hides **Start** and the track field, and the module is unchanged (FR-API-05). No sign-in is needed. The old URLs `/demo`, `/demo/text`, `/demo/call` and `/demo/recording` redirect permanently to `/start`.
 
-The demo calls the module **only through this integration API**, over HTTP, with its own key `DEMO_API_KEY` (a server-only environment variable; the key never reaches the browser). The demo key's client has `isDemo: true` (set when the key is created, `npm run api:client -- --demo`, scopes include `status:read`), so every case and interaction it creates is tagged demo **on the server** (M.7). Nothing in a request body can set or clear the tag.
+The demo calls the module **only through this integration API**, over HTTP, with its own key `DEMO_API_KEY` (a server-only environment variable; the key never reaches the browser). The demo key's client has `isDemo: true` (set when the key is created, `npm run api:client -- --demo`, scopes include `status:read` and `questions:read`), so every case and interaction it creates is tagged demo **on the server** (M.7). Nothing in a request body can set or clear the tag.
 
-**Safeguards on every route (plan §7, `core/demo/public.ts`):** kill switch → unsafe methods must carry an `Origin` equal to this site (`403`) → per-visitor limit by hashed IP (new cases 5 / 10 min, messages 30 / min, recordings 3 / 10 min, tracking 20 / min, `429`) → for `/interactions/{id}/…`, the id must be in the browser's signed, http-only `nivara_demo` cookie (otherwise `404`, so other people's cases cannot even be discovered). A daily cap of 150 new cases across all visitors (`429`). Responses carry **only what the page needs**: no module body, request id, timing, transcript, case id or expected label.
+**Two inputs (Phase P, P-D3).** `LIVE_TEXT` (Write, channel `CHATBOT`) and `LIVE_AUDIO` (Speak, channel `VOICE_CALL`), chosen once when the interaction is created (P-D2). The demo layer offers **no recordings**: no recording route, no WAV upload and no scenario library. The module's own `/audio` endpoint still accepts `inputMethod: RECORDED_AUDIO` from NHAA's systems (§6.3).
+
+**Safeguards on every route (plan §7, `core/demo/public.ts`, `guard.ts`, `limits.ts`):** kill switch → unsafe methods must carry an `Origin` equal to this site (`403`) → per-visitor limit by hashed IP (new cases 5 / 10 min; messages and next-question requests together 30 / min; tracking 20 / min; `429`) → for `/interactions/{id}/…`, the id must be in the browser's signed, http-only `nivara_demo` cookie (otherwise `404`, so other people's cases cannot even be discovered). A daily cap of 150 new cases across all visitors (`429`). Per case: at most 40 messages, at most **6 assistant questions**, for Speak at most **3 minutes of speech** (the sum of the windows sent; `windowIndex` and `startMs` continue across turns), and the whole conversation ends itself after **15 minutes**.
+
+**Assistant lines (P-D4).** The portal assistant's questions are scripted and pre-translated (`operatorQuestions.*`, CLAUDE.md rule 2), chosen by the module through `GET /integration/…/next-question` (§6.7). **Only the server records `OPERATOR` turns**, and only the text of a question the module returned: before a question is shown, the relay sends it to `POST /integration/…/messages` with `sender: "OPERATOR"`, so the person's answer is read with its question (FR-NLP-11, M.9). The public message body has **no `sender`**: a visitor can never write the assistant's lines.
+
+**Nothing leaks.** Public responses carry only what the page needs: `{ ok, showEmergencyPanel }`, the emergency options, the **text** of the next assistant question (never its key or the reason it was chosen), for Speak the person's own words for that window (`heard`), and at the end the docket ID. No module body, case id, request id, timing, dimension, indicator, score or band.
 
 | Method | Path | Request → Response |
 |---|---|---|
-| `POST` | `/api/demo/interactions` | `{ mode: "LIVE_TEXT" \| "RECORDED_AUDIO" \| "LIVE_AUDIO", language, consent: ConsentRequest, districtCode, scenarioId?, takeover? }` → `201 { interactionId }` and the `nivara_demo` cookie. Calls `POST /integration/interactions` with channel `CHATBOT` (live text) or `VOICE_CALL` (recorded audio, live microphone) and the chosen seeded district (plan §8.4). `LIVE_AUDIO`: one call at a time on the free tier; while another call is live (an audio window in the last 20 s) the answer is `409 LINE_BUSY`, unless `takeover: true` comes from a signed-in staff member with `demo.use` (a supervisor), which ends the older call. Idle calls are ended and the line freed. |
-| `POST` | `/api/demo/interactions/{id}/messages` | `{ text, sender }` → `200 DemoReceipt = { ok: true, showEmergencyPanel, emergency }`. At most 40 messages per case (`429`). The module's `409 CONSENT_REQUIRED` / `INTERACTION_ENDED` pass through; anything else is `503 ANALYSIS_DEGRADED`. |
-| `POST` | `/api/demo/interactions/{id}/audio` | One live-microphone window (M.12): multipart `audio`, `windowIndex`, `startMs`, relayed to `POST /integration/…/audio` as `audioSource: CALLER_ONLY`, `inputMethod: LIVE_AUDIO`. `startMs` past three minutes → `409 INTERACTION_ENDED`. → `200 { ok: true, analysed, showEmergencyPanel, emergency }`. Nothing is stored. |
-| `POST` | `/api/demo/interactions/{id}/recording` | Either JSON `{ scenarioId }` (a library file on the server) or `multipart/form-data` with one WAV `file` (≤ 4 MB), plus `audioSource`, `firstSpeaker` and optionally `fromWindow` (default 0). The server cuts the WAV into 5 s windows (M.8) and sends them to `POST /integration/…/audio` in order. **Response: `application/x-ndjson`**: `{ type: "start", windows, durationMs, fromWindow }`, then per window `{ type: "window", windowIndex, startMs, endMs, status, analysed, error }` (no transcript), then `{ type: "done", windows, analysed, showEmergencyPanel, emergency }` or `{ type: "error", code, message }`. A request stops after about 45 s (hosting limit: 60 s on Vercel Hobby) with `{ type: "more", nextWindow, windows }`; the page sends the same recording again with `fromWindow = nextWindow`, so a recording of any length works. `DEMO_RECORDING_BUDGET_MS` (optional, 1000–50000) lowers the budget, for tests. |
-| `POST` | `/api/demo/interactions/{id}/end` | → `200 { docketNumber }`; calls `POST /integration/…/end`. The docket number is revealed only here, when the person finishes (plan §6.3). |
-| `GET` | `/api/demo/library` | `{ items }`: the scenario library without its `expected` labels, each with `script` (for the live-text replay) and `recordingAvailable` |
+| `POST` | `/api/demo/interactions` | `{ mode: "LIVE_TEXT" \| "LIVE_AUDIO", language, consent: ConsentRequest, districtCode, takeover? }` → `201 { interactionId, question: { text } }` and the `nivara_demo` cookie. Calls `POST /integration/interactions` with channel `CHATBOT` (Write) or `VOICE_CALL` (Speak) and the chosen seeded district (plan §6.3, default Pune). `language` is the site language at this moment and stays fixed for the interaction (P-D7). The relay then reads the opening question (§6.7, `operatorQuestions.opening`), records it as an `OPERATOR` turn and returns its text. `LIVE_AUDIO`: one call at a time on the free tier; while another call is live the answer is `409 LINE_BUSY`, unless `takeover: true` comes from a signed-in staff member with `demo.use` (a supervisor), which ends the older call. |
+| `POST` | `/api/demo/interactions/{id}/messages` | `{ text }` only (no `sender`) → `200 DemoReceipt = { ok: true, showEmergencyPanel, emergency, question: { text } \| null }`. The person's message is sent with `sender: "VICTIM"`, `inputMethod: "TEXT"`; the relay then reads the next question, records it as an `OPERATOR` turn if there is one, and returns its text (`null` when nothing is left or six questions have been asked). Also used for the Review note (one more message before `…/end`) and, on Speak, for that note only. At most 40 messages per case (`429`). The module's `409 CONSENT_REQUIRED` / `INTERACTION_ENDED` pass through; anything else is `503 ANALYSIS_DEGRADED`. |
+| `POST` | `/api/demo/interactions/{id}/audio` | One live-microphone window: multipart `audio`, `windowIndex`, `startMs`, relayed to `POST /integration/…/audio` as `audioSource: CALLER_ONLY`, `inputMethod: LIVE_AUDIO`. More than 3 minutes of speech in the case → `409 INTERACTION_ENDED`. → `200 { ok: true, analysed, showEmergencyPanel, emergency, heard }`, where `heard` is the person's own words for that window, taken from the module's `transcript` (the caller's words only; may be empty), shown as "We heard: …" and on the Review step. Nothing is stored. |
+| `POST` | `/api/demo/interactions/{id}/next-question` | No body → `200 { question: { text } \| null }`. Used after **Done** on Speak and for **Skip this question** on both inputs: reads the next question (§6.7), records it as an `OPERATOR` turn, returns its text. A skipped question stays recorded as asked, so it is not suggested again. Counts toward the 30 / min limit. |
+| `POST` | `/api/demo/interactions/{id}/end` | → `200 { docketNumber }`; calls `POST /integration/…/end`. The docket number is revealed only here, when the person presses **Submit** on the Review step (plan §6.3). |
 | `GET` | `/api/demo/track?docket=` | → `200 CaseStatusResponse` (§6.6) read through `GET /integration/cases/{docket}/status` with the demo key; `404` for any other docket, demo or not; `400` for a malformed one |
 
-**Recorded audio (M.8).** Library files and uploads must be PCM WAV (16-bit, mono or stereo, any sample rate; convert with Audacity, which is free). Each window is a standalone WAV of at most 5 s; a final piece under 1 s is dropped. Windows are sent one at a time, never in parallel, with `startMs` = window × 5000 (also across the requests of one recording). The real audio goes through the real audio path; a prewritten transcript is never sent.
+Removed in Phase P (P-D3): `POST /api/demo/interactions/{id}/recording`, `GET /api/demo/library`, the `RECORDED_AUDIO` demo mode, the `scenarioId` field, the WAV upload limit, the recordings rate limit and `DEMO_RECORDING_BUDGET_MS`.
 
-**Scenario library (M.14).** `demo/library/library.json` (committed) lists scenarios with a stable `id`, `title`, `language`, `audioSource`, `firstSpeaker`, a `script` of turns (`{ speaker: "OPERATOR" | "CALLER", text }`, synthetic, respectful, non-graphic) for the team to record and for the live-text page to replay, and `expected` (band, overrides; draft labels fixed before any run). Recordings are the team's own voices reading the script, stored as `demo/library/audio/<id>.wav`, **git-ignored and never committed** (FR-VOI-09). Audio is never generated (`PRODUCT_VISION.md` Q4). `expected` is test metadata: it is never sent to the module and, since Phase N, never to the browser.
+**Live microphone line.** One live call at a time (free tier). **Any activity** on the call keeps it alive: an audio window, a message, or a next-question request. It counts as over after **60 s** with no activity (`LIVE_IDLE_MS = 60_000`), and the line is freed. A newcomer while the line is taken gets `409 LINE_BUSY` ("The line is busy. You can write instead, or try again in a few minutes."); a signed-in supervisor can take the line over.
 
-**What a demo page shows.** Only that input was received, the scripted emergency options when the module raises them (`CLAUDE.md` rule 1), a progress bar for recordings, and at the end the docket ID. The assessment appears only in the staff portals, read by signed-in staff through the staff API (§5) with the same role rules as always.
+**To verify while building (task P.4; stop and ask if either fails):** the integration API accepts `OPERATOR` text turns and a `TEXT` message on a `VOICE_CALL` interaction; and the module's `transcript` holds only the caller's words for `CALLER_ONLY` audio.
+
+**What a portal page shows.** The assistant's scripted questions (labelled as the assistant, never as a person or as AI), the person's own words (their messages, or "We heard: …" for Speak, and all of it again on the Review step), the scripted emergency options when the module raises them (`CLAUDE.md` rule 1), and at the end the docket ID. Never an AI summary, score, band, indicator or diagnostic wording. The assessment appears only in the staff portals, read by signed-in staff through the staff API (§5) with the same role rules as always.
 
 ### 6.6 Case status (task N.3, FR-API-06)
 
@@ -514,6 +536,25 @@ The demo calls the module **only through this integration API**, over HTTP, with
 ```
 
 `status` is the case status (`NEW`, `UNDER_REVIEW`, `ACTION_TAKEN`, `FOLLOW_UP_SCHEDULED`, `CLOSED`); `support` lists the support types whose recommendation is `APPROVED` or `AUTO_TRIGGERED`. The key set is exactly these five fields: never a score, band, urgency, indicator, note or staff name (rule 1). This is what a tracking page in NHAA's own portal, or the demo's `/track`, may show.
+
+### 6.7 Next question for the calling system's chatbot (Phase P, task P.3, FR-API-07)
+
+`GET /interactions/{id}/next-question`, scope **`questions:read`**, only for interactions that this client created (same ownership check as `core/integration/owned.ts`); anything else is `404`.
+
+```json
+{ "question": { "key": "operatorQuestions.safeNow", "text": "Are you in a safe place right now?" } }
+```
+or `{ "question": null }`.
+
+- `key` is an `operatorQuestions.*` key; `text` is its scripted, pre-translated wording in the **interaction's language** (`messages/*.json`). The module suggests; the calling system's chatbot decides whether to ask it, and if it does, sends it back as an `OPERATOR` turn (§6.2) so the answer is read with its question. The module never talks to the person (CLAUDE.md rule 2), and there is no fixed order and no quiz.
+- **Rules** (the pure function in `core/operator/suggest.ts`: no database, no clock; the same rules as the operator console's `suggested-questions`, §5.3):
+  - `asked`: the keys whose scripted text, in the interaction's language, equals an `OPERATOR` turn already stored in the interaction. An asked question is never suggested again.
+  - No turns yet: `operatorQuestions.opening`.
+  - Otherwise: the first suggestion in the existing order that has not been asked: safety first (`safePlace` after "not safe now", else `safeNow`), suicide questions on any sign, the accused nearby, then what the evidence points at, then `sayMore`.
+  - After `MAX_CHATBOT_QUESTIONS = 6` scripted questions in the interaction, or when nothing is left: `null`.
+- The endpoint loads the latest dimensions and fired overrides exactly as the staff route `GET /staff/interactions/{id}/suggested-questions` does.
+- The key set is exactly `question.key` and `question.text`. It never returns the staff-facing `reason`, dimensions, overrides, a score or a band (a unit test asserts the keys).
+- Additive: contract version `1.3`.
 
 ---
 
@@ -684,7 +725,8 @@ Error responses never contain message text or other victim content.
 | FR-CH-03/04 | integration `/audio`, `/staff/interactions/{id}/transcript`, `/suggested-questions`, `/operator-message`, `transcript.appended` |
 | FR-CH-07 | `docketNumber` on interaction and case; integration `POST /interactions` |
 | FR-API-06, FR-DEMO-02 | integration `GET /cases/{docket}/status`; demo `GET /api/demo/track` |
-| FR-DEMO-01, FR-DEMO-03 | `/api/demo/*` (§6.5) behind the public safeguards |
+| FR-API-07 | integration `GET /interactions/{id}/next-question` (§6.7); staff `/suggested-questions` shares its rules |
+| FR-DEMO-01, FR-DEMO-03…06 | `/api/demo/*` (§6.5) behind the public safeguards; `POST /api/demo/interactions/{id}/next-question` |
 | FR-CH-08 | integration `PUT /…/context` |
 | FR-CON-01…06 | `consent` on integration start, integration `/consent/withdraw`, `CONSENT_REQUIRED` |
 | FR-VOI-01…10 | integration `/audio`, `/v1/analyze/audio`, `/staff/interactions/{id}/voice` |
@@ -693,7 +735,8 @@ Error responses never contain message text or other victim content.
 | FR-SVI-01…07 | `AssessmentDto`, `/assessments`, `/assessments/current`, `/admin/scoring-configs*` |
 | FR-RISK-01…05 | `band`, `overridesFired`, `explanation`, `/band-override` |
 | FR-REC-01…09 | `/recommendations*`, `/referrals*`, `/follow-ups*`, `emergency.show` |
-| FR-LANG-01…06 | `language` fields, localised `emergency` and suggested questions, `translation` in transcript and evidence |
+| FR-LANG-01…06 | `language` fields, localised `emergency`, suggested questions and next question, `translation` in transcript and evidence |
+| FR-LANG-07 | No endpoint: the site language comes from the `NEXT_LOCALE` cookie; it becomes `language` on `POST /api/demo/interactions` |
 | FR-CASE-01…05 | `GET /cases` (sorted), `PATCH /cases/{id}`, `/notes` |
 | FR-ALR-01…04 | `/alerts*`, `alert.created`, `alert.escalated`, `alert.acknowledged` |
 | FR-DSH-01…08 | Staff API per role (§4), `/analytics/*` |

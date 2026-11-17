@@ -6,8 +6,8 @@
 | Problem statement | SIH26093, Ministry of Social Justice and Empowerment (MoSJE), Department of Social Justice and Empowerment |
 | Project name | **Nivara** |
 | Platform | Plug-in assessment module (Next.js API and staff dashboards, Python analysis service) called by NHAA's systems through an integration API |
-| Version | 0.2 (draft): module scope, no questionnaire (PRODUCT_VISION.md) |
-| Date | 16 Nov 2026 |
+| Version | 0.3 (draft): module scope, no questionnaire (PRODUCT_VISION.md); Phase P portal journey and site-wide languages (NIVARA_FLOW_AND_UI_PLAN.md) |
+| Date | 17 Nov 2026 |
 
 ---
 
@@ -48,7 +48,7 @@ The module sits **between NHAA's contact channels and the human responders**. It
 - dashboards for every stakeholder (the reference consuming system),
 - the integration API, which is the module's only input interface.
 
-The module never questions the person. If safety or wellbeing questions are asked, NHAA's chatbot asks them in the chat or the operator asks them aloud, and the answers arrive as ordinary text or speech. A detachable, public **demo input layer** (type a message, speak, play a recording) exists only to present and test the module through the same API; it ends with a docket ID and a tracking page, never a result (`NIVARA_FLOW_AND_UI_PLAN.md`).
+The module never questions the person. If safety or wellbeing questions are asked, NHAA's chatbot asks them in the chat or the operator asks them aloud, and the answers arrive as ordinary text or speech. A detachable, public **demo input layer**, a reference portal built on Nivara with two inputs (write, speak), exists only to present and test the module through the same API; its portal assistant asks only scripted questions chosen by rules, and it ends with a docket ID and a tracking page, never a result (`NIVARA_FLOW_AND_UI_PLAN.md`). The whole website, staff portals included, is available in five languages, English by default.
 
 Long-term monitoring after the complaint is filed is covered by the sister problem **SIH26094** and is **out of scope**. This module provides a hook for it (scheduled follow-ups for High/Critical cases).
 
@@ -90,7 +90,7 @@ Long-term monitoring after the complaint is filed is covered by the sister probl
 |---|---|---|
 | FR-CH-01 | The module shall accept exactly **two inputs** from any NHAA channel, through the integration API: **text messages** and **voice audio**. It shall have no questionnaire, no endpoint for structured answers and no key-press input. | M |
 | FR-CH-02 | Every text message shall carry its **sender**: the person (`VICTIM`), or NHAA's chatbot or operator (`OPERATOR`, used for both). Only the person's words are scored; the questioner's turns are stored as context. | M |
-| FR-CH-03 | The module shall analyse **voice audio** sent in short windows during a call (live) or cut from a recording, with live updates. In the demo, voice comes from the browser microphone or the team's own recordings. | M |
+| FR-CH-03 | The module shall analyse **voice audio** sent in short windows during a call (live) or cut from a recording, with live updates. Recorded audio is accepted from the calling system's own recordings. In the demo, voice comes from the browser microphone only (Phase P, P-D3). | M |
 | FR-CH-04 | The system shall provide an **operator assist console**. While a human operator takes a call or chat, it shows the live transcript, live SVI, detected indicators and suggested next questions. | M |
 | FR-CH-05 | ~~IVRS keypad simulation~~ *Removed 16 Nov 2026 (PRODUCT_VISION.md §5).* An IVRS can still send the caller's audio through the API. | – |
 | FR-CH-06 | ~~Victim-facing PWA~~ *Removed 16 Nov 2026 (PRODUCT_VISION.md §5).* The calling system owns the victim's interface. | – |
@@ -210,12 +210,13 @@ Long-term monitoring after the complaint is filed is covered by the sister probl
 
 | ID | Requirement | Priority |
 |---|---|---|
-| FR-LANG-01 | Text the module returns for the person (emergency options) and the questions it suggests to operators shall be available in **at least: English, Hindi, and three regional languages** (proposed: Marathi, Tamil, Bengali). | M |
+| FR-LANG-01 | Text the module returns for the person (emergency options) and the questions it suggests to operators and to calling systems' chatbots (FR-API-07) shall be available in **at least: English, Hindi, and three regional languages** (proposed: Marathi, Tamil, Bengali). | M |
 | FR-LANG-02 | Analysis (NLP and STT) shall support **English, Hindi and Hinglish** at minimum, and the three regional languages through native models or translate-then-analyse. | M |
 | FR-LANG-03 | The system shall **auto-detect the language** of text and speech, and accept the interaction language from the calling system. | M |
 | FR-LANG-04 | The design shall allow **adding a new language through configuration** (translation files plus a model mapping) without code changes. | S |
 | FR-LANG-05 | The system shall tolerate **dialect variation and non-standard spelling** (e.g. Romanised Hindi spelled several ways). Evaluation shall include dialect samples. | S |
 | FR-LANG-06 | Responders shall see the original text **and** an English/Hindi translation, with the evidence phrase highlighted in both. | M |
+| FR-LANG-07 | The **whole website** (the public pages and portal journey of the demo layer, the login page and every staff portal) shall be available in English, Hindi, Marathi, Tamil and Bengali, with **English as the default**. A language switcher on every public page, the login page and the staff top bar changes the whole site; the choice is remembered in the browser (a cookie, no language prefix in URLs). The conversation's language is the site language when the interaction is created. Staff screens translate their labels, but always show case content as written, with the translation of FR-LANG-06 beside it. Non-English text stays marked as a draft until a native speaker has reviewed it (Phase P, P-D7). | M |
 
 ### 3.12 Case management and human review (FR-CASE)
 | ID | Requirement | Priority |
@@ -255,9 +256,13 @@ Long-term monitoring after the complaint is filed is covered by the sister probl
 | FR-API-04 | The API shall accept and return the **NHAA docket number** to link with existing records. | M |
 | FR-API-05 | The integration API shall be the module's **only input interface**. There is no victim-facing API; the module must run and be tested with the demo input layer switched off. | M |
 | FR-API-06 | The integration API shall offer a **case status** read (`GET /cases/{docket}/status`, scope `status:read`): status, dates and the support arranged, for the calling system's own cases only, and never a score, band, urgency, indicator or staff detail (task N.3). | M |
-| FR-DEMO-01 | The demo input layer shall be **public** and offer three inputs (type a message, speak, play a recording) from the home page; each goes through the integration API with the demo key; the page shows only that input was received, the scripted emergency options when raised, and at the end the docket ID (task N.7). | M |
+| FR-API-07 | The integration API shall offer a **next question** read (`GET /interactions/{id}/next-question`, scope `questions:read`) for the calling system's own interactions: `{ question: { key, text } \| null }`, where `key` is an `operatorQuestions.*` key and `text` its scripted wording in the interaction's language. The rules are the operator console's suggested-question rules (pure, in `core/operator/suggest.ts`): the opening question when there are no turns yet; then safety first, suicide questions on any sign, then what the evidence points at, then "say more"; never a question already asked as an `OPERATOR` turn in the interaction; `null` after six scripted questions or when nothing is left. It never returns the staff-facing reason, dimensions or any score. The module suggests; the calling system decides whether to ask (Phase P, task P.3). | M |
+| FR-DEMO-01 | The demo input layer shall be **public** and present a **portal journey**: Home → Before we begin (language, district, consent, "I'd rather talk to someone") → How to share (**Write** or **Speak**, chosen once) → Conversation → Review → Registered (docket ID) → Track. It offers exactly **two inputs**, live text and live microphone, and **no recordings**. Each goes through the integration API with the demo key. A portal page shows only the assistant's scripted questions, the person's own words, the scripted emergency options when raised, and at the end the docket ID; never a score, band, indicator or diagnostic wording (Phase P, P-D1 to P-D3, tasks P.2 and P.7). | M |
 | FR-DEMO-02 | A public **track a case** page shall show, for a docket ID of a demo case, the case status and the support arranged, through FR-API-06, and nothing diagnostic (task N.8). | M |
-| FR-DEMO-03 | The public demo shall be limited: a kill switch, same-site posts only, per-visitor and daily rate limits, a signed cookie so a browser reaches only its own cases, trimmed responses, one live microphone call at a time (task N.4, plan §7). | M |
+| FR-DEMO-03 | The public demo shall be limited: a kill switch, same-site posts only, per-visitor and daily rate limits (messages and next-question requests together), a signed cookie so a browser reaches only its own cases, trimmed responses, per-case caps (40 messages, six assistant questions, three minutes of speech, fifteen minutes in all), one live microphone call at a time that counts as over after 60 s with no activity (tasks N.4 and P.4, plan §7). | M |
+| FR-DEMO-04 | The portal's **assistant** shall ask only scripted, pre-translated questions (`operatorQuestions.*`), the next one chosen through FR-API-07, and label them as the assistant, never as a person or as AI. The person answers in their own words (no quick replies or Yes/No buttons), can skip any question and can finish at any time. Each question is recorded in the module as an `OPERATOR` turn **by the server**; the public message body has no `sender`, so a visitor can never send an `OPERATOR` turn (Phase P, P-D4, task P.4). | M |
+| FR-DEMO-05 | Before submitting, a **Review** step shall show the person their own words in order (for Speak, the caller's own transcribed words for each answer) with each assistant question above its answer, and let them add one note, sent as one more message. It never shows an AI summary or interpretation (Phase P, P-D5, task P.7). | M |
+| FR-DEMO-06 | Every public page shall show **NHAA helpline 14566** and **Emergency 112** (tap to call) and a **Quick exit** that replaces the page with a neutral site so Back does not return, and drops the conversation held in memory (Phase P, P-D6, task P.6). | M |
 
 ### 3.16 Audit and accountability (FR-AUD)
 | ID | Requirement | Priority |
@@ -312,7 +317,7 @@ Long-term monitoring after the complaint is filed is covered by the sister probl
 ### 4.5 Accessibility and usability (NFR-ACC)
 | ID | Requirement | Priority |
 |---|---|---|
-| NFR-ACC-01 | Staff screens and the public pages (home, demo, track, login) shall meet **WCAG 2.1 AA** (contrast, keyboard navigation, screen-reader labels). Victim-facing screens of NHAA's own systems belong to the calling system. | M |
+| NFR-ACC-01 | Staff screens and the public pages (home, the portal journey, track, login) shall meet **WCAG 2.1 AA** (contrast, keyboard navigation, screen-reader labels). Victim-facing screens of NHAA's own systems belong to the calling system. | M |
 | NFR-ACC-02 | ~~Low-literacy victim screens~~ *Removed 16 Nov 2026: the calling system's interface.* | – |
 | NFR-ACC-03 | ~~Victim flow on a low-end phone~~ *Removed 16 Nov 2026: the calling system's interface.* | – |
 | NFR-ACC-04 | Text the module returns for the person and the operator's suggested questions shall be written at a simple reading level and reviewed by native speakers per language. | S |
@@ -357,7 +362,7 @@ Long-term monitoring after the complaint is filed is covered by the sister probl
 | ID | Constraint |
 |---|---|
 | C-TEC-01 | Front end and API layer built with **Next.js (App Router) and TypeScript**. |
-| C-TEC-02 | Real telephony (actual calls to 14566) is not available. Voice calls are **simulated in the demo input layer** (browser microphone or the team's own recordings, sent through the integration API). Audio is never generated. |
+| C-TEC-02 | Real telephony (actual calls to 14566) is not available. Voice calls are **simulated in the demo input layer** (browser microphone only, sent through the integration API). Audio is never generated. |
 | C-TEC-03 | AI services are limited to **free or student tiers or open-source models**: for example an LLM API for NLP, Whisper or Bhashini for STT, and a lightweight audio feature library for pitch and pauses. |
 | C-TEC-04 | Browser microphone access requires HTTPS and user permission. The app must handle denial gracefully. |
 | C-TEC-05 | Accuracy of Indian-language STT varies, especially for dialects. Scoring must account for transcript confidence. |
@@ -467,6 +472,7 @@ Long-term monitoring after the complaint is filed is covered by the sister probl
 | AC-LANG-02 | FR-LANG-03 | Language auto-detection is correct for ≥ 90% of evaluation scenarios. |
 | AC-LANG-03 | FR-LANG-02 | Band accuracy for each language is reported; no required language falls more than 15 percentage points below English. |
 | AC-LANG-04 | FR-LANG-06 | Responders see the original text and the translation, with the evidence phrase highlighted in both. |
+| AC-LANG-05 | FR-LANG-07 | The site opens in English. Switching to Hindi changes every public page, the portal journey (including the assistant's questions), the login page and the staff portals' labels, and survives a reload; `npm run i18n:check` finds no missing key in the five message files. |
 
 ### 6.9 Case management, alerts and dashboards
 | ID | Linked FR | Criterion |
@@ -484,6 +490,7 @@ Long-term monitoring after the complaint is filed is covered by the sister probl
 |---|---|---|
 | AC-API-01 | FR-API-01, 04 | An API test script runs a full interaction (start → messages → SVI → recommendations → close) with a docket number and gets valid responses. |
 | AC-API-02 | FR-API-02 | Requests without a valid key get 401; requests over the rate limit get 429. |
+| AC-API-03 | FR-API-07 | Unit tests show: the opening question with no turns; asked questions never suggested again; safety first and `safePlace` after "not safe now"; suicide questions on any sign; `null` after six scripted questions; the response holds exactly `question.key` and `question.text`; another client's interaction gets 404 and a key without `questions:read` gets 403. |
 | AC-AUD-01 | FR-AUD-01, 02 | Viewing, editing and exporting a case each create an audit entry with user, time and action; AI outputs record model and config versions. |
 
 ### 6.11 Non-functional
