@@ -1,7 +1,10 @@
 import { PhoneCall } from "lucide-react";
 import type { EmergencyPanel as Panel } from "@/contracts/interaction";
 
-/** The one risk signal a person may see (CLAUDE.md rule 1): NHAA's scripted emergency options. */
+/**
+ * The one risk signal a person may see (CLAUDE.md rule 1): NHAA's scripted emergency options, in the
+ * conversation's language, as the module returned them. Opens at once and stays open (plan §6.3).
+ */
 export function EmergencyPanel({ panel }: { panel: Panel }) {
   return (
     <section role="alert" className="rounded-xl border-2 border-danger bg-danger-soft p-4" data-testid="emergency-panel">

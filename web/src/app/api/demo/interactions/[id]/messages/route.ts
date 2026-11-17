@@ -27,7 +27,8 @@ export const POST = publicDemoRoute({ body: DemoMessage, limit: "message", owned
   if (typed >= MAX_MESSAGES_PER_CASE) throw new ApiError("RATE_LIMITED", "This demo case has reached its message limit; press Submit to register it");
   const r = await callModule<MessageReply>(originOf(req), `/interactions/${id}/messages`, { json: { text: body.text, sender: "VICTIM", inputMethod: "TEXT" } });
   if (r.status !== 201 && r.status !== 200) passThrough(r.status, r.body?.code);
-  const question = body.note ? null : await askNext(originOf(req), id);
+  // The person's message is already recorded; if the next question cannot be read, they can still go on.
+  const question = body.note ? null : await askNext(originOf(req), id).catch(() => null);
   const receipt: DemoReceipt = {
     ok: true,
     showEmergencyPanel: r.body?.showEmergencyPanel === true,

@@ -17,3 +17,4 @@ Remove a row once its review is done.
 | `languageNames.*` | Each language named in its own script, for the language switcher (task P.5). Same in every file. | – / – / – / – |
 | `public.nav.*`, `public.header.*`, `public.home.*`, `public.footer.*`, `public.trackForm.*`, `public.meta.*` | Public header, footer, track form and page titles; the whole site switches language (task P.5, FR-LANG-07). | – / – / – / – |
 | `login.*` | The staff sign-in page (task P.5). | – / – / – / – |
+| `portal.*` | The portal journey: before we begin, consent wording, how to share, conversation, Speak, review, registered, errors (task P.7). | – / – / – / – |

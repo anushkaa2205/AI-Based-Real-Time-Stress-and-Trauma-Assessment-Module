@@ -1,5 +1,5 @@
 /** The seeded districts a demo case may belong to (NIVARA_FLOW_AND_UI_PLAN.md §8.4). Demo layer only. */
-import type { DistrictOption } from "@/components/demo/consent-fields";
+import type { DistrictOption } from "@/components/portal/consent-fields";
 import { db } from "@/lib/db";
 import { District, State } from "@/models";
 

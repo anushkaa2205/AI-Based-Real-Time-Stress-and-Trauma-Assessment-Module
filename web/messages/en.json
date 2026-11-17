@@ -168,5 +168,119 @@
     "another": "Use another account",
     "failed": "Sign-in failed. Check your details and try again.",
     "expired": "The sign-in took too long. Start again with your e-mail and password."
+  },
+  "portal": {
+    "notice": "Demonstration. Please don't enter real names, numbers or addresses.",
+    "stepsLabel": "Progress",
+    "steps": {
+      "begin": "Before we begin",
+      "share": "How to share",
+      "conversation": "Conversation",
+      "review": "Review",
+      "registered": "Registered"
+    },
+    "meta": {
+      "start": "Start",
+      "write": "Write",
+      "speak": "Speak"
+    },
+    "begin": {
+      "title": "Before we begin",
+      "p1": "What you share is read by trained helpline staff, to arrange support for you.",
+      "p2": "You can skip any question or stop at any time.",
+      "p3": "This is not a medical diagnosis.",
+      "language": "Language",
+      "languageHint": "The whole site and the questions will be in this language.",
+      "district": "Your district",
+      "districtHint": "So that the right district team receives your case.",
+      "consentTitle": "What you allow",
+      "continue": "Continue",
+      "talk": "I'd rather talk to someone",
+      "talkTitle": "You can talk to someone now",
+      "talkBody": "Call the NHAA helpline, or 112 in an emergency."
+    },
+    "consent": {
+      "textAnalysis": "Reading what you share",
+      "textAnalysisHint": "Your words are read with care to understand how urgent your situation is. Without this, only basic safety checks run.",
+      "voiceAnalysis": "Listening to how you speak",
+      "voiceAnalysisHint": "If you choose to speak, the tone of your voice (pauses, pitch and pace) is also used to understand how urgent your situation is. Your voice is not recorded or stored.",
+      "shareWithCounsellor": "Sharing with a counsellor",
+      "shareWithCounsellorHint": "A trained counsellor may read what you share.",
+      "followUpContact": "Follow-up",
+      "followUpContactHint": "Helpline staff may plan to follow up on your case."
+    },
+    "share": {
+      "title": "How would you like to share?",
+      "lead": "Choose one. It stays the same for this conversation.",
+      "write": "Write",
+      "writeBody": "Type in your own words, at your own pace.",
+      "speak": "Speak",
+      "speakBody": "Uses your microphone. Your voice is not recorded or stored.",
+      "speakNeedsConsent": "Speaking needs your permission to listen to how you speak. Go back to give it, or write instead.",
+      "starting": "Starting…",
+      "back": "Back",
+      "busy": "The line is busy. You can write instead, or try again in a few minutes.",
+      "takeover": "Take the line over (supervisor)"
+    },
+    "conv": {
+      "assistant": "Assistant",
+      "you": "You",
+      "sending": "Sending…",
+      "notSent": "Not sent. Please try again.",
+      "placeholder": "Write here… (Enter to send, Shift+Enter for a new line)",
+      "inputLabel": "Your message",
+      "send": "Send",
+      "skip": "Skip this question",
+      "finish": "Finish",
+      "languageNote": "The conversation stays in the language chosen at the start; changing the language changes only the screen."
+    },
+    "closing": "Thank you. You can add anything else, or press Finish when you are ready.",
+    "speak": {
+      "start": "Tap to speak",
+      "recording": "Listening",
+      "muted": "Muted",
+      "sending": "Sending…",
+      "mute": "Mute",
+      "unmute": "Unmute",
+      "done": "Done",
+      "questionNote": "Read the question, then tap to speak. Tap Done when you have finished.",
+      "heard": "We heard:",
+      "heardNothing": "We did not catch any words. You can speak again, or add a note on the Review step.",
+      "micRefused": "The microphone is not available. Allow it in your browser, or add what you want to say as a note on the Review step.",
+      "unavailable": "Listening is not available right now. You can add what you want to say as a note on the Review step.",
+      "needsConsent": "Speaking needs your permission to listen to how you speak."
+    },
+    "review": {
+      "title": "Review",
+      "lead": "These are your own words. Nothing else is added.",
+      "whatWeHeard": "What we heard",
+      "nothing": "Nothing has been shared yet. You can add a note below.",
+      "noteLabel": "Something wrong or missing? Add a note",
+      "noteHint": "Earlier answers can't be changed; your note reaches staff with them.",
+      "back": "Back to the conversation",
+      "submit": "Submit",
+      "submitting": "Submitting…"
+    },
+    "registered": {
+      "title": "Your case is registered",
+      "lead": "Keep this docket ID. Helpline staff will see your case.",
+      "copy": "Copy",
+      "copied": "Copied",
+      "track": "Track this case",
+      "home": "Back to home"
+    },
+    "lost": {
+      "title": "This conversation is no longer here",
+      "body": "The page was reloaded or left, so the conversation was cleared. You can start again.",
+      "again": "Start again"
+    },
+    "errors": {
+      "LINE_BUSY": "The line is busy. You can write instead, or try again in a few minutes.",
+      "RATE_LIMITED": "Please wait a little and try again.",
+      "CONSENT_REQUIRED": "That needs a permission you did not give. You can start again and give it.",
+      "INTERACTION_ENDED": "This conversation has reached its limit. Please go to Review and submit it.",
+      "NOT_FOUND": "This conversation could not be found. Please start again.",
+      "ANALYSIS_DEGRADED": "Something went wrong on our side. Please try again."
+    }
   }
 }

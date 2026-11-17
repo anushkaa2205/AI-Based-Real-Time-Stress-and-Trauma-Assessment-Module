@@ -63,6 +63,10 @@ const nextConfig: NextConfig = {
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
+  /** Phase P (plan §8.4): the old demo pages now live in the portal journey. */
+  async redirects() {
+    return ["/demo", "/demo/text", "/demo/call", "/demo/recording"].map((source) => ({ source, destination: "/start", permanent: true }));
+  },
 };
 
 export default withNextIntl(nextConfig);

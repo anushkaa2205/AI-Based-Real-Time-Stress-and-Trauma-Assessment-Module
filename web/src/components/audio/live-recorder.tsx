@@ -1,11 +1,16 @@
 "use client";
 
 /**
- * Live microphone recorder (task 7.1, FR-CH-03, C-TEC-04, NFR-REL-02), used by the public demo's
- * Speak page (tasks M.12, N.7). It knows nothing about the module's API: the caller passes `send`,
- * which delivers one window (the demo relays it server-side with its own API key, so no key ever
- * reaches the browser) and returns the HTTP response. It shows no transcript: a person sees only
- * that they are being heard, plus the emergency options (CLAUDE.md rule 1).
+ * Live microphone recorder (task 7.1, FR-CH-03, C-TEC-04, NFR-REL-02), used by the portal's Speak
+ * conversation (tasks M.12, N.7, P.7). It knows nothing about the module's API: the caller passes
+ * `send`, which delivers one window (the demo relays it server-side with its own API key, so no key
+ * ever reaches the browser) and returns the HTTP response; `onReply` receives each window's reply
+ * (since Phase P it carries the person's own heard words for "We heard"). It shows nothing about the
+ * assessment, only the emergency options (CLAUDE.md rule 1).
+ *
+ * Phase P, turn by turn: the person taps to speak, then Done. `windowIndex` and `startMs` continue
+ * across turns, and `startMs` counts speech only (not the time spent reading a question), so the
+ * three-minute cap is a cap on speech (`maxTotalMs`).
  *
  * Records in 5-second windows. Each window is a complete, separately decodable file
  * (the recorder is restarted every 5 s, because MediaRecorder timeslices after the
@@ -30,31 +35,25 @@ interface AudioReply {
   emergency: EmergencyPanel | null;
 }
 
-/** windowIndex and the call clock must be unique across the whole interaction, not one recording. */
-function clockFor(id: string): { nextIndex: () => number; offsetMs: () => number } {
-  const key = `nhaa-voice-${id}`;
-  let state = { next: 0, t0: Date.now() };
-  try {
-    const raw = sessionStorage.getItem(key);
-    if (raw) state = JSON.parse(raw) as typeof state;
-  } catch {
-    /* private mode: memory only */
+/**
+ * windowIndex and the speech clock must be unique across the whole interaction, not one recording.
+ * Held in memory only (the conversation is too): a reload starts a new conversation anyway.
+ */
+const clocks = new Map<string, { next: number; spokenMs: number }>();
+function clockFor(id: string) {
+  let state = clocks.get(id);
+  if (!state) {
+    state = { next: 0, spokenMs: 0 };
+    clocks.set(id, state);
   }
-  const save = () => {
-    try {
-      sessionStorage.setItem(key, JSON.stringify(state));
-    } catch {
-      /* ignore */
-    }
-  };
-  save();
+  const s = state;
   return {
-    nextIndex: () => {
-      const i = state.next++;
-      save();
-      return i;
+    nextIndex: () => s.next++,
+    /** Speech sent so far in this interaction, in ms */
+    spokenMs: () => s.spokenMs,
+    addSpoken: (ms: number) => {
+      s.spokenMs += Math.max(0, ms);
     },
-    offsetMs: () => Date.now() - state.t0,
   };
 }
 
@@ -89,21 +88,24 @@ export function LiveRecorder({
   interactionId,
   send,
   onEmergency,
+  onReply,
   onFinished,
   onFallback,
   labels = ENGLISH,
-  maxSeconds,
+  maxTotalMs,
 }: {
-  /** Used only to keep window numbers unique across recordings of one interaction. */
+  /** Keeps window numbers and the speech clock unique across the turns of one interaction. */
   interactionId: string;
   /** Delivers one window (fields `audio`, `windowIndex`, `startMs`); null on network failure. */
   send: (form: FormData) => Promise<Response | null>;
   onEmergency: (panel: EmergencyPanel) => void;
+  /** Each window's reply as the relay sent it */
+  onReply?: (reply: unknown) => void;
   onFinished: () => Promise<void>;
-  onFallback: (reason: "micRefused" | "unavailable" | "needsConsent") => void;
+  onFallback: (reason: "micRefused" | "unavailable" | "needsConsent" | "ended") => void;
   labels?: RecorderLabels;
-  /** Stops by itself after this many seconds (the public demo caps a call at three minutes). */
-  maxSeconds?: number;
+  /** Stops by itself once this much speech has been sent in the interaction (the portal caps it at three minutes). */
+  maxTotalMs?: number;
 }) {
   const t = (k: keyof RecorderLabels) => labels[k];
   const [phase, setPhase] = useState<"idle" | "recording" | "finishing">("idle");
@@ -144,6 +146,7 @@ export function LiveRecorder({
       const res = await send(form).catch(() => null);
       if (res?.status === 202 || res?.status === 200) {
         const r = (await res.json()) as AudioReply;
+        onReply?.(r);
         if (r.showEmergencyPanel && r.emergency) onEmergency(r.emergency);
         unanalysed.current = r.analysed ? 0 : unanalysed.current + 1;
         if (unanalysed.current >= MAX_UNANALYSED) {
@@ -154,9 +157,10 @@ export function LiveRecorder({
         return;
       }
       if (res?.status === 409) {
+        const code = ((await res.json().catch(() => null)) as { code?: string } | null)?.code;
         release();
         setPhase("idle");
-        onFallback("needsConsent");
+        onFallback(code === "INTERACTION_ENDED" ? "ended" : "needsConsent");
         return;
       }
       if (attempt >= RETRIES.length || (res && res.status >= 400 && res.status < 500 && res.status !== 429)) {
@@ -177,11 +181,13 @@ export function LiveRecorder({
     const rec = new MediaRecorder(stream.current, mime ? { mimeType: mime } : undefined);
     recorder.current = rec;
     const parts: Blob[] = [];
-    const startMs = clock.current!.offsetMs();
+    const startMs = clock.current!.spokenMs();
+    const began = Date.now();
     rec.ondataavailable = (e) => {
       if (e.data.size) parts.push(e.data);
     };
     rec.onstop = () => {
+      clock.current!.addSpoken(Math.min(WINDOW_MS, Date.now() - began));
       const blob = new Blob(parts, { type: rec.mimeType || mime || "audio/webm" });
       if (blob.size > 0) {
         const idx = clock.current!.nextIndex();
@@ -205,16 +211,23 @@ export function LiveRecorder({
       return;
     }
     clock.current = clockFor(interactionId);
+    if (maxTotalMs && clock.current.spokenMs() >= maxTotalMs) {
+      stream.current.getTracks().forEach((tr) => tr.stop());
+      stream.current = null;
+      onFallback("ended");
+      return;
+    }
     unanalysed.current = 0;
     running.current = true;
-    setElapsed(0);
+    const before = clock.current.spokenMs();
+    setElapsed(Math.floor(before / 1000));
     setPhase("recording");
     const t0 = Date.now();
     const tick = () => {
       if (!running.current) return;
-      const s = Math.floor((Date.now() - t0) / 1000);
-      setElapsed(s);
-      if (maxSeconds && s >= maxSeconds) {
+      const total = before + (Date.now() - t0);
+      setElapsed(Math.floor(total / 1000));
+      if (maxTotalMs && total >= maxTotalMs) {
         void stop();
         return;
       }
@@ -265,7 +278,7 @@ export function LiveRecorder({
         <span className="text-lg font-semibold">{phase === "finishing" ? t("sending") : muted ? t("muted") : t("recording")}</span>
         <span className="num text-2xl text-ink-2">
           {mm}:{ss}
-          {maxSeconds ? <span className="text-sm text-ink-3"> / {Math.floor(maxSeconds / 60)}:00</span> : null}
+          {maxTotalMs ? <span className="text-sm text-ink-3"> / {Math.floor(maxTotalMs / 60_000)}:00</span> : null}
         </span>
       </p>
       <div className="flex w-full gap-3 sm:w-auto">
