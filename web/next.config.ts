@@ -1,5 +1,9 @@
 import { resolve } from "node:path";
 import type { NextConfig } from "next";
+import createNextIntlPlugin from "next-intl/plugin";
+
+/** Site-wide languages (Phase P, task P.5): the request config reads the NEXT_LOCALE cookie. */
+const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 const isDev = process.env.NODE_ENV !== "production";
 
@@ -61,4 +65,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withNextIntl(nextConfig);

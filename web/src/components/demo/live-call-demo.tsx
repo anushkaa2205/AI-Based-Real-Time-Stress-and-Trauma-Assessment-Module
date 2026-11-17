@@ -6,11 +6,12 @@
  * with the demo key, as the caller's own channel. One live call at a time; a call lasts at most three
  * minutes; audio is never stored. The page shows only that it is listening (rule 1).
  */
+import { useLocale } from "next-intl";
 import { Keyboard } from "lucide-react";
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { LiveRecorder } from "@/components/audio/live-recorder";
-import type { VictimLang } from "@/contracts/interaction";
+import { toVictimLang, type VictimLang } from "@/contracts/interaction";
 import { MAX_LIVE_CALL_MS } from "@/core/demo/limits";
 import { ConsentFields, DEFAULT_DISTRICT, DistrictSelect, FULL_CONSENT, LanguageSelect, type DemoConsent, type DistrictOption } from "./consent-fields";
 import { DemoShell } from "./demo-shell";
@@ -24,7 +25,8 @@ const LEAD = "Talk into your microphone as a caller would. Five-second windows g
 
 export function LiveCallDemo({ districts, canTakeOver }: { districts: DistrictOption[]; canTakeOver: boolean }) {
   const demo = useDemoCase();
-  const [language, setLanguage] = useState<VictimLang>("en");
+  const locale = useLocale();
+  const [language, setLanguage] = useState<VictimLang>(toVictimLang(locale));
   const [district, setDistrict] = useState(districts.some((d) => d.code === DEFAULT_DISTRICT) ? DEFAULT_DISTRICT : (districts[0]?.code ?? ""));
   const [consent, setConsent] = useState<DemoConsent>({ ...FULL_CONSENT, voiceAnalysis: true });
   const [fallback, setFallback] = useState<string | null>(null);

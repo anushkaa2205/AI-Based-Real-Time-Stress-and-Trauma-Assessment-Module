@@ -7,10 +7,11 @@
  * scripted, chosen by the module's rules and recorded by the server as OPERATOR turns (P-D4). The AI
  * never writes them (rule 2), and the page shows nothing about the assessment (rule 1).
  */
+import { useLocale } from "next-intl";
 import { AlertCircle, Bot, Send, User } from "lucide-react";
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import type { DemoNextQuestion, DemoQuestion, DemoReceipt } from "@/contracts/demo";
-import type { VictimLang } from "@/contracts/interaction";
+import { toVictimLang, type VictimLang } from "@/contracts/interaction";
 import { ConsentFields, DEFAULT_DISTRICT, DistrictSelect, FULL_CONSENT, LanguageSelect, type DemoConsent, type DistrictOption } from "./consent-fields";
 import { DemoShell } from "./demo-shell";
 import { EmergencyPanel } from "./emergency-panel";
@@ -31,7 +32,8 @@ const LEAD = "Write as a person would in NHAA's chat. Each message goes to the m
 
 export function LiveTextDemo({ districts }: { districts: DistrictOption[] }) {
   const demo = useDemoCase();
-  const [language, setLanguage] = useState<VictimLang>("en");
+  const locale = useLocale();
+  const [language, setLanguage] = useState<VictimLang>(toVictimLang(locale));
   const [district, setDistrict] = useState(districts.some((d) => d.code === DEFAULT_DISTRICT) ? DEFAULT_DISTRICT : (districts[0]?.code ?? ""));
   const [consent, setConsent] = useState<DemoConsent>(FULL_CONSENT);
   const [lines, setLines] = useState<ChatLine[]>([]);

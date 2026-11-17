@@ -53,5 +53,65 @@
       "REHABILITATION_RELIEF": "Rehabilitation and relief have been arranged",
       "INFORMATION": "Information has been shared with you"
     }
+  },
+  "languageNames": {
+    "en": "English",
+    "hi": "हिन्दी",
+    "mr": "मराठी",
+    "ta": "தமிழ்",
+    "bn": "বাংলা"
+  },
+  "public": {
+    "nav": {
+      "home": "Nivara home",
+      "site": "Site",
+      "howItWorks": "How it works",
+      "track": "Track a case",
+      "api": "API",
+      "staffLogin": "Staff login",
+      "openPortal": "Open my portal",
+      "menuOpen": "Open menu",
+      "menuClose": "Close menu",
+      "language": "Language"
+    },
+    "footer": {
+      "about": "A real-time stress and trauma assessment module for the National Helpline Against Atrocities (14566). Smart India Hackathon 2026, problem statement SIH26093, Ministry of Social Justice and Empowerment.",
+      "demoTitle": "Demonstration",
+      "demoBody": "Demonstration. Do not enter real names, numbers or addresses.",
+      "helpTitle": "If you need help",
+      "helpBody": "Call the National Helpline Against Atrocities at 14566, or emergency services at 112.",
+      "integrators": "For integrators: API documentation"
+    },
+    "trackForm": {
+      "label": "Docket ID",
+      "button": "Track",
+      "invalid": "A docket ID looks like NHAA-2026-MH-004512.",
+      "eyebrow": "Track a case",
+      "loading": "Loading",
+      "progress": "Progress"
+    },
+    "meta": {
+      "track": "Track a case",
+      "login": "Staff sign in"
+    }
+  },
+  "login": {
+    "home": "Nivara home",
+    "tagline": "Who needs you first.",
+    "lead": "Sign in to your role's portal: the queue in risk order, the evidence behind each case, the proposals waiting for a decision.",
+    "staffOnly": "For helpline staff only. Every sign-in is recorded.",
+    "back": "Back to home",
+    "title": "Staff sign in",
+    "leadPassword": "Use the e-mail and password you were given.",
+    "leadTotp": "Enter the 6-digit code from your authenticator app.",
+    "email": "E-mail",
+    "password": "Password",
+    "checking": "Checking…",
+    "continue": "Continue",
+    "code": "Authenticator code",
+    "signIn": "Sign in",
+    "another": "Use another account",
+    "failed": "Sign-in failed. Check your details and try again.",
+    "expired": "The sign-in took too long. Start again with your e-mail and password."
   }
 }

@@ -6,6 +6,7 @@
  */
 import Link from "next/link";
 import { Check, CircleDashed } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import type { CaseStatusResponse } from "@/contracts/integration";
 import { CASE_STATUSES } from "@/models/enums";
@@ -27,12 +28,13 @@ export type TrackMessages = {
 
 type State = { kind: "loading" } | { kind: "ok"; data: CaseStatusResponse } | { kind: "notFound" } | { kind: "error" };
 
-function fmt(iso: string): string {
-  return new Date(iso).toLocaleString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" });
+function fmt(iso: string, locale: string): string {
+  return new Date(iso).toLocaleString(`${locale}-IN`, { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" });
 }
 
 export function TrackResult({ docket, t }: { docket: string; t: TrackMessages }) {
   const [state, setState] = useState<State>({ kind: "loading" });
+  const f = useTranslations("public.trackForm");
 
   useEffect(() => {
     let live = true;
@@ -52,7 +54,7 @@ export function TrackResult({ docket, t }: { docket: string; t: TrackMessages })
   return (
     <main className="mx-auto flex w-full max-w-xl flex-1 flex-col gap-6 px-5 py-10 md:py-16">
       <div>
-        <p className="eyebrow">Track a case</p>
+        <p className="eyebrow">{f("eyebrow")}</p>
         <h1 className="page-title mt-2">{t.title}</h1>
         <p className="num mt-2 text-lg tracking-wider text-ink-2" data-testid="track-docket">
           {docket}
@@ -60,7 +62,7 @@ export function TrackResult({ docket, t }: { docket: string; t: TrackMessages })
       </div>
 
       {state.kind === "loading" && (
-        <div className="card card-pad flex flex-col gap-3" aria-busy="true" aria-label="Loading">
+        <div className="card card-pad flex flex-col gap-3" aria-busy="true" aria-label={f("loading")}>
           <div className="skeleton h-5 w-2/3" />
           <div className="skeleton h-4 w-1/2" />
           <div className="skeleton mt-3 h-24 w-full" />
@@ -91,9 +93,11 @@ export function TrackResult({ docket, t }: { docket: string; t: TrackMessages })
 
 function Progress({ data, t }: { data: CaseStatusResponse; t: TrackMessages }) {
   const current = CASE_STATUSES.indexOf(data.status);
+  const locale = useLocale();
+  const f = useTranslations("public.trackForm");
   return (
     <section className="card card-pad flex flex-col gap-6" data-testid="track-result" data-status={data.status}>
-      <ol className="flex flex-col gap-0" aria-label="Progress">
+      <ol className="flex flex-col gap-0" aria-label={f("progress")}>
         {CASE_STATUSES.map((s, i) => {
           const done = i < current;
           const active = i === current;
@@ -109,12 +113,12 @@ function Progress({ data, t }: { data: CaseStatusResponse; t: TrackMessages }) {
                 <p className={`${active ? "text-lg font-semibold text-ink" : done ? "font-medium text-ink-2" : "text-ink-3"}`}>{t.status[s] ?? s}</p>
                 {i === 0 && (
                   <p className="hint">
-                    {t.registeredOn} {fmt(data.registeredAt)}
+                    {t.registeredOn} {fmt(data.registeredAt, locale)}
                   </p>
                 )}
                 {active && i > 0 && (
                   <p className="hint">
-                    {t.updatedOn} {fmt(data.updatedAt)}
+                    {t.updatedOn} {fmt(data.updatedAt, locale)}
                   </p>
                 )}
               </div>

@@ -8,23 +8,26 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ArrowRight, LogIn } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { LanguageSwitcher } from "@/components/ui/language-switcher";
 import { MobileMenu } from "./mobile-menu";
 import { Wordmark } from "./wordmark";
 
 export function SiteNav({ signedIn, demoOn }: { signedIn: boolean; demoOn: boolean }) {
   const dark = usePathname() === "/";
+  const t = useTranslations("public.nav");
   const links = [
-    { href: "/#how-it-works", label: "How it works" },
-    ...(demoOn ? [{ href: "/track", label: "Track a case" }] : []),
-    { href: "/api/docs", label: "API" },
+    { href: "/#how-it-works", label: t("howItWorks") },
+    ...(demoOn ? [{ href: "/track", label: t("track") }] : []),
+    { href: "/api/docs", label: t("api") },
   ];
   return (
     <header className={`${dark ? "bg-night text-white" : "bg-paper/90 text-ink backdrop-blur"} sticky top-0 z-30 ${dark ? "" : "border-b border-line"}`}>
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between gap-4 px-5 md:px-8">
-        <Link href="/" className="no-underline" aria-label="Nivara home">
+        <Link href="/" className="no-underline" aria-label={t("home")}>
           <Wordmark tone={dark ? "light" : "dark"} />
         </Link>
-        <nav aria-label="Site" className="hidden items-center gap-7 md:flex">
+        <nav aria-label={t("site")} className="hidden items-center gap-7 md:flex">
           {links.map((l) => (
             <Link key={l.href} href={l.href} className={`text-sm font-medium no-underline transition-colors ${dark ? "text-white/75 hover:text-white" : "text-ink-2 hover:text-ink"}`}>
               {l.label}
@@ -32,13 +35,14 @@ export function SiteNav({ signedIn, demoOn }: { signedIn: boolean; demoOn: boole
           ))}
         </nav>
         <div className="flex items-center gap-2">
+          <LanguageSwitcher tone={dark ? "light" : "dark"} className="hidden sm:inline-flex" />
           {signedIn ? (
             <Link href="/staff" className={`btn btn-sm ${dark ? "btn-ghost-light" : "btn-secondary"}`} data-testid="nav-portal">
-              Open my portal <ArrowRight className="size-4" aria-hidden />
+              {t("openPortal")} <ArrowRight className="size-4" aria-hidden />
             </Link>
           ) : (
             <Link href="/login" className={`btn btn-sm ${dark ? "btn-ghost-light" : "btn-primary"}`} data-testid="nav-staff-login">
-              <LogIn className="size-4" aria-hidden /> Staff login
+              <LogIn className="size-4" aria-hidden /> {t("staffLogin")}
             </Link>
           )}
           <MobileMenu links={links} dark={dark} />

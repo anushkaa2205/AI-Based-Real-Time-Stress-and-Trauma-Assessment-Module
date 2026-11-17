@@ -3,6 +3,7 @@
 /** Docket ID field (plan §6.2 item 4, §6.4): opens /track/<docket>. */
 import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState, type FormEvent } from "react";
 import { DOCKET_PATTERN } from "@/core/cases/docket";
 
@@ -10,11 +11,12 @@ export function TrackForm({ initial = "", autoFocus = false }: { initial?: strin
   const router = useRouter();
   const [value, setValue] = useState(initial);
   const [error, setError] = useState<string | null>(null);
+  const t = useTranslations("public.trackForm");
 
   function submit(e: FormEvent) {
     e.preventDefault();
     const docket = value.trim().toUpperCase();
-    if (!DOCKET_PATTERN.test(docket)) return setError("A docket ID looks like NHAA-2026-MH-004512.");
+    if (!DOCKET_PATTERN.test(docket)) return setError(t("invalid"));
     setError(null);
     router.push(`/track/${docket}`);
   }
@@ -22,7 +24,7 @@ export function TrackForm({ initial = "", autoFocus = false }: { initial?: strin
   return (
     <form onSubmit={submit} className="flex flex-col gap-2" data-testid="track-form">
       <label htmlFor="docket" className="label">
-        Docket ID
+        {t("label")}
       </label>
       <div className="flex flex-col gap-2 sm:flex-row">
         <input
@@ -40,7 +42,7 @@ export function TrackForm({ initial = "", autoFocus = false }: { initial?: strin
           aria-describedby={error ? "docket-error" : undefined}
         />
         <button type="submit" className="btn btn-primary min-h-11">
-          <Search className="size-4" aria-hidden /> Track
+          <Search className="size-4" aria-hidden /> {t("button")}
         </button>
       </div>
       {error && (

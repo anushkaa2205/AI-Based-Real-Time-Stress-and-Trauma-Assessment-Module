@@ -1,4 +1,6 @@
 import type { Metadata, Viewport } from "next";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages } from "next-intl/server";
 import { Fraunces, IBM_Plex_Mono, IBM_Plex_Sans, Noto_Sans_Bengali, Noto_Sans_Devanagari, Noto_Sans_Tamil } from "next/font/google";
 import "./globals.css";
 
@@ -18,10 +20,16 @@ export const metadata: Metadata = {
   description: "Nivara: a real-time stress and trauma assessment module for the National Helpline Against Atrocities (14566).",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+/** The site language (Phase P, P-D7) comes from the NEXT_LOCALE cookie; `<html lang>` follows it. */
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const [locale, messages] = await Promise.all([getLocale(), getMessages()]);
   return (
-    <html lang="en" className={`${fraunces.variable} ${plex.variable} ${plexMono.variable} ${deva.variable} ${taml.variable} ${beng.variable} h-full antialiased`}>
-      <body className="flex min-h-full flex-col">{children}</body>
+    <html lang={locale} className={`${fraunces.variable} ${plex.variable} ${plexMono.variable} ${deva.variable} ${taml.variable} ${beng.variable} h-full antialiased`}>
+      <body className="flex min-h-full flex-col">
+        <NextIntlClientProvider locale={locale} messages={messages} timeZone="Asia/Kolkata">
+          {children}
+        </NextIntlClientProvider>
+      </body>
     </html>
   );
 }
