@@ -1,6 +1,6 @@
 /**
  * Accessibility (task 9.4, AC-ACC-01, NFR-ACC-01; extended in N.11): axe-core WCAG 2.1 A/AA rules on the
- * public pages (home, demo, track), the sign-in page and the staff dashboards, plus a keyboard-only
+ * public pages (home, the portal journey, track), the sign-in page and the staff dashboards, plus a keyboard-only
  * pass on sign-in. A screen-reader session still needs a person.
  */
 import AxeBuilder from "@axe-core/playwright";
@@ -22,9 +22,19 @@ test("public pages, sign-in and staff dashboards have no WCAG 2.1 AA violations 
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   await audit(page, "home");
   if (process.env.DEMO_ENABLED === "true") {
-    await page.goto("/demo/text");
-    await expect(page.getByTestId("consent-step")).toBeVisible();
-    await audit(page, "demo: type a message");
+    // The portal journey (P.9): Before we begin, How to share, and both conversation pages.
+    await page.goto("/start");
+    await expect(page.getByTestId("begin")).toBeVisible();
+    await audit(page, "portal: before we begin");
+    await page.getByTestId("continue").click();
+    await expect(page.getByTestId("share")).toBeVisible();
+    await audit(page, "portal: how to share");
+    await page.goto("/start/write");
+    await expect(page.getByTestId("portal-lost").or(page.getByTestId("chat"))).toBeVisible();
+    await audit(page, "portal: write");
+    await page.goto("/start/speak");
+    await expect(page.getByTestId("portal-lost").or(page.getByTestId("chat"))).toBeVisible();
+    await audit(page, "portal: speak");
     await page.goto("/track");
     await audit(page, "track");
   }
