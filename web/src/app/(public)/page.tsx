@@ -1,38 +1,45 @@
 /**
- * Home page (NIVARA_FLOW_AND_UI_PLAN.md §6.2, task N.6). Part of the demo input layer: it explains
- * the module and starts the demo. Never a score, band, indicator or staff screenshot (rule 1), and
- * no invented numbers, testimonials or logos (PRODUCT_VISION.md §9). With the demo off, the
- * starter and the track field are hidden and the module is unaffected (FR-API-05).
+ * Home page (Phase P, task P.6; NIVARA_FLOW_AND_UI_PLAN.md §6.2). A reference portal built on Nivara,
+ * part of the demo input layer. The hero speaks to the person and has one main action, Start. Never a
+ * score, band, indicator or staff screenshot (rule 1), and no invented numbers, testimonials or logos.
+ * With the demo off, Start and the track field are hidden and the module is unaffected (FR-API-05).
+ * All text comes from messages/*.json in the site language (P-D7).
  */
 import Link from "next/link";
-import { ArrowRight, Code2, MessageSquareText, Mic } from "lucide-react";
+import { ArrowRight, Bot, Globe2, MessagesSquare, Phone, PhoneCall, Smartphone, Users } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { TrackForm } from "@/components/public/track-form";
 import { demoEnabled } from "@/core/demo/client";
 
-export const metadata = { title: "Nivara · Stress and trauma assessment for the 14566 helpline" };
+export const dynamic = "force-dynamic";
 
-const INPUTS = [
-  { href: "/demo/text", icon: MessageSquareText, title: "Type a message", body: "Write as a person would in NHAA's chat.", testId: "start-text" },
-  { href: "/demo/call", icon: Mic, title: "Speak", body: "Talk into your microphone, as on a helpline call.", testId: "start-call" },
-] as const;
+export async function generateMetadata() {
+  return { title: { absolute: (await getTranslations("public.home"))("metaTitle") } };
+}
 
-const STEPS = [
-  { n: "01", title: "NHAA's own channel sends what the person said", body: "The chatbot, helpline, IVRS, app or operator desk keeps the conversation and the consent. It sends the text or the audio to Nivara through one integration API." },
-  { n: "02", title: "Nivara reads the warning signs and works out urgency", body: "Safety rules run on every message, before and regardless of the AI. The AI finds indicators with the exact words as evidence; deterministic rules turn them into a stress vulnerability index and a risk band." },
-  { n: "03", title: "Trained staff see the most urgent people first", body: "Counsellors get a queue in risk order with live alerts. Every action is a proposal until a human approves it. Police and welfare teams receive only the referral meant for them." },
-] as const;
-
-const ROLES = [
-  ["Operator", "follows a live chat or call with suggested questions and the emergency state."],
-  ["Counsellor", "works the queue in risk order, reads the evidence, approves or rejects support."],
-  ["Supervisor", "everything a counsellor sees, plus the operator console and oversight."],
-  ["District officer", "cases of their own district; decides police and protection proposals."],
-  ["Police liaison", "only the approved referral: no narrative, no score."],
-  ["Welfare officer", "only the approved welfare referral."],
-] as const;
-
-export default function HomePage() {
+export default async function HomePage() {
   const demoOn = demoEnabled();
+  const t = await getTranslations("public.home");
+  const steps = [
+    { n: "01", title: t("step1Title"), body: t("step1Body") },
+    { n: "02", title: t("step2Title"), body: t("step2Body") },
+    { n: "03", title: t("step3Title"), body: t("step3Body") },
+  ];
+  const roles = [
+    { who: t("roleCounsellor"), what: t("roleCounsellorBody") },
+    { who: t("roleOperator"), what: t("roleOperatorBody") },
+    { who: t("roleDistrict"), what: t("roleDistrictBody") },
+    { who: t("rolePolice"), what: t("rolePoliceBody") },
+    { who: t("roleAnalytics"), what: t("roleAnalyticsBody") },
+  ];
+  const sources = [
+    { icon: Globe2, label: t("sourcePortal"), here: true },
+    { icon: PhoneCall, label: t("sourceHelpline") },
+    { icon: Phone, label: t("sourceIvrs") },
+    { icon: Bot, label: t("sourceChatbot") },
+    { icon: Smartphone, label: t("sourceApp") },
+  ];
+
   return (
     <>
       {/* Hero */}
@@ -41,72 +48,40 @@ export default function HomePage() {
           <div className="absolute -right-40 -top-40 size-[34rem] rounded-full bg-brand/40 blur-3xl" />
           <div className="absolute -bottom-48 -left-24 size-[26rem] rounded-full bg-marigold/10 blur-3xl" />
         </div>
-        <div className="relative mx-auto grid w-full max-w-6xl gap-12 px-5 pb-20 pt-16 md:grid-cols-[1.15fr_0.85fr] md:items-center md:px-8 md:pb-28 md:pt-24">
-          <div className="flex flex-col gap-6">
-            <p className="rise eyebrow text-marigold">Assessment module for the NHAA helpline 14566</p>
-            <h1 className="display rise rise-2 text-4xl text-white md:text-[3.5rem]">
-              Hear the distress <span className="text-marigold">before</span> it is said in so many words.
-            </h1>
-            <p className="rise rise-3 max-w-xl text-lg leading-relaxed text-white/75">
-              Nivara listens to what a person tells the helpline, in text or in their own voice, and tells trained staff who needs them first. It plugs into
-              NHAA&apos;s existing systems; it never questions the person, and a human approves every action.
-            </p>
-            {!demoOn && (
-              <div className="rise rise-3 flex flex-wrap gap-3">
-                <Link href="/login" className="btn btn-accent">
-                  Staff login <ArrowRight className="size-4" aria-hidden />
+        <div className="relative mx-auto flex w-full max-w-6xl flex-col gap-6 px-5 pb-20 pt-16 md:px-8 md:pb-28 md:pt-24">
+          <p className="rise eyebrow text-marigold">{t("label")}</p>
+          <h1 className="display rise rise-2 max-w-3xl text-4xl text-white md:text-[3.5rem] md:leading-[1.08]">{t("headline")}</h1>
+          <p className="rise rise-3 max-w-xl text-lg leading-relaxed text-white/75">{t("lead")}</p>
+          {demoOn ? (
+            <div className="rise rise-3 flex flex-col gap-4" data-testid="hero-actions">
+              <div className="flex flex-wrap items-center gap-4">
+                <Link href="/start" className="btn btn-accent btn-lg" data-testid="start">
+                  {t("start")} <ArrowRight className="size-5" aria-hidden />
                 </Link>
-                <Link href="/#how-it-works" className="btn btn-ghost-light">
-                  How it works
+                <Link href="/track" className="text-sm font-medium text-white/80 underline-offset-4 hover:text-white" data-testid="hero-track">
+                  {t("trackLink")}
                 </Link>
               </div>
-            )}
-          </div>
-
-          {demoOn && (
-            <div className="rise rise-3 card card-raise flex flex-col gap-4 p-5 md:p-6" data-testid="demo-starter">
-              <div>
-                <p className="section-title">Try the demo</p>
-                <h2 className="mt-1 text-xl font-semibold text-ink">File a demo case as a caller would</h2>
-                <p className="hint mt-1">Synthetic data only. You get a docket ID, never a score; staff see the assessment on their side.</p>
-              </div>
-              <ul className="flex flex-col gap-2">
-                {INPUTS.map((m) => (
-                  <li key={m.href}>
-                    <Link
-                      href={m.href}
-                      data-testid={m.testId}
-                      className="group flex items-center gap-4 rounded-xl border border-line bg-surface px-4 py-3.5 no-underline transition-all hover:-translate-y-px hover:border-brand hover:shadow-raise"
-                    >
-                      <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-brand-soft text-brand">
-                        <m.icon className="size-5" aria-hidden />
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block font-semibold text-ink">{m.title}</span>
-                        <span className="block text-sm text-ink-2">{m.body}</span>
-                      </span>
-                      <ArrowRight className="size-4 shrink-0 text-ink-3 transition-transform group-hover:translate-x-0.5 group-hover:text-brand" aria-hidden />
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-              <p className="text-xs text-ink-3">
-                Already have a docket ID?{" "}
-                <Link href="/track" className="link">
-                  Track your case
-                </Link>
+              <p className="text-sm text-white/65">
+                <a href="tel:14566" className="text-white/80 underline-offset-4 hover:text-white">
+                  {t("preferTalk")}
+                </a>
               </p>
             </div>
+          ) : (
+            <p className="rise rise-3 max-w-xl rounded-xl border border-white/15 px-4 py-3 text-white/80" data-testid="demo-off">
+              {t("demoOff")}
+            </p>
           )}
         </div>
       </section>
 
-      {/* How it works */}
+      {/* How it works, for the person */}
       <section id="how-it-works" className="mx-auto w-full max-w-6xl scroll-mt-20 px-5 py-20 md:px-8 md:py-28">
-        <p className="eyebrow">How it works</p>
-        <h2 className="display mt-3 max-w-2xl text-3xl md:text-4xl">The module is the product. Everything else is a channel.</h2>
+        <p className="eyebrow">{t("howEyebrow")}</p>
+        <h2 className="display mt-3 max-w-2xl text-3xl md:text-4xl">{t("howTitle")}</h2>
         <ol className="mt-12 grid gap-10 md:grid-cols-3 md:gap-8">
-          {STEPS.map((s) => (
+          {steps.map((s) => (
             <li key={s.n} className="flex flex-col gap-3 border-t border-line pt-5">
               <span className="num text-sm text-brand">{s.n}</span>
               <h3 className="text-lg font-semibold leading-snug text-ink">{s.title}</h3>
@@ -114,64 +89,69 @@ export default function HomePage() {
             </li>
           ))}
         </ol>
-        <p className="mt-10 max-w-3xl text-sm text-ink-3">
-          Two safety paths run independently: a rule-based safety lexicon on every message, and the AI analysis. If the AI is unavailable, the rules still run and the
-          case is still registered. Scores, bands and warning signs are shown to staff only, never to the person.
-        </p>
       </section>
 
-      {/* Who sees what */}
+      {/* Who sees what you share */}
       <section className="border-y border-line bg-surface">
-        <div className="mx-auto w-full max-w-6xl px-5 py-20 md:px-8 md:py-24">
-          <div className="grid gap-10 md:grid-cols-[0.8fr_1.2fr]">
-            <div>
-              <p className="eyebrow">Who sees what</p>
-              <h2 className="display mt-3 text-3xl md:text-4xl">One login, a portal for each role.</h2>
-              <p className="mt-4 max-w-md text-[0.9375rem] leading-relaxed text-ink-2">
-                Each role signs in on the same page and lands on its own portal. What a role can read is enforced on the server, not only hidden on the screen.
-              </p>
-              <Link href="/login" className="btn btn-primary mt-6">
-                Staff login <ArrowRight className="size-4" aria-hidden />
-              </Link>
-            </div>
-            <dl className="grid gap-x-8 gap-y-5 sm:grid-cols-2">
-              {ROLES.map(([role, body]) => (
-                <div key={role} className="border-l-2 border-brand-soft pl-4">
-                  <dt className="font-semibold text-ink">{role}</dt>
-                  <dd className="mt-0.5 text-sm leading-relaxed text-ink-2">{body}</dd>
-                </div>
-              ))}
-            </dl>
+        <div className="mx-auto grid w-full max-w-6xl gap-10 px-5 py-20 md:grid-cols-[0.85fr_1.15fr] md:px-8 md:py-24">
+          <div>
+            <p className="eyebrow">{t("whoEyebrow")}</p>
+            <h2 className="display mt-3 text-3xl md:text-4xl">{t("whoTitle")}</h2>
+            <p className="mt-4 max-w-md text-[0.9375rem] leading-relaxed text-ink-2">{t("whoLead")}</p>
+          </div>
+          <ul className="flex flex-col divide-y divide-line" data-testid="who-sees">
+            {roles.map((r) => (
+              <li key={r.who} className="flex gap-3 py-4 first:pt-0">
+                <Users className="mt-0.5 size-4 shrink-0 text-brand" aria-hidden />
+                <p className="text-[0.9375rem] leading-relaxed text-ink-2">
+                  <span className="font-semibold text-ink">{r.who}</span> {r.what}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      {/* The engine behind this portal */}
+      <section className="mx-auto w-full max-w-6xl px-5 py-20 md:px-8 md:py-24">
+        <p className="eyebrow">{t("engineEyebrow")}</p>
+        <h2 className="display mt-3 max-w-2xl text-3xl md:text-4xl">{t("engineTitle")}</h2>
+        <p className="mt-4 max-w-2xl text-[0.9375rem] leading-relaxed text-ink-2">{t("engineLead")}</p>
+        <div className="mt-10 grid items-center gap-4 md:grid-cols-[1fr_auto_1fr_auto_1fr]" aria-hidden data-testid="engine-diagram">
+          <ul className="flex flex-col gap-2">
+            {sources.map((s) => (
+              <li key={s.label} className={`flex items-center gap-2.5 rounded-lg border px-3 py-2 text-sm ${s.here ? "border-brand bg-brand-soft font-semibold text-brand" : "border-line bg-surface text-ink-2"}`}>
+                <s.icon className="size-4 shrink-0" /> {s.label}
+              </li>
+            ))}
+          </ul>
+          <ArrowRight className="mx-auto size-5 rotate-90 text-ink-3 md:rotate-0" />
+          <div className="rounded-xl bg-night px-5 py-6 text-center text-white">
+            <p className="display text-2xl">{t("engineCore")}</p>
+            <p className="mt-1 text-sm text-white/70">{t("engineCoreBody")}</p>
+          </div>
+          <ArrowRight className="mx-auto size-5 rotate-90 text-ink-3 md:rotate-0" />
+          <div className="rounded-xl border border-line bg-surface px-5 py-6 text-center">
+            <MessagesSquare className="mx-auto size-5 text-brand" />
+            <p className="mt-2 font-semibold text-ink">{t("engineStaff")}</p>
+            <p className="mt-1 text-sm text-ink-2">{t("engineStaffBody")}</p>
           </div>
         </div>
       </section>
 
-      {/* Track + integrators */}
-      <section className="mx-auto grid w-full max-w-6xl gap-10 px-5 py-20 md:grid-cols-2 md:px-8 md:py-24">
-        {demoOn && (
-          <div id="track" className="card card-pad flex flex-col gap-4 scroll-mt-20">
+      {/* Track a case */}
+      {demoOn && (
+        <section className="border-t border-line bg-surface-2">
+          <div id="track" className="mx-auto grid w-full max-w-6xl scroll-mt-20 gap-8 px-5 py-16 md:grid-cols-2 md:items-end md:px-8 md:py-20">
             <div>
-              <p className="eyebrow">Track a case</p>
-              <h2 className="mt-2 text-2xl font-semibold text-ink">Where does my demo case stand?</h2>
-              <p className="hint mt-1">Enter the docket ID you were given. You will see its status and the support arranged, nothing diagnostic.</p>
+              <p className="eyebrow">{t("trackEyebrow")}</p>
+              <h2 className="mt-2 text-2xl font-semibold text-ink">{t("trackTitle")}</h2>
+              <p className="hint mt-1">{t("trackLead")}</p>
             </div>
             <TrackForm />
           </div>
-        )}
-        <div className={`flex flex-col gap-4 ${demoOn ? "" : "md:col-span-2"}`}>
-          <p className="eyebrow">For integrators</p>
-          <h2 className="text-2xl font-semibold text-ink">One API. Text and audio in, a structured assessment out.</h2>
-          <p className="text-[0.9375rem] leading-relaxed text-ink-2">
-            Start an interaction with the consent the person gave, send messages or 5-second audio windows, read the assessment, the recommendations and, with the
-            right scope, the indicators with their evidence. Keys carry scopes and rate limits; every response states the contract version.
-          </p>
-          <div>
-            <Link href="/api/docs" className="btn btn-secondary">
-              <Code2 className="size-4" aria-hidden /> Read the API documentation
-            </Link>
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
     </>
   );
 }

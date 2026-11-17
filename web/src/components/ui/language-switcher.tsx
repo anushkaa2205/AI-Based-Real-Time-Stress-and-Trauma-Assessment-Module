@@ -29,7 +29,7 @@ export function LanguageSwitcher({ tone = "dark", className = "" }: { tone?: "da
   }
 
   return (
-    <label className={`relative inline-flex items-center ${className}`}>
+    <label className={`relative items-center ${className || "inline-flex"}`}>
       <span className="sr-only">{t("language")}</span>
       <Languages className={`pointer-events-none absolute left-2.5 size-4 ${tone === "light" ? "text-white/70" : "text-ink-3"}`} aria-hidden />
       <select
