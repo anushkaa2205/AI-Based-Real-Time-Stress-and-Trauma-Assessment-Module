@@ -282,5 +282,135 @@
       "NOT_FOUND": "This conversation could not be found. Please start again.",
       "ANALYSIS_DEGRADED": "Something went wrong on our side. Please try again."
     }
+  },
+  "staff": {
+    "nav": {
+      "operator": "Operator console",
+      "counsellor": "Case queue",
+      "approvals": "Approvals",
+      "district": "District dashboard",
+      "police": "Action requests",
+      "welfare": "Referrals",
+      "analytics": "Analytics",
+      "admin": "Administration",
+      "audit": "Audit log"
+    },
+    "roles": {
+      "OPERATOR": "Operator",
+      "NHAA_SUPERVISOR": "NHAA supervisor",
+      "COUNSELLOR": "Counsellor",
+      "DISTRICT_OFFICER": "District officer",
+      "POLICE_LIAISON": "Police liaison",
+      "WELFARE_OFFICER": "Welfare officer",
+      "STATE_ADMIN": "State admin",
+      "MINISTRY_ADMIN": "Ministry admin",
+      "SYS_ADMIN": "System admin",
+      "AUDITOR": "Auditor"
+    },
+    "shell": {
+      "myPortal": "My portal",
+      "staffNav": "Staff",
+      "signOut": "Sign out",
+      "onDuty": "On duty",
+      "offDuty": "Off duty",
+      "goOff": "Go off duty",
+      "goOn": "Go on duty"
+    },
+    "bands": {
+      "CRITICAL": "Critical",
+      "HIGH": "High",
+      "MODERATE": "Moderate",
+      "LOW": "Low",
+      "none": "Not assessed"
+    },
+    "common": {
+      "loading": "Loading",
+      "demo": "Demo",
+      "demoTitle": "Created by the demo input layer with synthetic data",
+      "justNow": "just now",
+      "minutes": "{n} min",
+      "hoursMinutes": "{h} h {m} min",
+      "days": "{n} days",
+      "none": "–"
+    },
+    "channels": {
+      "CHATBOT": "Chat",
+      "VOICE_CALL": "Call",
+      "IVRS": "IVRS",
+      "MOBILE_APP": "App",
+      "PORTAL": "Portal",
+      "OPERATOR_ASSISTED": "Operator",
+      "API": "API"
+    },
+    "status": {
+      "NEW": "New",
+      "UNDER_REVIEW": "Under review",
+      "ACTION_TAKEN": "Action taken",
+      "FOLLOW_UP_SCHEDULED": "Follow-up",
+      "CLOSED": "Closed"
+    },
+    "queue": {
+      "title": "Case queue",
+      "lead": "Most urgent first: by band, then score, then longest waiting. Updates live.",
+      "mine": "Only my cases",
+      "refreshFailed": "Could not refresh the queue. Retrying…",
+      "empty": "No cases are waiting",
+      "emptyHint": "New cases appear here the moment they are registered.",
+      "band": "Band",
+      "svi": "SVI",
+      "docket": "Docket",
+      "waiting": "Waiting",
+      "reason": "Main reason",
+      "channel": "Channel",
+      "assigned": "Assigned to",
+      "district": "District",
+      "status": "Status",
+      "unassigned": "Unassigned",
+      "limited": "limited",
+      "limitedTitle": "Limited AI analysis",
+      "openAlert": "Open {level} alert"
+    },
+    "alerts": {
+      "critical": "Critical alert",
+      "high": "High risk",
+      "escalated": "Escalated (level {level})",
+      "open": "Open case",
+      "ack": "Acknowledge",
+      "fewer": "Show fewer alerts",
+      "more": "+{count, plural, one {# more open alert} other {# more open alerts}}"
+    },
+    "pages": {
+      "noDistrict": "Your account has no district. Ask an administrator to set one.",
+      "districtTitle": "District dashboard",
+      "districtLead": "High and Critical cases in your district, the police and protection proposals waiting for you, and every open referral.",
+      "districtCases": "High and Critical cases",
+      "districtRequests": "Police and protection requests awaiting you",
+      "missed": "Missed deadlines",
+      "missedEmpty": "No overdue referrals.",
+      "openReferrals": "Open referrals",
+      "openReferralsEmpty": "No open referrals.",
+      "policeTitle": "Action requests",
+      "policeLead": "Requests approved by NHAA staff for your district. Contact the complainant only through the route shown.",
+      "policeEmpty": "No action requests for your district.",
+      "welfareTitle": "Referrals",
+      "welfareLead": "Relief, rehabilitation, legal aid and medical support approved for your district.",
+      "welfareEmpty": "No referrals for your district.",
+      "approvalsTitle": "Approvals",
+      "approvalsLead": "Proposed support waits here until a person approves or rejects it. Emergency support that was auto-triggered is listed for review.",
+      "operatorTitle": "Operator console",
+      "analytics": "Analytics",
+      "analyticsNational": "National analytics",
+      "analyticsState": "State analytics",
+      "analyticsDistrict": "District analytics",
+      "adminTitle": "Administration",
+      "auditTitle": "Audit log",
+      "auditLead": "Every view, change and export, chained by hash so that any edit or deletion shows up.",
+      "backToQueue": "← Back to queue"
+    },
+    "district": {
+      "empty": "No High or Critical cases open in your district",
+      "alert": "Alert",
+      "escalated": "{level}, escalated (level {n})"
+    }
   }
 }

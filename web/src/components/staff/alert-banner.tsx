@@ -7,6 +7,7 @@
  * each poll also lets the server run due jobs (escalations).
  */
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRealtime } from "@/components/realtime/realtime-provider";
 
@@ -48,6 +49,7 @@ function beep() {
 
 export function AlertBanner({ channels, caseHref }: { channels: string[]; caseHref: string | null }) {
   const [alerts, setAlerts] = useState<AlertItem[]>([]);
+  const t = useTranslations("staff.alerts");
   const [busy, setBusy] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
   const heard = useRef(new Set<string>());
@@ -100,13 +102,13 @@ export function AlertBanner({ channels, caseHref }: { channels: string[]; caseHr
           data-testid={`alert-${a.level}`}
           className={`flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border border-line border-l-[6px] bg-white px-4 py-2.5 ${a.level === "CRITICAL" ? "border-l-danger" : "border-l-[#c4511a]"}`}
         >
-          <strong className={`text-sm uppercase tracking-wide ${a.level === "CRITICAL" ? "text-danger" : "text-[#7a2e0b]"}`}>{a.level === "CRITICAL" ? "Critical alert" : "High risk"}</strong>
+          <strong className={`text-sm uppercase tracking-wide ${a.level === "CRITICAL" ? "text-danger" : "text-[#7a2e0b]"}`}>{a.level === "CRITICAL" ? t("critical") : t("high")}</strong>
           <span className="num text-sm font-semibold">{a.docketNumber}</span>
           <span className="min-w-40 flex-1 text-sm text-ink-2">{a.reason}</span>
-          {a.escalationLevel > 0 && <span className="tag border-line">Escalated (level {a.escalationLevel})</span>}
+          {a.escalationLevel > 0 && <span className="tag border-line">{t("escalated", { level: a.escalationLevel })}</span>}
           {caseHref && (
             <Link href={`${caseHref}/${a.caseId}`} className="link text-sm font-semibold">
-              Open case
+              {t("open")}
             </Link>
           )}
           <button
@@ -115,13 +117,13 @@ export function AlertBanner({ channels, caseHref }: { channels: string[]; caseHr
             disabled={busy === a.id}
             className={`btn btn-sm ${a.level === "CRITICAL" ? "btn-danger" : "btn-primary"}`}
           >
-            Acknowledge
+            {t("ack")}
           </button>
         </div>
       ))}
       {(hidden > 0 || expanded) && alerts.length > SHOWN && (
         <button type="button" data-testid="alerts-toggle" onClick={() => setExpanded(!expanded)} className="link self-start text-sm">
-          {expanded ? "Show fewer alerts" : `+${hidden} more open alert${hidden === 1 ? "" : "s"}`}
+          {expanded ? t("fewer") : t("more", { count: hidden })}
         </button>
       )}
     </div>

@@ -4,9 +4,11 @@
  * High and Critical cases in the officer's district (task 6.6, FR-DSH-03).
  * Band and SVI only: the API sends the reduced shape (no reason, no evidence, no transcript).
  */
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { useRealtime } from "@/components/realtime/realtime-provider";
-import { BandBadge, waitingFor } from "./band-badge";
+import { BandBadge, useWaitingFor } from "./band-badge";
+import { CASE_STATUSES } from "@/models/enums";
 import { DemoMark } from "./demo-mark";
 
 interface Row {
@@ -26,6 +28,8 @@ const MAX_PAGES = 10;
 export function DistrictCases({ channels }: { channels: string[] }) {
   const [rows, setRows] = useState<Row[] | null>(null);
   const [now, setNow] = useState(() => Date.now());
+  const t = useTranslations("staff");
+  const waitingFor = useWaitingFor();
 
   const load = useCallback(async () => {
     // A district officer must see every open High and Critical case, not just the first page.
@@ -58,18 +62,18 @@ export function DistrictCases({ channels }: { channels: string[] }) {
     if (env.event.startsWith("case.") || env.event === "assessment.updated") void load();
   });
 
-  if (rows === null) return <div className="skeleton h-24 w-full" aria-busy="true" />;
-  if (rows.length === 0) return <div className="empty">No High or Critical cases open in your district</div>;
+  if (rows === null) return <div className="skeleton h-24 w-full" aria-busy="true" aria-label={t("common.loading")} />;
+  if (rows.length === 0) return <div className="empty">{t("district.empty")}</div>;
   return (
     <table className="data-table" data-testid="district-cases">
       <thead className="bg-surface-2">
         <tr>
-          <th className="p-2">Band</th>
-          <th className="p-2">SVI</th>
-          <th className="p-2">Docket</th>
-          <th className="p-2">Status</th>
-          <th className="p-2">Waiting</th>
-          <th className="p-2">Alert</th>
+          <th className="p-2">{t("queue.band")}</th>
+          <th className="p-2">{t("queue.svi")}</th>
+          <th className="p-2">{t("queue.docket")}</th>
+          <th className="p-2">{t("queue.status")}</th>
+          <th className="p-2">{t("queue.waiting")}</th>
+          <th className="p-2">{t("district.alert")}</th>
         </tr>
       </thead>
       <tbody>
@@ -82,9 +86,9 @@ export function DistrictCases({ channels }: { channels: string[] }) {
             <td className="p-2 num">
               {r.docketNumber} <DemoMark show={r.isDemo} />
             </td>
-            <td className="p-2">{r.status.replace(/_/g, " ").toLowerCase()}</td>
+            <td className="p-2">{(CASE_STATUSES as readonly string[]).includes(r.status) ? t(`status.${r.status}`) : r.status}</td>
             <td className="p-2">{waitingFor(r.waitingSince, now)}</td>
-            <td className="p-2 text-xs">{r.openAlert ? `${r.openAlert.level.toLowerCase()}${r.openAlert.escalationLevel ? `, escalated (level ${r.openAlert.escalationLevel})` : ""}` : "–"}</td>
+            <td className="p-2 text-xs">{r.openAlert ? (r.openAlert.escalationLevel ? t("district.escalated", { level: t(`bands.${r.openAlert.level}`), n: r.openAlert.escalationLevel }) : t(`bands.${r.openAlert.level}`)) : "–"}</td>
           </tr>
         ))}
       </tbody>

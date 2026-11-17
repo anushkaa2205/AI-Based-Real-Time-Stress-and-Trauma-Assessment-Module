@@ -18,3 +18,4 @@ Remove a row once its review is done.
 | `public.nav.*`, `public.header.*`, `public.home.*`, `public.footer.*`, `public.trackForm.*`, `public.meta.*` | Public header, footer, track form and page titles; the whole site switches language (task P.5, FR-LANG-07). | – / – / – / – |
 | `login.*` | The staff sign-in page (task P.5). | – / – / – / – |
 | `portal.*` | The portal journey: before we begin, consent wording, how to share, conversation, Speak, review, registered, errors (task P.7). | – / – / – / – |
+| `staff.*` | Staff portal labels, buttons, band names and empty states (task P.8). Case content is never translated here. | – / – / – / – |

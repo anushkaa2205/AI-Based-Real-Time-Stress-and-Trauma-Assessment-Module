@@ -1,9 +1,11 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 
 export function SignOutButton() {
   const router = useRouter();
+  const t = useTranslations("staff.shell");
   return (
     <button
       type="button"
@@ -13,7 +15,7 @@ export function SignOutButton() {
         router.replace("/login");
       }}
     >
-      Sign out
+      {t("signOut")}
     </button>
   );
 }

@@ -47,6 +47,11 @@ export function navFor(role: Role): StaffPage[] {
   return Object.values(STAFF_PAGES).filter((p) => (p.roles as readonly Role[]).includes(role));
 }
 
+/** The page's key (for its translated label, `staff.nav.<key>`), from its href. */
+export function pageKeyOf(href: string): StaffPageKey | null {
+  return (Object.entries(STAFF_PAGES).find(([, p]) => p.href === href)?.[0] as StaffPageKey | undefined) ?? null;
+}
+
 export function canOpen(role: Role, page: StaffPageKey): boolean {
   return (STAFF_PAGES[page].roles as readonly Role[]).includes(role);
 }

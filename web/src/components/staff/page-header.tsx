@@ -1,3 +1,5 @@
+import { useTranslations } from "next-intl";
+
 /** Page title row for staff screens (plan §9.6): title, one-line lead, optional actions on the right. */
 export function PageHeader({ title, lead, children }: { title: string; lead?: string; children?: React.ReactNode }) {
   return (
@@ -16,8 +18,9 @@ export function EmptyState({ children }: { children: React.ReactNode }) {
 }
 
 export function TableSkeleton({ rows = 5, cols = 5 }: { rows?: number; cols?: number }) {
+  const t = useTranslations("staff.common");
   return (
-    <div className="card overflow-hidden" aria-busy="true" aria-label="Loading">
+    <div className="card overflow-hidden" aria-busy="true" aria-label={t("loading")}>
       <div className="h-10 bg-surface-2" />
       <div className="flex flex-col gap-3 p-4">
         {Array.from({ length: rows }, (_, r) => (
