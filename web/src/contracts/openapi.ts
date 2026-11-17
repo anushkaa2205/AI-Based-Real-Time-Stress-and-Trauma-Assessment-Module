@@ -71,6 +71,7 @@ export const OPERATIONS: Op[] = [
   { method: "get", path: `${ig}/{id}/assessment`, tag: "Integration", summary: "Current SVI, band and top dimensions", auth: "api", scope: "assessments:read" },
   { method: "get", path: `${ig}/{id}/recommendations`, tag: "Integration", summary: "Recommendations", auth: "api", scope: "assessments:read" },
   { method: "get", path: `${ig}/{id}/stream`, tag: "Integration", summary: "Server-Sent Events: assessment.updated, emergency.show, recommendation.created", auth: "api", scope: "stream:read", sse: true },
+  { method: "get", path: `${ig}/{id}/next-question`, tag: "Integration", summary: "Next scripted question for the calling system's chatbot (never a score, band or reason)", auth: "api", scope: "questions:read", response: I.NextQuestionResponse },
   { method: "post", path: `${ig}/{id}/end`, tag: "Integration", summary: "End the interaction", auth: "api", scope: "interactions:write", body: I.IntegrationEnd },
   { method: "get", path: "/api/v1/integration/cases/{docket}/status", tag: "Integration", summary: "Case status and arranged support (never scores, bands or indicators)", auth: "api", scope: "status:read", response: I.CaseStatusResponse },
 ];

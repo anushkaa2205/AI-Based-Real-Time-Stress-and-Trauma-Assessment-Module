@@ -23,6 +23,8 @@ export const INTERACTION_STATUSES = ["ACTIVE", "ENDED", "ABANDONED"] as const;
 export const ASSESSMENT_MODES = ["SAFETY_ONLY", "TEXT_ONLY", "VOICE_ONLY", "FULL"] as const;
 export const CONSENT_ACTIONS = ["GRANTED", "UPDATED", "WITHDRAWN"] as const;
 export const MESSAGE_SENDERS = ["VICTIM", "SYSTEM", "OPERATOR"] as const;
+/** Integration API key scopes (API_CONTRACTS §4, §6). questions:read since Phase P (task P.3). */
+export const API_SCOPES = ["interactions:write", "assessments:read", "stream:read", "indicators:read", "status:read", "questions:read"] as const;
 /** IVR_KEYPRESS removed 16 Nov 2026: the module accepts text and voice only (FR-CH-01). */
 export const MESSAGE_MODALITIES = ["TEXT", "VOICE_TRANSCRIPT"] as const;
 /** How the input reached the calling system (task M.6, gap V2); separate from `channel` and `modality` */

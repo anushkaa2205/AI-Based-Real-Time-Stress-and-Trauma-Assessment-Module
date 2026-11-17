@@ -7,6 +7,7 @@
  * and never again.
  */
 import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { API_SCOPES } from "@/models/enums";
 import { DemoMark } from "./demo-mark";
 
 interface UserRow {
@@ -119,7 +120,7 @@ export function AdminConsole({ districts }: { districts: { id: string; name: str
     e.preventDefault();
     const form = e.currentTarget;
     const f = new FormData(form);
-    const scopes = ["interactions:write", "assessments:read", "stream:read", "indicators:read"].filter((s) => f.get(s));
+    const scopes = API_SCOPES.filter((s) => f.get(s));
     const r = await call<{ key: string }>("POST", "/api/v1/staff/admin/api-clients", { name: f.get("name"), scopes, rateLimitPerMin: Number(f.get("rpm") || 120), isDemo: f.get("isDemo") === "on" });
     say(r.ok, r.data, "API client created. Copy the key now; it is not shown again.");
     if (r.ok) {
@@ -276,7 +277,7 @@ export function AdminConsole({ districts }: { districts: { id: string; name: str
               System name
               <input name="name" required minLength={2} className={input} />
             </label>
-            {["interactions:write", "assessments:read", "stream:read", "indicators:read"].map((s) => (
+            {API_SCOPES.map((s) => (
               <label key={s} className="flex items-center gap-1 text-xs">
                 <input type="checkbox" name={s} defaultChecked={s !== "indicators:read"} /> {s}
               </label>

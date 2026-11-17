@@ -6,6 +6,9 @@
  * `npm run api:client -- --demo` (task M.7) creates the demo input layer's client (`isDemo: true`,
  * so everything it creates is marked demo) and writes `DEMO_API_KEY` and `DEMO_ENABLED=true` into the
  * git-ignored `.env.local` instead. Restart the dev server afterwards.
+ *
+ * `npm run api:client -- --update-demo-scopes` (task P.3) gives every active demo client all current
+ * scopes (status:read, questions:read, …) without issuing a new key, so DEMO_API_KEY keeps working.
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -32,6 +35,13 @@ function setEnvLines(file: string, values: Record<string, string>) {
 }
 
 async function main() {
+  if (process.argv.includes("--update-demo-scopes")) {
+    await db();
+    const r = await ApiClient.updateMany({ isDemo: true, isActive: true }, { $addToSet: { scopes: { $each: [...SCOPES] } } });
+    console.log(`Updated ${r.modifiedCount} demo client(s) to scopes: ${SCOPES.join(", ")}.`);
+    await mongoose.disconnect();
+    return;
+  }
   const demo = process.argv.includes("--demo");
   const name = arg("name") ?? (demo ? "Demo input layer" : "Demo integration client");
   const scopes = (arg("scopes") ?? SCOPES.join(",")).split(",").map((s) => s.trim()) as Scope[];

@@ -10,5 +10,5 @@ Remove a row once its review is done.
 | Key | Why | Reviewed (hi / mr / ta / bn) |
 |---|---|---|
 | `emergency.*` | Shown to the person by the calling system (FR-REC-06). | – / – / – / – |
-| `operatorQuestions.*` | Read aloud by the operator (FR-DSH-01). | – / – / – / – |
+| `operatorQuestions.*` | Read aloud by the operator (FR-DSH-01), and since Phase P shown by the portal assistant and returned by `GET …/next-question` (P.3). `operatorQuestions.opening` is new (17 Nov 2026). | – / – / – / – |
 | `track.*` | The public "track your case" page of the demo (task N.8): status line, support arranged, errors. | – / – / – / – |

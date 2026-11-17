@@ -5,10 +5,12 @@
  * shown once, at creation. Pure helpers plus a hash check that is constant-time.
  */
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
+import { API_SCOPES } from "@/models/enums";
 
 /** indicators:read (task M.5): indicators with their evidence; granted only to systems that need it */
 /** status:read (task N.3): case status and arranged support, for a tracking page in the calling system */
-export const SCOPES = ["interactions:write", "assessments:read", "stream:read", "indicators:read", "status:read"] as const;
+/** questions:read (task P.3): the next scripted question for the calling system's chatbot */
+export const SCOPES = API_SCOPES;
 export type Scope = (typeof SCOPES)[number];
 
 export function hashSecret(secret: string): string {

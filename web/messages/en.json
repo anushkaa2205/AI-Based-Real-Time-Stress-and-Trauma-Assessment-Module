@@ -6,6 +6,7 @@
     "nhaa": "NHAA helpline"
   },
   "operatorQuestions": {
+    "opening": "You can share only what you feel comfortable sharing. What would you like to tell us?",
     "safeNow": "Are you in a safe place right now?",
     "accusedNearby": "Is the person who harmed you near you right now?",
     "suicidalThoughts": "Are you having thoughts of ending your life?",

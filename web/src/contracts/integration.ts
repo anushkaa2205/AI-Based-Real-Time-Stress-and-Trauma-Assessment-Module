@@ -17,9 +17,10 @@ export const IntegrationStart = z.object({
 
 /**
  * Version of the integration contract, sent as `X-Contract-Version` on every integration response
- * (task M.6, gap V2). 1.1: `inputMethod`, `GET …/indicators` (M.5).
+ * (task M.6, gap V2). 1.1: `inputMethod`, `GET …/indicators` (M.5). 1.2: `GET /cases/{docket}/status`
+ * (N.3). 1.3: `GET …/next-question` (P.3).
  */
-export const INTEGRATION_CONTRACT_VERSION = "1.2";
+export const INTEGRATION_CONTRACT_VERSION = "1.3";
 
 export const IntegrationMessage = z.object({
   text: z.string().trim().min(1).max(2000),
@@ -39,3 +40,12 @@ export const CaseStatusResponse = z.object({
   support: z.array(z.enum(SUPPORT_TYPES)),
 });
 export type CaseStatusResponse = z.infer<typeof CaseStatusResponse>;
+
+/** GET …/next-question (task P.3, API_CONTRACTS §6.7): a scripted question key and its wording, or null. Nothing else. */
+export const NextQuestionResponse = z.object({
+  question: z
+    .object({ key: z.string().regex(/^operatorQuestions\.[A-Za-z]+$/), text: z.string().min(1) })
+    .strict()
+    .nullable(),
+}).strict();
+export type NextQuestionResponse = z.infer<typeof NextQuestionResponse>;
