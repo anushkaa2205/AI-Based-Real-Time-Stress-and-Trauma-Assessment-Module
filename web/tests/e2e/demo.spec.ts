@@ -1,9 +1,8 @@
 /**
  * The public demo (NIVARA_FLOW_AND_UI_PLAN.md §5–§7, tasks N.4, N.7, N.8, N.11). Needs DEMO_ENABLED=true
  * and DEMO_API_KEY (`npm run api:client -- --demo`, with the status:read scope); skipped otherwise.
- * The recorded-audio test also needs the analysis service. All text and audio are synthetic.
+ * All text is synthetic. Recorded audio was removed from the demo layer in Phase P (P.2).
  */
-import { resolve } from "node:path";
 import { expect, test } from "@playwright/test";
 import mongoose from "mongoose";
 import { dropIntegrationKeys, freshIp, integrationSession, staffLogin, withDb } from "./helpers";
@@ -11,13 +10,12 @@ import { dropIntegrationKeys, freshIp, integrationSession, staffLogin, withDb } 
 test.describe.configure({ mode: "serial" });
 test.afterAll(dropIntegrationKeys);
 
-const TWO_VOICES = resolve(__dirname, "../../../analysis-service/tests/fixtures/audio/two_voices_en.wav");
 const CONSENT = { noticeVersion: "2026-11-v1", language: "en", textAnalysis: true, voiceAnalysis: true, shareWithCounsellor: true, followUpContact: false, audioRetention: false };
 const START = { mode: "LIVE_TEXT", language: "en", consent: CONSENT, districtCode: "MH-PUN" };
 
 test.beforeAll(async ({ request }) => {
   test.skip(process.env.DEMO_ENABLED !== "true", "demo input layer switched off");
-  expect((await request.get("/api/demo/library")).status()).toBe(200);
+  expect((await request.get("/api/demo/track?docket=bad")).status()).toBe(400); // demo routes are on
 });
 
 test("signed out, a visitor files a case by typing, gets only a docket number, and can track it (N.4, N.7, N.8)", async ({ page, baseURL }) => {
@@ -77,7 +75,7 @@ test("signed out, a visitor files a case by typing, gets only a docket number, a
   await expect(page.getByTestId("indicator").first()).toBeVisible();
 });
 
-test("demo responses never carry the assessment, request ids or timings; the library carries no expected labels (plan §7)", async ({ page, baseURL }) => {
+test("demo responses never carry the assessment, request ids or timings; the library and recording routes are gone (plan §7, P.2)", async ({ page, baseURL }) => {
   await page.setExtraHTTPHeaders({ "x-forwarded-for": freshIp(), origin: baseURL ?? "http://localhost:3000" });
   await page.goto("/");
   const start = await page.request.post("/api/demo/interactions", { data: START });
@@ -88,9 +86,8 @@ test("demo responses never carry the assessment, request ids or timings; the lib
   const m = await page.request.post(`/api/demo/interactions/${id}/messages`, { data: { sender: "VICTIM", text: "They said they will come back tonight." } });
   expect(m.status()).toBe(200);
   expect(Object.keys((await m.json()) as object).sort()).toEqual(["emergency", "ok", "showEmergencyPanel"]);
-  const lib = (await (await page.request.get("/api/demo/library")).json()) as { items: Record<string, unknown>[] };
-  expect(lib.items.length).toBeGreaterThan(0);
-  for (const item of lib.items) expect(item).not.toHaveProperty("expected");
+  expect((await page.request.get("/api/demo/library")).status()).toBe(404);
+  expect((await page.request.post(`/api/demo/interactions/${id}/recording`, { data: { scenarioId: "S047" } })).status()).toBe(404);
   const end = await page.request.post(`/api/demo/interactions/${id}/end`);
   expect(end.status()).toBe(200);
   expect(Object.keys((await end.json()) as object)).toEqual(["docketNumber"]);
@@ -182,30 +179,4 @@ test("a demo case in Pune reaches the district, police and welfare portals after
   await page.context().clearCookies();
   await page.goto(`/track/${docketNumber}`);
   await expect(page.getByTestId("support-list")).toContainText(/police/i, { timeout: 30_000 });
-});
-
-test("play a recording: an uploaded two-voice WAV is cut into windows and sent through /audio (M.8, M.14, N.7)", async ({ page, baseURL }) => {
-  test.setTimeout(360_000);
-  const url = process.env.ANALYSIS_URL;
-  const ok = url ? await fetch(new URL("/v1/health", url), { signal: AbortSignal.timeout(3000) }).then((r) => r.ok).catch(() => false) : false;
-  test.skip(!ok, "analysis service not running");
-
-  await page.setExtraHTTPHeaders({ "x-forwarded-for": freshIp(), origin: baseURL ?? "http://localhost:3000" });
-  await page.goto("/demo/recording");
-  await page.getByLabel("Upload a WAV").check();
-  await page.getByTestId("file").setInputFiles(TWO_VOICES);
-  await page.getByTestId("start").click();
-  await page.getByTestId("play").click({ timeout: 30_000 });
-  await expect(page.getByTestId("progress")).toContainText(/Sent 6 of 6 windows/, { timeout: 300_000 }); // 27.8 s → 5 + 5 + 5 + 5 + 5 + 2.8 s
-  await expect(page.getByText(/at home with my sister/i)).toHaveCount(0); // no transcript on a public page
-  await page.getByTestId("finish").click();
-  const docket = ((await page.getByTestId("docket").textContent({ timeout: 30_000 })) ?? "").trim();
-  await withDb(async (db) => {
-    const c = await db.collection("cases").findOne({ docketNumber: docket });
-    expect(c?.isDemo).toBe(true);
-    const i = await db.collection("interactions").findOne({ caseId: c?._id });
-    expect(i?.channel).toBe("VOICE_CALL");
-    expect(await db.collection("voice_windows").countDocuments({ interactionId: i?._id })).toBeGreaterThanOrEqual(1);
-    expect(await db.collection("stored_audio").countDocuments({ interactionId: i?._id })).toBe(0); // no audio kept
-  });
 });

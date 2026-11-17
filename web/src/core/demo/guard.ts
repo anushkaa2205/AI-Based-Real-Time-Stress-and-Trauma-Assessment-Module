@@ -13,13 +13,11 @@ export const DEMO_LIMITS = {
   start: { limit: 5, windowMs: 10 * 60_000 },
   /** Text messages per visitor */
   message: { limit: 30, windowMs: 60_000 },
-  /** Recordings (library or upload) per visitor */
-  recording: { limit: 3, windowMs: 10 * 60_000 },
   /** Live microphone windows per visitor: 5 s windows for a 3-minute call, with headroom */
   audio: { limit: 60, windowMs: 60_000 },
   /** Tracking lookups per visitor */
   track: { limit: 20, windowMs: 60_000 },
-  /** Everything else (library, end) */
+  /** Everything else (end) */
   other: { limit: 60, windowMs: 60_000 },
   /** Demo cases per day across all visitors */
   daily: { limit: 150, windowMs: 24 * 60 * 60_000 },

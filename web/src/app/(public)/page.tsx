@@ -5,7 +5,7 @@
  * starter and the track field are hidden and the module is unaffected (FR-API-05).
  */
 import Link from "next/link";
-import { ArrowRight, Code2, FileAudio2, MessageSquareText, Mic } from "lucide-react";
+import { ArrowRight, Code2, MessageSquareText, Mic } from "lucide-react";
 import { TrackForm } from "@/components/public/track-form";
 import { demoEnabled } from "@/core/demo/client";
 
@@ -14,7 +14,6 @@ export const metadata = { title: "Nivara · Stress and trauma assessment for the
 const INPUTS = [
   { href: "/demo/text", icon: MessageSquareText, title: "Type a message", body: "Write as a person would in NHAA's chat.", testId: "start-text" },
   { href: "/demo/call", icon: Mic, title: "Speak", body: "Talk into your microphone, as on a helpline call.", testId: "start-call" },
-  { href: "/demo/recording", icon: FileAudio2, title: "Play a recording", body: "Send a recorded call through the real audio path.", testId: "start-recording" },
 ] as const;
 
 const STEPS = [

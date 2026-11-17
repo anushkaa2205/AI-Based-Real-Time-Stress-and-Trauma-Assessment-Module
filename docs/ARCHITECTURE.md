@@ -630,7 +630,7 @@ flowchart LR
 │   │   │   ├── privacy/                # redact.ts crypto.ts
 │   │   │   ├── policies/               # rbac.ts serializers.ts
 │   │   │   ├── analysis-client/
-│   │   │   └── demo/                   # demo layer only: client, guard + public + limits (safeguards), districts; wav.ts and library go in P.2 unless the evaluation set uses them (plan §8.1)
+│   │   │   └── demo/                   # demo layer only: client, guard + public + limits (safeguards), districts
 │   │   ├── components/                 # public/ (header, footer, track), portal/ (journey steps, consent, chat, microphone, review, registered), staff/, ui/, audio/
 │   │   ├── i18n/                       # next-intl request config (site language from the NEXT_LOCALE cookie)
 │   │   ├── contracts/                  # Zod schemas = API contracts
@@ -646,7 +646,6 @@ flowchart LR
 │   ├── scenarios/*.json
 │   ├── audio/
 │   └── run_eval.ts                     # band accuracy, recall, fairness report
-├── demo/library/                       # scenario library (Phase M); no longer offered on the public site (Phase P), removed in P.2 unless the evaluation set uses it
 ├── docs/                               # REQUIREMENTS, ARCHITECTURE, DATABASE, API_CONTRACTS, TOOLS_AND_COSTS, IMPLEMENTATION_PLAN
 └── CLAUDE.md
 ```

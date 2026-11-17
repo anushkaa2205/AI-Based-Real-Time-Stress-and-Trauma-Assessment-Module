@@ -37,7 +37,7 @@ export const POST = publicDemoRoute({ body: DemoStart, limit: "start" }, async (
       channel: DEMO_CHANNEL[body.mode],
       language: body.language,
       districtCode: body.districtCode,
-      externalRef: body.mode === "LIVE_AUDIO" ? LIVE_REF : `demo:${body.mode.toLowerCase()}:${body.scenarioId ?? "live"}`,
+      externalRef: body.mode === "LIVE_AUDIO" ? LIVE_REF : `demo:${body.mode.toLowerCase()}:live`,
       consent: body.consent,
     },
   });

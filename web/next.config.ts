@@ -33,19 +33,16 @@ const securityHeaders = [
 ];
 
 /**
- * Files outside `web/` that server code reads at run time (the demo scenario library, task M.14, and the
- * evaluation scenarios the demo and the admin "simulate" feature use). Without this they would not be
- * packaged into Vercel's serverless functions. Needs "Include files outside the Root Directory" on in the
- * Vercel project (the default for new projects) and Root Directory = web.
+ * Files outside `web/` that server code reads at run time (the evaluation scenarios the admin "simulate"
+ * feature uses). Without this they would not be packaged into Vercel's serverless functions. Needs
+ * "Include files outside the Root Directory" on in the Vercel project (the default for new projects) and
+ * Root Directory = web. The demo scenario library was removed in Phase P (P.2).
  */
-const outsideFiles = ["../demo/library/library.json", "../evaluation/scenarios/*.json"];
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   outputFileTracingRoot: resolve(process.cwd(), ".."),
   outputFileTracingIncludes: {
-    "/demo/**": outsideFiles,
-    "/api/demo/**": outsideFiles,
     "/api/v1/staff/admin/scoring-configs/**": ["../evaluation/scenarios/*.json"],
   },
   experimental: {

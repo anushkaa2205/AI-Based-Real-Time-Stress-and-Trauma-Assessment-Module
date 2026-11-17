@@ -22,7 +22,7 @@ export interface DemoCase {
   /** The problem code behind `error`, for pages that act on one (LINE_BUSY) */
   errorCode: string | null;
   busy: boolean;
-  start(input: { mode: DemoMode; language: VictimLang; districtCode: string; consent: DemoConsent; scenarioId?: string; takeover?: boolean }): Promise<boolean>;
+  start(input: { mode: DemoMode; language: VictimLang; districtCode: string; consent: DemoConsent; takeover?: boolean }): Promise<boolean>;
   finish(): Promise<void>;
   reset(): void;
   /** Reads a demo reply: records the emergency panel if the module raised it. */
@@ -79,7 +79,6 @@ export function useDemoCase(): DemoCase {
         language: input.language,
         districtCode: input.districtCode,
         consent: consentRequest(input.consent, input.language),
-        ...(input.scenarioId ? { scenarioId: input.scenarioId } : {}),
         ...(input.takeover ? { takeover: true } : {}),
       }),
     });

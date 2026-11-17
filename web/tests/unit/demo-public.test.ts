@@ -50,7 +50,7 @@ describe("limits", () => {
   it("match the plan's starting values", () => {
     expect(DEMO_LIMITS.start).toEqual({ limit: 5, windowMs: 600_000 });
     expect(DEMO_LIMITS.message).toEqual({ limit: 30, windowMs: 60_000 });
-    expect(DEMO_LIMITS.recording).toEqual({ limit: 3, windowMs: 600_000 });
+    expect("recording" in DEMO_LIMITS).toBe(false); // P.2: no recordings on the public site
     expect(DEMO_LIMITS.track).toEqual({ limit: 20, windowMs: 60_000 });
     expect(DEMO_LIMITS.daily.limit).toBe(150);
   });

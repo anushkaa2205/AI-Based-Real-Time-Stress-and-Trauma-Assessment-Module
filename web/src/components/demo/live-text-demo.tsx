@@ -8,7 +8,7 @@
  * nothing (rule 2), and the page shows only that each message was received (rule 1).
  */
 import { AlertCircle, Bot, Send, User } from "lucide-react";
-import { useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import type { DemoReceipt } from "@/contracts/demo";
 import type { VictimLang } from "@/contracts/interaction";
 import { ConsentFields, DEFAULT_DISTRICT, DistrictSelect, FULL_CONSENT, LanguageSelect, type DemoConsent, type DistrictOption } from "./consent-fields";
@@ -18,14 +18,6 @@ import { Registered } from "./registered";
 import { demoFetch, messageFor, useDemoCase } from "./use-demo-case";
 
 type Sender = "VICTIM" | "OPERATOR";
-
-export interface TextScenario {
-  id: string;
-  title: string;
-  languageTag: string;
-  language: VictimLang;
-  script: { speaker: "OPERATOR" | "CALLER"; text: string }[];
-}
 
 interface ChatLine {
   key: string;
@@ -37,20 +29,16 @@ interface ChatLine {
 const TITLE = "Type a message";
 const LEAD = "Write as a person would in NHAA's chat. Each message goes to the module as it is; you get a docket ID at the end, never a score.";
 
-export function LiveTextDemo({ scenarios, questions, districts }: { scenarios: TextScenario[]; questions: Record<VictimLang, { key: string; text: string }[]>; districts: DistrictOption[] }) {
+export function LiveTextDemo({ questions, districts }: { questions: Record<VictimLang, { key: string; text: string }[]>; districts: DistrictOption[] }) {
   const demo = useDemoCase();
   const [language, setLanguage] = useState<VictimLang>("en");
   const [district, setDistrict] = useState(districts.some((d) => d.code === DEFAULT_DISTRICT) ? DEFAULT_DISTRICT : (districts[0]?.code ?? ""));
   const [consent, setConsent] = useState<DemoConsent>(FULL_CONSENT);
-  const [scenarioId, setScenarioId] = useState("");
   const [lines, setLines] = useState<ChatLine[]>([]);
   const [draft, setDraft] = useState("");
-  const [step, setStep] = useState(0);
   const listRef = useRef<HTMLOListElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  const scenario = useMemo(() => scenarios.find((s) => s.id === scenarioId) ?? null, [scenarios, scenarioId]);
-  const nextLine = scenario && step < scenario.script.length ? scenario.script[step]! : null;
   const sending = lines.some((l) => l.state === "sending");
   const canFinish = demo.phase === "input" && lines.some((l) => l.sender === "VICTIM" && l.state === "sent") && !sending;
 
@@ -60,12 +48,9 @@ export function LiveTextDemo({ scenarios, questions, districts }: { scenarios: T
 
   async function start(e: FormEvent) {
     e.preventDefault();
-    const lang = scenario?.language ?? language;
-    setLanguage(lang);
-    const ok = await demo.start({ mode: "LIVE_TEXT", language: lang, districtCode: district, consent, scenarioId: scenario?.id });
+    const ok = await demo.start({ mode: "LIVE_TEXT", language, districtCode: district, consent });
     if (ok) {
       setLines([]);
-      setStep(0);
       setTimeout(() => inputRef.current?.focus(), 0);
     }
   }
@@ -98,16 +83,9 @@ export function LiveTextDemo({ scenarios, questions, districts }: { scenarios: T
     }
   }
 
-  function playNext() {
-    if (!nextLine) return;
-    setStep((s) => s + 1);
-    void send(nextLine.text, nextLine.speaker === "OPERATOR" ? "OPERATOR" : "VICTIM");
-  }
-
   function another() {
     demo.reset();
     setLines([]);
-    setStep(0);
   }
 
   const shell = (children: React.ReactNode) => (
@@ -122,21 +100,9 @@ export function LiveTextDemo({ scenarios, questions, districts }: { scenarios: T
     return shell(
       <form onSubmit={start} className="card card-pad flex flex-col gap-5" data-testid="consent-step">
         <div className="grid gap-4 sm:grid-cols-2">
-          <LanguageSelect value={language} onChange={setLanguage} disabled={!!scenario} />
+          <LanguageSelect value={language} onChange={setLanguage} />
           <DistrictSelect districts={districts} value={district} onChange={setDistrict} />
         </div>
-        <label htmlFor="scenario" className="flex flex-col">
-          <span className="label">Sample conversation (optional)</span>
-          <select id="scenario" className="field" value={scenarioId} onChange={(e) => setScenarioId(e.target.value)} data-testid="scenario">
-            <option value="">None: I will type my own messages</option>
-            {scenarios.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.id} · {s.title} ({s.languageTag})
-              </option>
-            ))}
-          </select>
-          <span className="hint mt-1">A synthetic script you can replay line by line, as the chatbot and as the person.</span>
-        </label>
         <ConsentFields value={consent} onChange={setConsent} />
         {demo.error && <ErrorLine text={demo.error} />}
         <button type="submit" disabled={demo.busy || !district} className="btn btn-primary btn-lg" data-testid="start">
@@ -185,7 +151,7 @@ export function LiveTextDemo({ scenarios, questions, districts }: { scenarios: T
         </form>
       </section>
 
-      <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+      <div className="grid gap-3">
         <details className="card group">
           <summary className="cursor-pointer select-none px-4 py-3 text-sm font-semibold text-ink">Ask one of NHAA&apos;s scripted questions as the chatbot</summary>
           <ul className="flex flex-wrap gap-2 border-t border-line p-3">
@@ -198,16 +164,6 @@ export function LiveTextDemo({ scenarios, questions, districts }: { scenarios: T
             ))}
           </ul>
         </details>
-        {scenario && (
-          <div className="card flex flex-col justify-center gap-1 px-4 py-3">
-            <span className="hint">
-              {scenario.id} · line {Math.min(step + 1, scenario.script.length)} of {scenario.script.length}
-            </span>
-            <button type="button" disabled={!nextLine || sending} onClick={playNext} className="btn btn-secondary btn-sm" data-testid="play-next">
-              {nextLine ? `Play next (${nextLine.speaker === "OPERATOR" ? "chatbot" : "person"})` : "Script finished"}
-            </button>
-          </div>
-        )}
       </div>
 
       {demo.error && <ErrorLine text={demo.error} />}
