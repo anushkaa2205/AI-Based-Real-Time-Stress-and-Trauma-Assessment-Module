@@ -211,4 +211,4 @@ Band accuracy by group, with AI. No identity feature is used for scoring (CLAUDE
 | AC-REL-01 AI down → fallback, limited confidence, queued | ✓ | Phase 4 tests |
 | AC-MNT-01 scoring coverage ≥ 80% | ✓ | 94% statements (scoring 92%, lexicon 98.5%, recommendations 100%) |
 
-**Not done in Phase 9 by decision:** deployment (9.9), README (9.10) and the demo script (9.11) are deferred until the project is finished. **Needs people:** usability test (9.8), phone tests, second reviewer for labels, native-speaker review.
+**Not done in Phase 9 by decision:** deployment (9.9), README (9.10) and the presentation script (9.11) are deferred until the project is finished. **Needs people:** usability test (9.8), phone tests, second reviewer for labels, native-speaker review.

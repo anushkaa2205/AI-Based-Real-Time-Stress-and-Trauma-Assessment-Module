@@ -8,7 +8,7 @@ An **AI-based real-time stress and trauma assessment module** for victims and co
 
 It is a **channel-independent, plug-in module** (`docs/PRODUCT_VISION.md`). NHAA's own systems (chatbot, helpline, IVRS, mobile app, portal, operator desk) hold the conversation with the person, obtain consent, and call the module through the **integration API** (`/api/v1/integration/*`), its only input. The module accepts exactly two inputs: **text messages and voice audio**. It never asks the person questions: there is no questionnaire, no structured answers and no key presses. It may *suggest* the next scripted question to a calling system's chatbot (`/next-question`, the same rules as the operator console's suggestions); the calling system decides whether to ask it. Questions asked by NHAA's chatbot or operator arrive as `OPERATOR` turns or as speech; case details from NHAA's record arrive as metadata (`/context`).
 
-From what the person says or writes, the module detects warning signs, calculates a **Stress Vulnerability Index (SVI, 0–100)**, assigns a risk band (Low / Moderate / High / Critical), recommends support, and puts the highest-risk people in front of a human responder first. The staff dashboards are kept as the reference consuming system. A detachable **demo input layer** presents the module through the same API: the public site, a reference portal built on Nivara (`/`, the portal journey Start → Before we begin → Write or speak → Conversation → Review → Registered, and the tracking page), belongs to that layer, not to the module, and the module runs and is tested with it switched off. The portal has **two inputs, Write (live text) and Speak (live microphone)**; it offers no recordings. Its assistant asks only scripted, pre-translated questions chosen by rules, and only the server records them as `OPERATOR` turns. The whole website, staff portals included, is multilingual (English by default). The module has no victim website of its own. **`docs/NIVARA_FLOW_AND_UI_PLAN.md` (Phases N and P) decides the website flow, the public pages, the demo layer, languages and the look; where it clashes with an older document, it wins.**
+From what the person says or writes, the module detects warning signs, calculates a **Stress Vulnerability Index (SVI, 0–100)**, assigns a risk band (Low / Moderate / High / Critical), recommends support, and puts the highest-risk people in front of a human responder first. **Nivara is an integrated portal with the module plugged in:** the public **Nivara portal** (`/`, the portal journey Start → Before we begin → Write or speak → Conversation → Review → Registered, and the tracking page) and the staff portals are one working product. The public portal reaches the module only through the integration API with its own portal key, like any NHAA channel, so the module still runs and is tested on its own with the portal switched off (`PORTAL_ENABLED`). In code, user-facing text and docs, always describe Nivara as a working integrated portal, never as a trial, mock-up or showcase. The portal has **two inputs, Write (live text) and Speak (live microphone)**; it offers no recordings. Its assistant asks only scripted, pre-translated questions chosen by rules, and only the server records them as `OPERATOR` turns. The whole website, staff portals included, is multilingual (English by default). The module has no victim website of its own. **`docs/NIVARA_FLOW_AND_UI_PLAN.md` (Phases N and P) decides the website flow, the public pages, the portal, languages and the look; where it clashes with an older document, it wins.**
 
 ## Documents (source of truth)
 
@@ -50,7 +50,7 @@ These come from the requirements and are the reason the design looks the way it 
 - **Database:** MongoDB (Atlas, replica set) + Mongoose 9
 - **Auth:** Auth.js v5 for staff (credentials + TOTP); API keys for integrations (the module's only input)
 - **Real-time:** Pusher Channels Sandbox (SSE fallback locally)
-- **AI service:** Python 3.12 + FastAPI in `analysis-service/`, run on a team laptop (Cloudflare Quick Tunnel for the deployed demo)
+- **AI service:** Python 3.12 + FastAPI in `analysis-service/`, run on a team laptop (Cloudflare Quick Tunnel for the deployed portal)
 - **LLM:** Groq `openai/gpt-oss-120b` (use `gpt-oss-20b` while developing); Gemini Flash free tier only as overflow on HTTP 429
 - **Speech-to-text:** Groq `whisper-large-v3-turbo` for Hindi/English/Hinglish; AI4Bharat IndicConformer (self-hosted) for Marathi/Tamil/Bengali; Bhashini as backup
 - **Voice features:** Silero VAD (pauses), Praat via parselmouth (pitch), librosa (energy), emotion2vec+ base (voice emotion)
@@ -62,9 +62,9 @@ These come from the requirements and are the reason the design looks the way it 
 ```
 web/                 Next.js app
   src/app/           (public)/ home, start/{write,speak}, track; login; (staff)/ portals;
-                     api/v1 (integration, staff) and api/demo (public demo relay)
+                     api/v1 (integration, staff) and api/portal (public portal relay)
   src/core/          interactions, consent, safety-lexicon, scoring, recommendations, operator,
-                     cases, alerts, audit, privacy, policies, analysis-client, pipeline, demo/ (demo layer only)
+                     cases, alerts, audit, privacy, policies, analysis-client, pipeline, portal/ (portal only)
   src/components/    public/, portal/ (the portal journey), staff/, ui/, audio/ (live recorder used by Speak)
   src/models/        Mongoose models (one file per collection)
   src/contracts/     Zod schemas = the API contracts
@@ -90,14 +90,14 @@ Run from `web/` unless stated otherwise.
 | Lint | `npm run lint` |
 | Unit tests | `npm test` |
 | End-to-end tests | `npm run e2e` |
-| Seed demo data | `npm run seed` |
+| Seed seed data | `npm run seed` |
 | Create indexes | `npm run db:indexes` |
 | Background jobs (local loop) | `npm run jobs` |
 | Evaluation report | `npm run eval` |
 | AI service setup (Windows, from `analysis-service/`) | `py -3.12 -m venv .venv` then `.venv\Scripts\activate` then `pip install -r requirements.txt` |
 | AI service run | `uvicorn app.main:app --reload --port 8000` |
-| Expose AI service for the deployed demo | `cloudflared tunnel --url http://localhost:8000` (copy the URL into `ANALYSIS_URL`) |
-| Create the demo key (`DEMO_API_KEY`, scopes include `status:read` and `questions:read`) | `npm run api:client -- --demo` |
+| Expose AI service for the deployed portal | `cloudflared tunnel --url http://localhost:8000` (copy the URL into `ANALYSIS_URL`) |
+| Create the portal key (`PORTAL_API_KEY`, scopes include `status:read` and `questions:read`) | `npm run api:client -- --portal` |
 
 ## Coding conventions
 
@@ -144,7 +144,9 @@ Never print, log or commit their values.
 ## Team update logs (two people work on this repo)
 
 - Anushka writes only `docs/anushka_updates.md`; Hasini writes only `docs/hasini_updates.md`. Never edit the other person's log.
-- Who "you" are working for: if the current git branch starts with `hasini/`, Hasini; otherwise Anushka.
+- **Branches:** Anushka works on `anushka`, Hasini on `hasini/portals-tracking` (or other `hasini/…` branches). Nobody commits to `master` directly.
+- **Nightly merge:** every night Anushka merges `anushka` (and Hasini's reviewed pull requests) into `master` and pushes. The next session on either branch starts with `git fetch origin` and `git merge origin/master`.
+- Who "you" are working for: if the current git branch starts with `hasini/`, Hasini; if it is `anushka`, Anushka. On `master`, stop and ask which branch to switch to before changing anything.
 - **At the start of every session, and after every `git pull` or `git merge origin/master`**, read the other person's update log (the entries since last time) before changing any file. If an entry touches a file or decision the current task depends on, stop and tell the user before writing code.
 - **Whenever you make a decision or finish a piece of implementation**, add an entry at the bottom of your own log, in the same commit as the code: date, task, what was done, what was decided, files changed, what the other person should know, next step.
 - **Before every push:** `git fetch origin` then `git merge origin/master`, re-read the other person's log, run `npm run typecheck`, `npm run lint` and `npm test` from `web/`, then push. Never push to `master` from a `hasini/` branch and never force-push.

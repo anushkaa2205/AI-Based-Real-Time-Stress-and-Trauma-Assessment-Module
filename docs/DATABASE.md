@@ -24,7 +24,7 @@
 
 | Topic | Decision |
 |---|---|
-| Server | **MongoDB 8**, always as a **replica set**: Atlas (free M0 for demo) or a single-node replica set locally. Needed for multi-document transactions and change streams. |
+| Server | **MongoDB 8**, always as a **replica set**: Atlas (free M0 for now) or a single-node replica set locally. Needed for multi-document transactions and change streams. |
 | ODM | **Mongoose 9** with TypeScript; schemas validate enums, ranges and required fields. **Zod** validates every API input before it reaches Mongoose. |
 | Databases | `nhaa_assess` (everything) and `nhaa_pii` (only `subject_identities`) on separate connections and credentials (NFR-PRI-03). |
 | IDs | `ObjectId` for every `_id`; the NHAA **docket number** is a separate unique field. |
@@ -116,7 +116,7 @@ Legend: **🔒** = encrypted field, **TTL** = auto-deleted by MongoDB, **U** = u
 | `summaryEnc` 🔒, `summaryTranslatedEnc` 🔒 | string | Neutral summary (FR-NLP-09) |
 | `bandOverrides[]` | embedded | `{fromBand, toBand, reason (≥ 5 chars), byUserId, at}` |
 | `firstContactAt`, `lastActivityAt`, `closedAt` | Date | |
-| `isDemo` | bool | Created through the demo input layer's API key (task M.7). Set on the server from the key, never from a request; shown as a "Demo" mark on staff screens |
+| `isPortal` | bool | Created through the portal's API key (task M.7). Set on the server from the key, never from a request; used to tell portal cases apart (analytics filter) |
 
 **Indexes:** `{status:1, bandRank:-1, currentSvi:-1, waitingSince:1}` (queue) · `{districtId:1, status:1, bandRank:-1}` · `{assignedCounsellorId:1, status:1}` · `docketNumber` U · `subjectId`.
 
@@ -129,7 +129,7 @@ Legend: **🔒** = encrypted field, **TTL** = auto-deleted by MongoDB, **U** = u
 | `mode` | enum | SAFETY_ONLY · TEXT_ONLY · VOICE_ONLY · FULL, derived from consent; default SAFETY_ONLY |
 | `uiLanguage`, `detectedLanguages[]` | string | BCP-47 codes |
 | `operatorId`, `apiClientId`, `districtId` | ObjectId | |
-| `isDemo` | bool | Copied from the API client at start (task M.7) |
+| `isPortal` | bool | Copied from the API client at start (task M.7) |
 | `messageSeq`, `assessmentSeq` | number | Counters, incremented with `$inc` to number child documents |
 | `voiceBaseline` | object | Speaker baseline (FR-VOI-03), from the caller's speech only |
 | `speakerStateEnc` 🔒 | string | Encrypted voice fingerprints of the two speakers of a `MIXED` call (task M.10), so labels stay consistent across windows. Biometric: deleted when the interaction ends |
@@ -201,7 +201,7 @@ Since task M.10: `audioSource` (`CALLER_ONLY` | `MIXED`) and `speakers {separate
 **Indexes:** `{caseId:1, type:1, status:1}` · `{status:1, responsibleRole:1, dueAt:1}` (approval inbox).
 
 ### 4.10 `referrals`: the only case data police and welfare see
-`recommendationId` **U**, `caseId`, `docketNumber`, `type`, `targetRole`, `districtId`, `assignedToId`, `actionRequested`, `locationHint` (village/ward, never a full address), `contactRoute`, `urgency`, `dueAt`, `status`, `outcomeNote`, `declinedReason`, `history[] {status, byUserId, at}`, `isDemo` (copied from the case, task M.7: the only demo signal police and welfare see).
+`recommendationId` **U**, `caseId`, `docketNumber`, `type`, `targetRole`, `districtId`, `assignedToId`, `actionRequested`, `locationHint` (village/ward, never a full address), `contactRoute`, `urgency`, `dueAt`, `status`, `outcomeNote`, `declinedReason`, `history[] {status, byUserId, at}`, `isPortal` (copied from the case, task M.7: a yes/no source flag).
 **Index:** `{targetRole:1, districtId:1, status:1, dueAt:1}`.
 
 ### 4.11 `alerts`
@@ -212,7 +212,7 @@ Since task M.10: `audioSource` (`CALLER_ONLY` | `MIXED`) and `speakers {separate
 | Collection | Key fields | Indexes |
 |---|---|---|
 | `users` | `email` U, `passwordHash` (hidden), `role`, `stateId`, `districtId`, `languages[]`, `totpSecretEnc` 🔒 (hidden), `isActive`, `isOnDuty`, `openCaseCount` | `{role, districtId, isOnDuty}` |
-| `api_clients` | `keyPrefix` U, `keyHash` (hidden), `scopes[]`, `rateLimitPerMin`, `isActive`, `isDemo` (the demo input layer's client, task M.7) | |
+| `api_clients` | `keyPrefix` U, `keyHash` (hidden), `scopes[]`, `rateLimitPerMin`, `isActive`, `isPortal` (the portal's client, task M.7) | |
 | `subjects` | `_id`, `createdAt` only | |
 | `subject_identities` (PII DB) | `_id` = subject id, `fullNameEnc` 🔒, `phoneEnc` 🔒, `phoneHash` (HMAC, for de-duplication), `addressEnc` 🔒 | `phoneHash` |
 | `case_notes` | `caseId`, `authorId`, `bodyEnc` 🔒 | `{caseId, createdAt:-1}` |
@@ -220,7 +220,7 @@ Since task M.10: `audioSource` (`CALLER_ONLY` | `MIXED`) and `speakers {separate
 | `rate_limits` | `key` (SHA-256 of scope + subject; never a raw IP), `windowStart`, `count`, `expiresAt` | `{key, windowStart}` U, **TTL** on `expiresAt` |
 | `audit_logs` | `actorType`, `actorId`, `action`, `entityType`, `entityId`, `metadata` (never content), `ipHash`, `prevHash` U, `hash` U | `{entityType, entityId, createdAt}`, `{actorId, createdAt}` |
 | `jobs` | `type`, `payload`, `runAt`, `attempts`, `lockedUntil`, `doneAt`, `lastError`, `cleanupAt` **TTL** | `{doneAt, runAt}` |
-| `daily_stats` | `day`, `stateId`, `districtId`, `channel`, `language`, `band`, `isDemo`, counts, median times, referral counts by type | U on the full dimension key |
+| `daily_stats` | `day`, `stateId`, `districtId`, `channel`, `language`, `band`, `isPortal`, counts, median times, referral counts by type | U on the full dimension key |
 | `states`, `districts` | `code` U, `name`, `stateId` | |
 
 ---
@@ -488,11 +488,11 @@ services:
 
 ### 10.4 Seeding (`scripts/seed.ts`)
 - States and districts (a small subset, e.g. Maharashtra, Tamil Nadu, West Bengal, Uttar Pradesh)
-- One demo user per role, with a known password and TOTP disabled in the demo environment only
+- One seeded staff user per role, with a known password and TOTP disabled in the local environment only
 - Scoring config v1 (weights, thresholds, overrides, rules from REQUIREMENTS appendices), active
 - 20+ synthetic cases across all bands, channels and languages (from `evaluation/scenarios`)
-- One API client for the integration demo
-- The demo input layer's client is created separately: `npm run api:client -- --demo` (`isDemo: true`; writes `DEMO_API_KEY` to `.env.local`, never printed)
+- One API client for the integration example
+- the portal's client is created separately: `npm run api:client -- --portal` (`isPortal: true`; writes `PORTAL_API_KEY` to `.env.local`, never printed)
 
 ### 10.5 Size estimate (for sizing Atlas)
 | Per interaction (typical 10-minute session) | Approx. |
@@ -502,4 +502,4 @@ services:
 | ~60 voice windows (voice calls) | 60 × 1 KB = 60 KB |
 | ~80 indicators | 80 × 0.6 KB = 48 KB |
 | ~30 assessments | 30 × 2 KB = 60 KB |
-| **Total** | **~220 KB** → the 512 MB free tier holds ~2,000 demo sessions |
+| **Total** | **~220 KB** → the 512 MB free tier holds ~2,000 portal sessions |

@@ -39,7 +39,7 @@
 ### Key decisions (ADR summary)
 | # | Decision | Alternatives considered | Why |
 |---|---|---|---|
-| ADR-1 | **Next.js (App Router) monolith** for the integration API, the staff dashboards (reference consuming system) and the demo input layer (since Phase P a reference portal built on Nivara) | Separate React SPA + Express API | One codebase and one deploy; route handlers are enough for the API; server components keep sensitive data on the server. |
+| ADR-1 | **Next.js (App Router) monolith** for the integration API, the staff portals and the public Nivara portal (since Phase P the portal journey) | Separate React SPA + Express API | One codebase and one deploy; route handlers are enough for the API; server components keep sensitive data on the server. |
 | ADR-2 | **Separate Python FastAPI "analysis service"** for STT, acoustics, emotion and NLP | Doing everything in Node | The audio/ML ecosystem (Praat/parselmouth, librosa, Whisper, Hugging Face) is Python-first. |
 | ADR-3 | **The module never talks to the person.** NHAA's chatbot or operator holds the conversation; the module only analyses it. Text it returns for the person (emergency options) and questions it suggests to operators are scripted and pre-translated | An LLM chatbot that talks to the victim; a built-in questionnaire | Safety and predictability: a generative bot could say something harmful to a traumatised person. LLMs are used only for *analysis*. |
 | ADR-4 | **The AI outputs indicators; deterministic rules output SVI, bands and recommendations** | End-to-end model predicting the band | Explainability, auditability, tunable thresholds, and it works even when the model is down. |
@@ -65,7 +65,7 @@ flowchart LR
     SM["State admin /<br/>Ministry (DoSJE)"]
     SYS(("Assessment Module"))
     NHAA["NHAA systems<br/>(chatbot, helpline, IVRS,<br/>app / portal, operator desk)"]
-    DEMO["Demo input layer: reference portal<br/>(detachable; write, speak)"]
+    PORTAL["Nivara portal<br/>(public, integrated; write, speak)"]
     AI["External AI APIs<br/>(Groq LLM + Whisper)"]
     EM["Emergency services<br/>112 · Tele-MANAS 14416"]
 
@@ -77,7 +77,7 @@ flowchart LR
     WO -- "referrals" --> SYS
     SM -- "anonymised analytics" --> SYS
     NHAA <-- "integration API: text, audio,<br/>context, docket no." --> SYS
-    DEMO -. "same API, demo key" .-> SYS
+    PORTAL -. "same API, portal key" .-> SYS
     SYS -- "de-identified text / audio" --> AI
     NHAA -. "shows emergency options" .-> EM
 ```
@@ -89,7 +89,7 @@ flowchart LR
 ```mermaid
 flowchart TB
     subgraph Client["Callers and browsers"]
-        VU["NHAA systems<br/>(API key) · demo input layer"]
+        VU["NHAA systems<br/>(API key) · Nivara portal"]
         SU["Staff UI<br/>operator · counsellor · district ·<br/>police · welfare · analytics · admin"]
     end
 
@@ -121,13 +121,13 @@ flowchart TB
 
 | Container | Responsibility | Technology | Scales by |
 |---|---|---|---|
-| **Calling systems** | NHAA's chatbot, helpline, IVRS, app or operator desk: own the person's interface and consent, call the integration API, show the returned emergency options. Not part of this repository. A detachable **demo input layer** plays this role for presentations: since Phase P, a public reference portal built on Nivara with two inputs (write, speak), §6.6. | Any HTTP client with an API key | Outside the module |
+| **Calling systems** | NHAA's chatbot, helpline, IVRS, app or operator desk: own the person's interface and consent, call the integration API, show the returned emergency options. Not part of this repository. The public **Nivara portal** is one of them, built into this repository: since Phase P a portal journey with two inputs (write, speak), §6.6. | Any HTTP client with an API key | Outside the module |
 | **Staff UI** | Role-specific dashboards, live updates, approvals | Next.js server components + client islands, `pusher-js` | Static + CDN |
 | **API (route handlers)** | Integration API (API keys, the module's only input), staff API (Auth.js) | Next.js route handlers, Zod validation | Serverless instances |
 | **Core modules** | Interactions (start, consent, end), safety lexicon, scoring, recommendations, RBAC, privacy, audit | TypeScript libraries inside the Next app | With the API |
-| **Analysis service** (team laptop, exposed via Cloudflare Quick Tunnel for the demo) | STT, language ID, translation, acoustic features, speech emotion, text NLP (indicators + evidence), summaries | Python, FastAPI, Groq (LLM + Whisper), IndicConformer, Silero VAD, parselmouth, librosa, emotion2vec+; Silero VAD, Hugging Face, LLM API | Horizontal (stateless) |
+| **Analysis service** (team laptop, exposed via Cloudflare Quick Tunnel for the deployed portal) | STT, language ID, translation, acoustic features, speech emotion, text NLP (indicators + evidence), summaries | Python, FastAPI, Groq (LLM + Whisper), IndicConformer, Silero VAD, parselmouth, librosa, emotion2vec+; Silero VAD, Hugging Face, LLM API | Horizontal (stateless) |
 | **Job runner** (inside the web app) | Alert escalation timers, follow-up reminders, retention purges, re-scoring after config changes | `core/jobs/runDue()` called from dashboard polling and a protected internal route; no separate process | Atomic claim with `findOneAndUpdate` + `lockedUntil`, so concurrent requests never run a job twice |
-| **MongoDB** | All persistent data | MongoDB 8 (Atlas), Mongoose 9 | Managed (Atlas M0 for demo, M10+ for production) |
+| **MongoDB** | All persistent data | MongoDB 8 (Atlas), Mongoose 9 | Managed (Atlas M0 for now, M10+ for production) |
 | **Pusher** | Push events to staff dashboards (calling systems use the integration SSE stream) | Pusher Channels (private/presence channels) | Managed |
 | **Object storage** | Encrypted audio, only with explicit consent | S3-compatible (Supabase Storage / R2) | Managed |
 
@@ -265,7 +265,7 @@ The `/messages` response carries no SVI, band or indicator names: only whether t
 ```mermaid
 sequenceDiagram
     autonumber
-    participant V as Helpline system or demo microphone
+    participant V as Helpline system or portal microphone
     participant API as /api/v1/integration
     participant AS as Analysis service
     participant SC as Scoring engine
@@ -340,16 +340,16 @@ sequenceDiagram
 3. `stored_audio` documents are deleted and objects removed; a `retention.purge` job double-checks.
 4. The complaint itself (docket and context) stays, so redressal continues (FR-CON-03/04).
 
-### 6.6 Demo layer: the portal journey (Phase P)
+### 6.6 portal: the portal journey (Phase P)
 
-The public site is a **reference portal built on Nivara** (`NIVARA_FLOW_AND_UI_PLAN.md` §5–§8). It plays the part of an NHAA system: it reaches the module only through `/api/demo/*` → the integration API with the demo key, and the module runs and is tested with it switched off (FR-API-05). Two inputs, chosen once: **Write** (`/start/write`, channel `CHATBOT`) and **Speak** (`/start/speak`, channel `VOICE_CALL`, live microphone, `CALLER_ONLY` windows). No recordings.
+The public site is the **Nivara portal** (`NIVARA_FLOW_AND_UI_PLAN.md` §5–§8), integrated with the module like any NHAA channel: it reaches the module only through `/api/portal/*` → the integration API with the portal key, and the module runs and is tested with it switched off (FR-API-05). Two inputs, chosen once: **Write** (`/start/write`, channel `CHATBOT`) and **Speak** (`/start/speak`, channel `VOICE_CALL`, live microphone, `CALLER_ONLY` windows). No recordings.
 
 ```mermaid
 sequenceDiagram
     autonumber
     participant P as Person (browser, /start/*)
-    participant D as /api/demo/* (public relay)
-    participant API as /api/v1/integration (demo key)
+    participant D as /api/portal/* (public relay)
+    participant API as /api/v1/integration (portal key)
     participant M as Module (pipeline, suggest.ts)
 
     P->>D: POST /interactions { mode, language, district, consent }
@@ -370,10 +370,10 @@ sequenceDiagram
     D-->>P: { docketNumber }
 ```
 
-- **Only the server records `OPERATOR` turns**, and only scripted questions the module returned; the public message body has no `sender` (FR-DEMO-04).
+- **Only the server records `OPERATOR` turns**, and only scripted questions the module returned; the public message body has no `sender` (FR-PORTAL-04).
 - The next question comes from the same pure rules as the operator console (`core/operator/suggest.ts`), extended with the keys already asked (FR-API-07). The AI never writes or says anything to the person (rule 2).
 - The page shows the assistant's questions, the person's own words ("We heard: …" for Speak, and the Review step), the emergency options when raised, and the docket ID. Never a score, band or indicator (rule 1).
-- Safeguards (`core/demo/guard.ts`, `public.ts`, `limits.ts`): kill switch, same-site, per-visitor and daily limits, the `nivara_demo` own-cases cookie, per-case caps (40 messages, 6 questions, 3 min of speech, 15 min in all), one live call at a time, freed after 60 s with no activity.
+- Safeguards (`core/portal/guard.ts`, `public.ts`, `limits.ts`): kill switch, same-site, per-visitor and daily limits, the `nivara_portal` own-cases cookie, per-case caps (40 messages, 6 questions, 3 min of speech, 15 min in all), one live call at a time, freed after 60 s with no activity.
 - **Languages (FR-LANG-07):** the site language lives in the `NEXT_LOCALE` cookie (no URL prefix), read by `next-intl` (`src/i18n/request.ts`, `NextIntlClientProvider` in `app/layout.tsx`). It switches the public pages, login and staff portals, and becomes the interaction's `language` when the interaction is created. `core/i18n/messages.ts` keeps serving the module's own server-side text.
 
 ---
@@ -565,7 +565,7 @@ flowchart LR
 | Environment | Setup |
 |---|---|
 | **Local dev** | MongoDB Atlas Free (no Docker needed); `uvicorn app.main:app --port 8000` in `analysis-service/`; `npm run dev` in `web/`; optional `npm run jobs`; Pusher sandbox app or the local SSE fallback (`REALTIME_DRIVER=sse`). |
-| **Demo / staging** | Vercel Hobby (web) + MongoDB Atlas Free + Pusher Sandbox; analysis service on a team laptop exposed with `cloudflared tunnel --url http://localhost:8000` and the URL set as `ANALYSIS_URL`. Seeded with synthetic cases and demo users for each role. All free (see `TOOLS_AND_COSTS.md`). |
+| **Staging** | Vercel Hobby (web) + MongoDB Atlas Free + Pusher Sandbox; analysis service on a team laptop exposed with `cloudflared tunnel --url http://localhost:8000` and the URL set as `ANALYSIS_URL`. Seeded with synthetic cases and seeded staff user for each role. All free (see `TOOLS_AND_COSTS.md`). |
 | **Production (proposal for NHAA)** | Government cloud (MeghRaj / NIC) in India for data residency, MongoDB Enterprise or Atlas in an Indian region, PII vault in a separate cluster; analysis models self-hosted on GPU; Bhashini for languages; VPC-only traffic between services. |
 
 **Environment variables (main):** web: `MONGODB_URI`, `MONGODB_PII_URI`, `ENCRYPTION_KEYS` (JSON of key ID → base64 key), `ENCRYPTION_ACTIVE_KEY`, `AUTH_SECRET`, `ANALYSIS_URL`, `ANALYSIS_HMAC_SECRET`, `PUSHER_APP_ID/KEY/SECRET/CLUSTER`, `JOBS_SECRET`. Analysis service: `ANALYSIS_HMAC_SECRET`, `GROQ_API_KEY`, `GEMINI_API_KEY`, `HF_TOKEN` (to download IndicConformer), optional `BHASHINI_USER_ID` / `BHASHINI_API_KEY`.
@@ -583,7 +583,7 @@ flowchart LR
 | Auth | Auth.js v5 (credentials + TOTP via `otplib`) for staff; API keys for integrations |
 | Real-time | Pusher Channels (`pusher` server, `pusher-js` client); SSE fallback for local dev |
 | Rate limiting | MongoDB-backed fixed-window counters (Upstash free tier optional) |
-| Audio capture (demo input layer) | MediaRecorder (opus/webm, 5 s timeslice); recorder logic kept in `components/audio/` for Speak on the portal |
+| Audio capture (Nivara portal) | MediaRecorder (opus/webm, 5 s timeslice); recorder logic kept in `components/audio/` for Speak on the portal |
 | Languages | `next-intl` (installed): site language in the `NEXT_LOCALE` cookie, `src/i18n/request.ts`, all strings in `messages/*.json` (en default, hi, mr, ta, bn) |
 | Analysis service | Python 3.12, FastAPI, Pydantic, `groq` SDK, silero-vad, praat-parselmouth, librosa, funasr (emotion2vec+), transformers (IndicConformer) |
 | Testing | Vitest (unit, scoring), Playwright (E2E per role), pytest (analysis), k6 (latency checks) |
@@ -599,12 +599,12 @@ flowchart LR
 /
 ├── web/                                # Next.js app
 │   ├── scripts/
-│   │   ├── seed.ts                     # demo users per role + synthetic cases
+│   │   ├── seed.ts                     # seeded staff user per role + synthetic cases
 │   │   └── sync-indexes.ts             # Model.syncIndexes() for every model (run on deploy)
 │   ├── messages/                       # every public, portal, login and staff string + emergency options + operator questions: en hi mr ta bn
 │   ├── src/
 │   │   ├── app/
-│   │   │   ├── (public)/               # Phase P: home page (Start hero), start/ (before we begin, how to share), start/{write,speak}, track/[docket]; old /demo/* URLs redirect to /start
+│   │   │   ├── (public)/               # Phase P: home page (Start hero), start/ (before we begin, how to share), start/{write,speak}, track/[docket]
 │   │   │   ├── (staff)/
 │   │   │   │   ├── operator/           # live call console
 │   │   │   │   ├── counsellor/         # queue, case/[id]
@@ -613,8 +613,8 @@ flowchart LR
 │   │   │   │   ├── welfare/
 │   │   │   │   ├── analytics/          # state + ministry
 │   │   │   │   ├── admin/              # users, scoring configs, audit
-│   │   │   │   (no demo pages here since Phase N: the demo is the public site)
-│   │   │   ├── api/demo/…              # public demo relay: calls /api/v1/integration with DEMO_API_KEY behind the plan §7 safeguards (API_CONTRACTS §6.5)
+│   │   │   │   (the portal is the public site)
+│   │   │   ├── api/portal/…              # public portal relay: calls /api/v1/integration with PORTAL_API_KEY behind the plan §7 safeguards (API_CONTRACTS §6.5)
 │   │   │   └── api/v1/
 │   │   │       ├── integration/…       # API-key API: the module's only input
 │   │   │       ├── staff/…             # Auth.js session API
@@ -630,7 +630,7 @@ flowchart LR
 │   │   │   ├── privacy/                # redact.ts crypto.ts
 │   │   │   ├── policies/               # rbac.ts serializers.ts
 │   │   │   ├── analysis-client/
-│   │   │   └── demo/                   # demo layer only: client, guard + public + limits (safeguards), districts
+│   │   │   └── portal/                  # portal only: client, guard + public + limits (safeguards), districts
 │   │   ├── components/                 # public/ (header, footer, track), portal/ (journey steps, consent, chat, microphone, review, registered), staff/, ui/, audio/
 │   │   ├── i18n/                       # next-intl request config (site language from the NEXT_LOCALE cookie)
 │   │   ├── contracts/                  # Zod schemas = API contracts

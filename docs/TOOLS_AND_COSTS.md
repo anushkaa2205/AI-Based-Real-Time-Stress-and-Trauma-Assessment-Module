@@ -1,7 +1,7 @@
 # Tools and Costs (verified 14 Nov 2026)
 
 Every external tool in the stack, whether it is free, and the limits that matter for this project.
-Free tiers change often: re-check before the demo.
+Free tiers change often: re-check before each presentation.
 
 ## Verdict
 
@@ -17,7 +17,7 @@ Free tiers change often: re-check before the demo.
 
 | Tool | Use | Free? | Limits / cost | Notes |
 |---|---|---|---|---|
-| **Groq: `openai/gpt-oss-120b`** (and `gpt-oss-20b`) | Warning signs + text emotion (strict JSON) | ✅ Free, no card | 30 req/min, 1,000 req/day, 8K tokens/min, 200K tokens/day, per model | Groq does not train on API data. Limits are per model, so `gpt-oss-20b` gives a second quota for development. The **public demo** draws on this quota, which is why it is rate-limited per visitor and capped per day (`NIVARA_FLOW_AND_UI_PLAN.md` §7). The generated-text mode was removed in Phase N. |
+| **Groq: `openai/gpt-oss-120b`** (and `gpt-oss-20b`) | Warning signs + text emotion (strict JSON) | ✅ Free, no card | 30 req/min, 1,000 req/day, 8K tokens/min, 200K tokens/day, per model | Groq does not train on API data. Limits are per model, so `gpt-oss-20b` gives a second quota for development. The **public portal** draws on this quota, which is why it is rate-limited per visitor and capped per day (`NIVARA_FLOW_AND_UI_PLAN.md` §7). The generated-text mode was removed in Phase N. |
 | **Groq: `whisper-large-v3-turbo`** | Speech-to-text (Hindi, English) | ✅ Free | 20 req/min, 2,000 req/day, 2 h audio/hour, 8 h audio/day | 5-second chunks = 12 req/min per live call → one call at a time on the free tier. |
 | **Google Gemini (Flash-Lite; currently `gemini-3.5-flash-lite`, thinking level low)** | Backup LLM. `gemini-2.5-flash` is closed to new API keys; `3.8-flash` was overloaded and slow when tested | ✅ Free | Limits shown per project in AI Studio | Free-tier content **is used to improve Google products** → synthetic test data only. |
 | **Bhashini (Govt. of India)** | Backup for regional ASR/translation | ✅ Free (registration) | Not verified on the official site | Use only if self-hosted IndicConformer fails or is too slow on the team laptop. |
@@ -56,7 +56,7 @@ Free tiers change often: re-check before the demo.
 | Next.js app (victim UI, dashboards, API, scoring, safety lexicon) | **Vercel Hobby** |
 | Database | **MongoDB Atlas Free** |
 | Live updates | **Pusher Sandbox** |
-| AI analysis service (Python: Silero, Praat, librosa, emotion2vec+) | **Team laptop** (needs ~2–3 GB free RAM), exposed with a **Cloudflare Quick Tunnel** for the demo |
+| AI analysis service (Python: Silero, Praat, librosa, emotion2vec+) | **Team laptop** (needs ~2–3 GB free RAM), exposed with a **Cloudflare Quick Tunnel** for the deployed portal |
 | LLM + Hindi/English speech-to-text | **Groq** (free) |
 | Regional-language speech-to-text | **IndicConformer** (self-hosted on the team laptop); **Bhashini** as backup |
 | Background jobs (alert escalation, follow-ups) | **No separate worker.** Due jobs are claimed and run inside normal API requests: staff dashboards already poll `/alerts` every 10 s, which is often enough for a 2-minute escalation timer. |
@@ -67,4 +67,4 @@ Free tiers change often: re-check before the demo.
 - Keep the analysis prompt compact (target ≤ 1,500 tokens per call) to stay inside Groq's 8K tokens/minute.
 - Cache AI responses by input hash during evaluation runs, so re-running the evaluation set does not burn quota.
 - One live voice call at a time on the free Whisper quota.
-- Warm everything up before the demo: open the Vercel app, start the laptop service and tunnel, and send one test message.
+- Warm everything up before a presentation: open the Vercel app, start the laptop service and tunnel, and send one test message.

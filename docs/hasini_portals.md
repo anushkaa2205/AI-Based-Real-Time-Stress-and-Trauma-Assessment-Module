@@ -10,7 +10,7 @@
 
 1. Makes **case tracking dynamic**: a case's stage now moves forward **automatically** when staff really do something (open it, approve support, plan a follow-up), and the public tracking page **updates by itself** without a reload.
 2. Says **what happens on each staff portal and how it should look**, so all ten roles tell one connected story.
-3. Adds **sample cases** (fixed, synthetic, always present) so **every portal shows at least 2 cases** before anyone uses the demo. Live demo cases still appear on top of them.
+3. Adds **sample cases** (fixed, synthetic, always present) so **every portal shows at least 2 cases** before anyone uses the portal. Live portal cases still appear on top of them.
 4. Fixes the **repeating alert beep** in the staff portals.
 
 ### 1.1 Why (what is wrong today)
@@ -24,7 +24,7 @@ Checked in the code on 19 Nov 2026:
 | The tracking page fetches once when it opens. Nothing changes until the person reloads. | `components/public/track-result.tsx` |
 | "Last updated" moves when staff add a private note or acknowledge an alert (nothing the person can see), but **not** when support is approved (approval never touches the case document). | `core/integration/status.ts` uses `case.updatedAt` |
 | The critical-alert beep remembers what it already beeped for only in memory, so every reload or sign-in beeps again for **every** open critical alert. Each beep opens a new `AudioContext`. | `components/staff/alert-banner.tsx` |
-| A fresh database shows empty portals until someone runs the demo. | `scripts/seed.ts` seeds users and settings only |
+| A fresh database shows empty portals until someone files a case through the portal. | `scripts/seed.ts` seeds users and settings only |
 
 ---
 
@@ -86,6 +86,8 @@ If step 4 says **CONFLICT**: do not fix it by guessing. Run `git merge --abort`,
 
 ### 2.1.4 Anushka's side (so it works both ways)
 
+- Anushka works on her own branch `anushka` and merges it into `master` **every night**. Your morning `git merge origin/master` brings her day's work in; read `anushka_updates.md` right after.
+
 - Avoid editing the files in Hasini's "new files" and "will edit" lists (2.2) while her branch is open. If you must, tell her first.
 - Merge Hasini's pull requests quickly, and tell her when `master` has changed a file she is working on.
 
@@ -104,11 +106,12 @@ The goal is that **your work never conflicts with Anushka's**. Stay inside these
 | `web/src/components/staff/case-stage.tsx` | The stage chip and stage line used on staff screens (H.4) |
 | `web/tests/unit/lifecycle.test.ts`, `web/tests/unit/samples.test.ts` | Unit tests |
 | `web/tests/e2e/tracking-live.spec.ts` | End-to-end test of live tracking |
+| `web/src/components/staff/sample-tag.tsx` | The Sample pill (H.7) |
 | `docs/hasini_updates.md` | Your update log (2.5); only you edit it |
 
 **Existing files you will edit (small, focused edits; list them in your pull request):**
 
-`components/public/track-result.tsx`, `components/staff/alert-banner.tsx`, `case-queue.tsx`, `case-detail.tsx`, `district-cases.tsx`, `referral-queue.tsx`, `approval-inbox.tsx`, `operator-console.tsx`, `demo-mark.tsx`; `core/integration/status.ts`, `core/followups/service.ts`, `core/referrals/service.ts` (the decision function only); the route files `app/api/v1/staff/cases/[id]/route.ts`, `alerts/[id]/ack/route.ts`, `interactions/[id]/claim/route.ts`.
+`components/public/track-result.tsx`, `components/staff/alert-banner.tsx`, `case-queue.tsx`, `case-detail.tsx`, `district-cases.tsx`, `referral-queue.tsx`, `approval-inbox.tsx`, `operator-console.tsx`; `core/integration/status.ts`, `core/followups/service.ts`, `core/referrals/service.ts` (the decision function only); the route files `app/api/v1/staff/cases/[id]/route.ts`, `alerts/[id]/ack/route.ts`, `interactions/[id]/claim/route.ts`.
 
 **Shared files: ask Anushka BEFORE you touch them** (these are where conflicts and rule breaks happen):
 
@@ -266,10 +269,10 @@ Call it from each event in 3.2. Do not copy the rules into the routes.
 ### 3.4 The tracking page, made live
 
 `components/public/track-result.tsx`:
-- **Polls** `/api/demo/track?docket=…` every **15 seconds** while the tab is visible; pauses when hidden; checks at once when the tab comes back into focus; stops after 30 minutes and shows a **Refresh** button.
+- **Polls** `/api/portal/track?docket=…` every **15 seconds** while the tab is visible; pauses when hidden; checks at once when the tab comes back into focus; stops after 30 minutes and shows a **Refresh** button.
 - Shows a small line under the docket: "Updates automatically · last checked 10:42".
 - When the stage changes, the new step animates in (off under `prefers-reduced-motion`) and a polite screen-reader announcement says the new stage.
-- Check the `track` rate limit in the demo safeguards (`core/demo`). 4 requests a minute per visitor must fit. If it does not, that is a doubt: do not raise the limit yourself (it is a public safeguard, plan §7).
+- Check the `track` rate limit in the portal safeguards (`core/portal`). 4 requests a minute per visitor must fit. If it does not, that is a doubt: do not raise the limit yourself (it is a public safeguard, plan §7).
 - **"Last updated"** in `core/integration/status.ts` becomes the later of `statusChangedAt` and the newest arranged-support decision time, so it changes only when something the person can see changes. The response keeps exactly its five fields (contract `API_CONTRACTS §6.6`); no new field.
 
 Push from Pusher is not used on the public page: public visitors cannot join private channels, and polling is free and simple.
@@ -284,7 +287,7 @@ General look (already in `NIVARA_FLOW_AND_UI_PLAN.md` §9, keep it): light pages
 - **Stage chip** for tables: a small pill with 5 dots, filled up to the current stage, plus the stage word ("Support arranged"). Neutral colours (petrol and grey), never band colours, so stage and risk are never confused.
 - **Stage line** for the case page: the same five steps as the public tracking page, with the date each was reached.
 - **"What the person sees"** box on the case page: an exact preview of the tracking page (stage + support lines), so staff know what the person is being told. It reuses the status view from `core/integration/status.ts` and shows nothing more.
-- **Sample** tag: samples show a grey "Sample" pill next to the existing "Demo" tag (extend `demo-mark.tsx`).
+- **Sample** tag: samples show a small grey "Sample" pill, from a new component `components/staff/sample-tag.tsx` (add it to your new-files list).
 
 ### 4.1 Operator: `/operator` Operator console
 
@@ -297,7 +300,7 @@ General look (already in `NIVARA_FLOW_AND_UI_PLAN.md` §9, keep it): light pages
 ### 4.2 Counsellor (and supervisor): `/counsellor` Case queue
 
 - **Purpose:** decide who to help first.
-- **Layout:** a real table, most urgent first (current sort stays). Columns: band, docket, **stage chip (new)**, waiting time, main reason, channel icon, assigned to, Demo/Sample tag. Above the table, **stage tabs** with counts: *New · Being reviewed · Support arranged · Follow-up planned · Closed* ("All open" by default). Critical rows unmissable; Low rows quiet.
+- **Layout:** a real table, most urgent first (current sort stays). Columns: band, docket, **stage chip (new)**, waiting time, main reason, channel icon, assigned to, Sample tag. Above the table, **stage tabs** with counts: *New · Being reviewed · Support arranged · Follow-up planned · Closed* ("All open" by default). Critical rows unmissable; Low rows quiet.
 - **Case page `/counsellor/case/{id}`:** header with docket, band and the stage line; score bar; warning signs with exact words; proposed support with Approve/Reject; **"What the person sees" box**; the three "Mark as" buttons move into one **Change stage** menu (Closed still needs a follow-up or a reason).
 - **What happens:** opening a New case → Being reviewed. Approving support → Support arranged, and the person's tracking page shows the support line within 15 s.
 - **Supervisor:** sees all of this plus the operator console (no change).
@@ -328,12 +331,12 @@ General look (already in `NIVARA_FLOW_AND_UI_PLAN.md` §9, keep it): light pages
 
 ### 4.7 State admin and Ministry admin: `/analytics`
 
-- No layout change. Samples are demo cases, so the existing "include / exclude demo" filter covers them.
+- No layout change. Samples are portal cases, so the existing "include / exclude portal cases" filter covers them.
 - Note: any number under 5 shows as "<5" on purpose (NFR-PRI-05). With 8 samples most cells will read "<5". That is correct behaviour, not a bug (**doubt D2**).
 
 ### 4.8 System admin: `/admin` and Auditor: `/admin/audit`
 
-- These portals hold no case data by design, so "2 cases" does not apply. The admin already sees the 10 seeded users and the demo API key.
+- These portals hold no case data by design, so "2 cases" does not apply. The admin already sees the 10 seeded users and the portal API key.
 - The auditor will see the audit entries that seeding the samples creates (case views, approvals, stage changes). Add a filter option for the new automatic stage-change action.
 
 ### 4.9 Alert banner (every staff page) and the beep
@@ -350,7 +353,7 @@ General look (already in `NIVARA_FLOW_AND_UI_PLAN.md` §9, keep it): light pages
 
 ### 5.1 The set
 
-Eight synthetic cases, all in **Pune (MH-PUN)** so the district, police and welfare portals see them. Docket numbers come from a reserved range `NHAA-2026-MH-9900xx`, so they are easy to recognise and never clash with real demo cases. Every portal shows **at least 2**.
+Eight synthetic cases, all in **Pune (MH-PUN)** so the district, police and welfare portals see them. Docket numbers come from a reserved range `NHAA-2026-MH-9900xx`, so they are easy to recognise and never clash with real portal cases. Every portal shows **at least 2**.
 
 | # | Docket | Language, channel | Target band | Starting stage | Starting state | Shown on |
 |---|---|---|---|---|---|---|
@@ -370,14 +373,14 @@ If the rules do not give the target band in a regional language, change the word
 ### 5.2 How they are made (through the real code, not fake rows)
 
 `scripts/seed-samples.ts` (run as `npm run seed:samples`):
-1. Finds the **demo API client** (the one `npm run api:client -- --demo` made). Samples belong to it, so `/track/<docket>` works for them. If it is missing, stop with a clear message.
+1. Finds the **portal API client** (the one `npm run api:client -- --portal` made). Samples belong to it, so `/track/<docket>` works for them. If it is missing, stop with a clear message.
 2. For each sample: creates the interaction with full consent (analysis allowed, `shareWithCounsellor: true`) and sends the messages through the **same module code** the integration API uses. Rules-only mode is fine (no analysis service needed), so scores, bands, warning signs and proposals are real outputs (rule 3).
-3. Moves each sample to its starting state with the **same core services** staff use, acting as the seeded demo users (Demo Counsellor approves, Demo District Officer decides, Demo Police Liaison accepts …). That way audit entries and stage changes are real, and the lifecycle (section 3) is tested by the seed itself.
-4. Marks every sample `isDemo: true`. `core/cases/samples.ts` exports the definitions and `isSampleDocket()` (reserved range check) for the Sample tag.
+3. Moves each sample to its starting state with the **same core services** staff use, acting as the seeded staff users (Nivara Counsellor approves, Nivara District Officer decides, Nivara Police Liaison accepts …). That way audit entries and stage changes are real, and the lifecycle (section 3) is tested by the seed itself.
+4. Marks every sample `isPortal: true`. `core/cases/samples.ts` exports the definitions and `isSampleDocket()` (reserved range check) for the Sample tag.
 5. **Idempotent:** run it twice and nothing doubles. `--reset` puts every sample back to its starting state: deletes the samples' interactions, messages, assessments, indicators, recommendations, referrals, follow-ups and alerts, then makes them again. Audit entries are append-only and stay (that is correct). Samples have no identity record, so nothing in the PII database is touched.
 6. Prints only counts and docket numbers, never message text.
 
-**Before each presentation:** `npm run seed:samples -- --reset`. Samples are "static" in that they always start from the same state; during the demo they still react to real staff actions (approve S3's counselling and watch S3's tracking page move), which is the point.
+**Before each presentation:** `npm run seed:samples -- --reset`. Samples are "static" in that they always start from the same state; during a presentation they still react to real staff actions (approve S3's counselling and watch S3's tracking page move), which is the point.
 
 ---
 
@@ -385,7 +388,7 @@ If the rules do not give the target band in a regional language, change the word
 
 Tick each one here when it is done (`[x]`, date, one line). Do not start a task that depends on an open doubt.
 
-- [ ] **H.0 Set up.** Check that `CLAUDE.md` has the update-log block and `docs/anushka_updates.md` exists (2.5); if not, ask Anushka. Branch (2.1); create `docs/hasini_updates.md` (2.5) as your first commit; read `CLAUDE.md`, `NIVARA_FLOW_AND_UI_PLAN.md` §6.4, §6.6, §9 and this file; run the app locally with `npm run seed`; sign in as each role once. Ask Anushka about every doubt in section 8 before H.2.
+- [ ] **H.0 Set up.** Create your branch only **after** the 19 Nov 2026 nightly merge (that merge brings in the `portal` names this plan uses; branching earlier would conflict). Check that `CLAUDE.md` has the update-log block and `docs/anushka_updates.md` exists (2.5); if not, ask Anushka. Branch (2.1); create `docs/hasini_updates.md` (2.5) as your first commit; read `CLAUDE.md`, `NIVARA_FLOW_AND_UI_PLAN.md` §6.4, §6.6, §9 and this file; run the app locally with `npm run seed`; sign in as each role once. Ask Anushka about every doubt in section 8 before H.2.
   *Done when:* the app runs on your laptop, `hasini_updates.md` is pushed with its first entry, and section 8 has answers.
 - [ ] **H.1 Lifecycle rules.** `core/cases/lifecycle.ts` + `tests/unit/lifecycle.test.ts`: every row of 3.2, forward-only, closed stays closed, follow-up without support does not jump ahead. Pure.
   *Done when:* tests pass with full coverage of the file.
@@ -424,9 +427,9 @@ Tick each one here when it is done (`[x]`, date, one line). Do not start a task 
 | D3 | Add `statusChangedAt` (Date) to the case model so "last updated" means a change the person can see? | Yes. Otherwise "last updated" stays as today. |
 | D4 | Add a mute button for the critical-alert sound (banner still shows; "Sound off" visible)? | Session-only mute, visible indicator, resets on sign-in. |
 | D5 | Call `syncCaseStatus` at the end of the pipeline when emergency support is auto-triggered (`core/pipeline/score.ts`)? | Yes, one line inside the existing transaction. If not, compute the stage at read time for tracking. |
-| D6 | S2 and S3 keep an open conversation so the operator console is not empty. Does any job close idle conversations or escalate the open alert over time? | Hasini checks `core/jobs/runDue.ts`; if they change, `--reset` before each demo is enough. |
+| D6 | S2 and S3 keep an open conversation so the operator console is not empty. Does any job close idle conversations or escalate the open alert over time? | Hasini checks `core/jobs/runDue.ts`; if they change, `--reset` before each presentation is enough. |
 | D7 | Should police/welfare finishing a referral change anything the person sees (for example "Counselling: done")? | No for now; it would change the status contract. |
-| D8 | Should the public `/track` page offer two sample docket numbers ("Try a sample") for the presentation? | Yes, only while `DEMO_ENABLED` is on. |
+| D8 | Should the public `/track` page offer two sample docket numbers ("Try a sample") for the presentation? | Yes, only while `PORTAL_ENABLED` is on. |
 
 ---
 
