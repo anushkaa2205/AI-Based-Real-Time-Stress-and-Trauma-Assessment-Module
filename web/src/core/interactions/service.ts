@@ -13,6 +13,8 @@ import { startRetention } from "@/core/privacy/retention";
 import { isMinor, type CaseContextInput } from "@/core/scoring/context";
 import { db } from "@/lib/db";
 import { ApiError } from "@/lib/problem";
+import { queueChannelsFor } from "@/lib/realtime/channels";
+import { publish } from "@/lib/realtime/publish";
 import { encrypt } from "@/core/privacy/crypto";
 import { Case, District, Interaction, Message, State, StoredAudio, Subject, type Channel, type InputMethod } from "@/models";
 
@@ -36,6 +38,7 @@ export async function startInteraction(input: {
   const state = district ? await State.findById(district.stateId).lean() : null;
 
   let caseDoc = input.docketNumber ? await Case.findOne({ docketNumber: input.docketNumber }) : null;
+  const isNewCase = !caseDoc;
   if (!caseDoc) {
     const subject = await Subject.create({});
     const year = new Date().getUTCFullYear();
@@ -75,6 +78,19 @@ export async function startInteraction(input: {
     entityId: String(interaction._id),
     metadata: { channel: input.channel, language: input.language },
   });
+  if (isNewCase) {
+    // API_CONTRACTS §7: a new case reaches the staff queues at once, before its first message is scored (FR-CASE-01).
+    const data = {
+      caseId: String(caseDoc._id),
+      docketNumber: caseDoc.docketNumber,
+      band: null,
+      svi: null,
+      status: caseDoc.status,
+      assignedToId: null,
+      waitingSince: new Date(caseDoc.waitingSince ?? Date.now()).toISOString(),
+    };
+    await publish(queueChannelsFor(caseDoc.districtId ? String(caseDoc.districtId) : null).map((channel) => ({ channel, event: "case.created" as const, data })));
+  }
   return { interactionId: String(interaction._id), docketNumber: caseDoc.docketNumber };
 }
 
