@@ -43,3 +43,10 @@ Entry format:
 - **Files:** `docs/hasini_portals.md` (§9), `docs/hasini_updates.md`
 - **Anushka should know:** D1's queue rule needs `core/cases/queue.ts` (not on my file lists) and probably a new case field; I will ask which task it belongs to. D6: no pre-presentation checklist exists yet (`IMPLEMENTATION_PLAN.md` 9.9 is deferred), so I need to know where to put the command. D4 adds "Sound off" text to `messages/*.json`; I will tell you the day before.
 - **Next:** D1 rule in the flow plan, then H.6 with the mute button.
+
+## 2026-11-19 · H.0 · D1 rule in the flow plan
+- **Did:** added one bullet to `NIVARA_FLOW_AND_UI_PLAN.md` §6.4: a new message on a closed case keeps it Closed, shows it in the default queue with a note, and the safety check, alerts and emergency panel run as normal.
+- **Decided:** wording only; no code yet (the queue change needs a task and Anushka's OK for `queue.ts`).
+- **Files:** `docs/NIVARA_FLOW_AND_UI_PLAN.md` (§6.4, one bullet), `docs/hasini_updates.md`
+- **Anushka should know:** I edited the flow plan, as you asked in D1; only that one bullet.
+- **Next:** H.6 with the mute button (D4).
