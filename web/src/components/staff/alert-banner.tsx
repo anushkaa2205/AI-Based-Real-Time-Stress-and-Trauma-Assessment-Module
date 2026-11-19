@@ -10,6 +10,7 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRealtime } from "@/components/realtime/realtime-provider";
+import { decideBeep, readHeard, writeHeard, type HeardMap } from "@/components/staff/alert-sound";
 
 interface AlertItem {
   id: string;
@@ -31,10 +32,24 @@ function byUrgency(a: AlertItem, b: AlertItem): number {
   return b.createdAt.localeCompare(a.createdAt);
 }
 
+/** One audio context for the whole tab (H.6): browsers limit how many can be open. */
+let audioCtx: AudioContext | null = null;
+
+/** sessionStorage, or null where it is blocked (H.6). */
+function tabStorage(): Storage | null {
+  try {
+    return window.sessionStorage;
+  } catch {
+    return null;
+  }
+}
+
 function beep() {
   try {
     const AudioCtx = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-    const ctx = new AudioCtx();
+    audioCtx ??= new AudioCtx();
+    const ctx = audioCtx;
+    if (ctx.state === "suspended") void ctx.resume().catch(() => undefined);
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.frequency.value = 880;
@@ -52,7 +67,8 @@ export function AlertBanner({ channels, caseHref }: { channels: string[]; caseHr
   const t = useTranslations("staff.alerts");
   const [busy, setBusy] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(false);
-  const heard = useRef(new Set<string>());
+  // Alert id → escalation level already beeped for; kept per tab so a reload does not beep again (H.6).
+  const heard = useRef<HeardMap | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -60,10 +76,11 @@ export function AlertBanner({ channels, caseHref }: { channels: string[]; caseHr
       if (!res.ok) return;
       const data = (await res.json()) as { items: AlertItem[] };
       setAlerts([...data.items].sort(byUrgency));
-      for (const a of data.items) {
-        if (a.level === "CRITICAL" && !heard.current.has(a.id)) beep();
-        heard.current.add(a.id);
-      }
+      const storage = tabStorage();
+      const decision = decideBeep(data.items, heard.current ?? readHeard(storage));
+      heard.current = decision.heard;
+      writeHeard(storage, decision.heard);
+      if (decision.beep) beep();
     } catch {
       /* offline: try again on the next tick */
     }

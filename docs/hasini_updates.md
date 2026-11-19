@@ -50,3 +50,10 @@ Entry format:
 - **Files:** `docs/NIVARA_FLOW_AND_UI_PLAN.md` (§6.4, one bullet), `docs/hasini_updates.md`
 - **Anushka should know:** I edited the flow plan, as you asked in D1; only that one bullet.
 - **Next:** H.6 with the mute button (D4).
+
+## 2026-11-19 · H.6 (part 1) · Alert beep: once per new or escalated Critical alert
+- **Did:** the banner remembers which Critical alerts already beeped (and at what escalation level) in `sessionStorage`, so a reload in the same tab does not beep again; at most one beep per check; an escalation beeps once; High stays silent; one `AudioContext` per tab. Pure decision in a small helper with 12 unit tests (100% coverage).
+- **Decided:** the helper lives beside the component (`components/staff/alert-sound.ts`, same pattern as `components/portal/relabel.ts`); it is a new file not on my plan's list, agreed with Hasini. A brand-new tab beeps once for alerts already open (it has no memory yet). Storage holds alert ids and levels only, never case text.
+- **Files:** `web/src/components/staff/alert-sound.ts` (new), `web/tests/unit/alert-sound.test.ts` (new), `web/src/components/staff/alert-banner.tsx`
+- **Anushka should know:** only the beep logic in `alert-banner.tsx` changed; layout and text are untouched. Part 2 (the "Sound off" button, D4) needs your OK for `app/(staff)/layout.tsx`, `app/(staff)/sign-out-button.tsx` and two strings in `messages/*.json`.
+- **Next:** check it in the running app; then part 2 once Anushka answers.
