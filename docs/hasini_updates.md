@@ -78,3 +78,10 @@ Entry format:
 - **Files:** `web/src/components/staff/referral-queue.tsx`, `web/tests/unit/portal-groups.test.ts`
 - **Anushka should know:** not checked in the browser yet as police or welfare (needs those sign-ins). The accessibility e2e could not sign in: `web/.seed-output/demo-credentials.txt` is out of date (counsellor login 401), so the staff part of AC-ACC-01 was not re-checked; public pages and login passed. Unit tests time out (5 s) at random when the laptop is busy; with `--maxWorkers=4` all 763 pass.
 - **Next:** check police and welfare in the browser; the rest of H.7 waits on H.4, H.5 and the strings.
+
+## 2026-11-20 · H.7 (part) · Police cards checked in the app
+- **Did:** signed in as the demo police liaison and opened `/police` at 1280 px and 375 px: cards grouped as Pending (1) then Accepted (19), each card in its right group, headings with counts, no sideways scroll, and no score, band or indicator words on the cards. No referral was changed during the check.
+- **Decided:** nothing new.
+- **Files:** `docs/hasini_updates.md`
+- **Anushka should know:** welfare uses the same component but was not opened in the browser (needs the welfare sign-in).
+- **Next:** waiting on Anushka's answers (mute button files, D1 queue, D6 checklist) and on H.4/H.5 for the rest of H.7.
