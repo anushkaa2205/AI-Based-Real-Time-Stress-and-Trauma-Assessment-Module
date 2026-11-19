@@ -42,7 +42,8 @@ export function SiteNav({ signedIn, demoOn }: { signedIn: boolean; demoOn: boole
           </a>
           <a
             href="tel:112"
-            aria-label={h("emergencyCall")}
+            aria-label={h("emergency")}
+            title={h("emergencyCall")}
             className={`btn btn-sm gap-1.5 whitespace-nowrap ${dark ? "border border-white/25 text-white hover:bg-white/10" : "border border-danger/40 text-danger hover:bg-danger-soft"}`}
             data-testid="call-emergency"
           >

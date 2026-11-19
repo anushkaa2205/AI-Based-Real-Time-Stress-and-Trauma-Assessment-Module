@@ -62,7 +62,7 @@ function useBandLabel(): (b: Band) => string {
 /** One theme (plan §9.6): charts use the brand colour and the band colours only. */
 const VIZ_STYLE = `
 .viz-root {
-  --surface-1: #ffffff; --ink-1: #14181f; --ink-2: #4a5361; --ink-muted: #7a8290;
+  --surface-1: #ffffff; --ink-1: #14181f; --ink-2: #4a5361; --ink-muted: #646c79;
   --grid: #e3e0d8; --axis: #c9c4b8;
   --band-LOW: #b8c0ca; --band-MODERATE: #b7860b; --band-HIGH: #c4511a; --band-CRITICAL: #b42318;
   --seq-0: #d6e7e9; --seq-1: #a9cdd1; --seq-2: #6ea9b1; --seq-3: #2f7c8b; --seq-4: #0b5563;

@@ -73,7 +73,7 @@
   --surface-2: #f1efe9;
   --ink: #14181f;
   --ink-2: #4a5361;
-  --ink-3: #7a8290;
+  --ink-3: #646c79; /* AA: 4.6:1 on surface-2, 4.9:1 on paper, 5.3:1 on white (AC-ACC-01) */
   --line: #e3e0d8;
   --brand: #0b5563;
   --brand-deep: #073b46;

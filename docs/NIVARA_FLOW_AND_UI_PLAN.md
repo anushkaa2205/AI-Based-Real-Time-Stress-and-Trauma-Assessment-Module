@@ -329,7 +329,7 @@ Rename `navy` to `brand` and `navy-deep` to `brand-deep` across the code in one 
 | `--surface-2` | `#F1EFE9` | Table headers, quiet panels |
 | `--ink` | `#14181F` | Text |
 | `--ink-2` | `#4A5361` | Secondary text |
-| `--ink-3` | `#7A8290` | Hints, captions |
+| `--ink-3` | `#646C79` | Hints, captions (darkened from #7A8290 on 19 Nov 2026 to meet WCAG AA 4.5:1 on every background, AC-ACC-01) |
 | `--line` | `#E3E0D8` | Borders |
 | `--brand` | `#0B5563` | Primary buttons and links (petrol) |
 | `--brand-deep` | `#073B46` | Hover, pressed |
