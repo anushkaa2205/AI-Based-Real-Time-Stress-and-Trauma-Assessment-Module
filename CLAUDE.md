@@ -22,6 +22,8 @@ From what the person says or writes, the module detects warning signs, calculate
 | `docs/API_CONTRACTS.md` | Every endpoint, real-time event, role permission and error code. |
 | `docs/TOOLS_AND_COSTS.md` | Which external services and models we use, their free-tier limits, and why. **Everything must stay free.** |
 | `docs/IMPLEMENTATION_PLAN.md` | Build order, tasks per phase, and what "done" means for each. **Update the status table there when a task is finished.** |
+| `docs/hasini_portals.md` | Hasini's plan: staff portals, live case tracking, sample cases, and how the two of us work without merge conflicts. |
+| `docs/anushka_updates.md`, `docs/hasini_updates.md` | Each person's log of decisions and implementation. Read the other person's after every pull (see "Team update logs"). |
 
 If code and docs disagree, stop and ask which is right; then fix the one that is wrong. Do not let them drift.
 
@@ -138,6 +140,15 @@ Never print, log or commit their values.
 8. **No secrets.** Never hard-code keys or connection strings; never print `.env` values.
 9. **Finish cleanly.** Tick the task in `docs/IMPLEMENTATION_PLAN.md`, update the status table, and suggest a commit message (one concern per commit).
 10. **Windows.** The team works on Windows: prefer cross-platform npm scripts; give PowerShell-compatible commands.
+
+## Team update logs (two people work on this repo)
+
+- Anushka writes only `docs/anushka_updates.md`; Hasini writes only `docs/hasini_updates.md`. Never edit the other person's log.
+- Who "you" are working for: if the current git branch starts with `hasini/`, Hasini; otherwise Anushka.
+- **At the start of every session, and after every `git pull` or `git merge origin/master`**, read the other person's update log (the entries since last time) before changing any file. If an entry touches a file or decision the current task depends on, stop and tell the user before writing code.
+- **Whenever you make a decision or finish a piece of implementation**, add an entry at the bottom of your own log, in the same commit as the code: date, task, what was done, what was decided, files changed, what the other person should know, next step.
+- **Before every push:** `git fetch origin` then `git merge origin/master`, re-read the other person's log, run `npm run typecheck`, `npm run lint` and `npm test` from `web/`, then push. Never push to `master` from a `hasini/` branch and never force-push.
+- **On any merge conflict:** run `git merge --abort` and tell the user; never resolve it by guessing or by dropping the other person's lines. Hasini's work follows `docs/hasini_portals.md` §2 (her files, shared files, doubts).
 
 ## Current status
 
