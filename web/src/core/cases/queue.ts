@@ -28,6 +28,9 @@ export async function caseQueue(user: StaffUser, scope: ListScope, q: z.output<t
   if (q.assignedTo === "me") filter.assignedCounsellorId = user.id;
   else if (q.assignedTo === "unassigned") filter.assignedCounsellorId = null;
   else if (q.assignedTo) filter.assignedCounsellorId = q.assignedTo;
+  // Dockets are stored in upper case: upper-casing the search keeps it case-insensitive and lets the
+  // anchored prefix use the unique docketNumber index (a case-insensitive regex cannot).
+  if (q.docket) filter.docketNumber = { $regex: `^${q.docket.toUpperCase().replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}` };
   if (q.from || q.to) {
     filter.firstContactAt = { ...(q.from ? { $gte: new Date(q.from) } : {}), ...(q.to ? { $lte: new Date(q.to) } : {}) };
   }

@@ -6,7 +6,7 @@
  */
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRealtime } from "@/components/realtime/realtime-provider";
 import { BandBadge, useWaitingFor } from "./band-badge";
 import { DemoMark } from "./demo-mark";
@@ -34,6 +34,9 @@ interface Item {
 export function CaseQueue({ channels, caseHref }: { channels: string[]; caseHref: string | null }) {
   const [items, setItems] = useState<Item[] | null>(null);
   const [mine, setMine] = useState(false);
+  const [docket, setDocket] = useState("");
+  const [pages, setPages] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
   const [now, setNow] = useState(() => Date.now());
   const [error, setError] = useState(false);
   const t = useTranslations("staff");
@@ -41,26 +44,46 @@ export function CaseQueue({ channels, caseHref }: { channels: string[]; caseHref
   const channelLabel = (c: string) => ((CHANNELS as readonly string[]).includes(c) ? t(`channels.${c}`) : c);
   const statusLabel = (s: string) => ((CASE_STATUSES as readonly string[]).includes(s) ? t(`status.${s}`) : s);
 
+  const latest = useRef(0);
+
   const load = useCallback(async () => {
+    const run = ++latest.current;
     try {
-      const res = await fetch(`/api/v1/staff/cases?limit=100${mine ? "&assignedTo=me" : ""}`, { cache: "no-store" });
-      if (!res.ok) throw new Error(String(res.status));
-      setItems(((await res.json()) as { items: Item[] }).items);
+      // Every page loaded so far is refreshed, so a case further down never drops out of view.
+      const all: Item[] = [];
+      let cursor: string | null = null;
+      for (let page = 0; page < pages; page++) {
+        const qs = new URLSearchParams({ limit: "100" });
+        if (mine) qs.set("assignedTo", "me");
+        if (docket.trim()) qs.set("docket", docket.trim());
+        if (cursor) qs.set("cursor", cursor);
+        const res = await fetch(`/api/v1/staff/cases?${qs}`, { cache: "no-store" });
+        if (!res.ok) throw new Error(String(res.status));
+        const body = (await res.json()) as { items: Item[]; nextCursor: string | null };
+        all.push(...body.items);
+        cursor = body.nextCursor;
+        if (!cursor) break;
+      }
+      if (run !== latest.current) return; // a newer search has started; drop this older answer
+      setItems(all);
+      setHasMore(!!cursor);
       setNow(Date.now());
       setError(false);
     } catch {
-      setError(true);
+      if (run === latest.current) setError(true);
     }
-  }, [mine]);
+  }, [mine, docket, pages]);
 
+  // While a docket is being typed, wait for a pause before asking the server.
+  const delay = docket.trim() ? 300 : 0;
   useEffect(() => {
-    const first = setTimeout(load, 0);
+    const first = setTimeout(load, delay);
     const timer = setInterval(load, 10_000);
     return () => {
       clearTimeout(first);
       clearInterval(timer);
     };
-  }, [load]);
+  }, [load, delay]);
 
   useRealtime(channels, (env) => {
     if (env.event === "case.updated" || env.event === "case.created" || env.event === "assessment.updated") void load();
@@ -69,10 +92,34 @@ export function CaseQueue({ channels, caseHref }: { channels: string[]; caseHref
   return (
     <section className="flex flex-col gap-5">
       <PageHeader title={t("queue.title")} lead={t("queue.lead")}>
-        <label className="flex items-center gap-2 text-sm text-ink-2">
-          <input type="checkbox" className="size-4 accent-brand" checked={mine} onChange={(e) => setMine(e.target.checked)} />
-          {t("queue.mine")}
-        </label>
+        <div className="flex flex-wrap items-center gap-4">
+          <label className="flex items-center gap-2 text-sm text-ink-2">
+            <span className="sr-only">{t("queue.search")}</span>
+            <input
+              type="search"
+              value={docket}
+              onChange={(e) => {
+                setDocket(e.target.value);
+                setPages(1);
+              }}
+              placeholder={t("queue.searchPlaceholder")}
+              className="field min-h-9 w-56"
+              data-testid="queue-search"
+            />
+          </label>
+          <label className="flex items-center gap-2 text-sm text-ink-2">
+            <input
+              type="checkbox"
+              className="size-4 accent-brand"
+              checked={mine}
+              onChange={(e) => {
+                setMine(e.target.checked);
+                setPages(1);
+              }}
+            />
+            {t("queue.mine")}
+          </label>
+        </div>
       </PageHeader>
       {error && (
         <p role="status" className="text-sm text-warn">
@@ -83,7 +130,7 @@ export function CaseQueue({ channels, caseHref }: { channels: string[]; caseHref
         <TableSkeleton cols={6} />
       ) : items.length === 0 ? (
         <EmptyState>
-          <p className="font-medium text-ink-2">{t("queue.empty")}</p>
+          <p className="font-medium text-ink-2">{docket.trim() ? t("queue.noMatch") : t("queue.empty")}</p>
           <p className="text-sm">{t("queue.emptyHint")}</p>
         </EmptyState>
       ) : (
@@ -141,6 +188,13 @@ export function CaseQueue({ channels, caseHref }: { channels: string[]; caseHref
               ))}
             </tbody>
           </table>
+          {hasMore && (
+            <div className="flex justify-center border-t border-line p-3">
+              <button type="button" className="btn btn-quiet btn-sm" onClick={() => setPages((n) => n + 1)} data-testid="queue-more">
+                {t("queue.loadMore")}
+              </button>
+            </div>
+          )}
         </div>
       )}
     </section>

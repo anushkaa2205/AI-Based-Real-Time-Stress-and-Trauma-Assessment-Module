@@ -369,7 +369,11 @@
       "unassigned": "किसी को नहीं सौंपा",
       "limited": "सीमित",
       "limitedTitle": "सीमित AI विश्लेषण",
-      "openAlert": "खुला {level} अलर्ट"
+      "openAlert": "खुला {level} अलर्ट",
+      "search": "डॉकेट खोजें",
+      "searchPlaceholder": "डॉकेट नंबर खोजें",
+      "noMatch": "इस डॉकेट नंबर से कोई खुला मामला नहीं मिला",
+      "loadMore": "और मामले दिखाएँ"
     },
     "alerts": {
       "critical": "गंभीर अलर्ट",

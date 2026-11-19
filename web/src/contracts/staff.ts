@@ -157,6 +157,8 @@ export const CaseQueueQuery = z.object({
   language: z.string().max(10).optional(),
   from: Iso.optional(),
   to: Iso.optional(),
+  /** Docket number or the start of one, case-insensitive (find a case the portal just registered) */
+  docket: z.string().trim().min(1).max(40).optional(),
   limit: z.coerce.number().int().min(1).max(100).default(50),
   cursor: z.string().max(40).optional(),
 });

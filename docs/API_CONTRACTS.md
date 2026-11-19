@@ -211,7 +211,7 @@ Base: `/api/v1/staff`. Auth.js session. Responses shaped by role (§4).
 
 ### 5.2 Case queue and detail
 #### `GET /cases`
-Query: `status` (multi), `band` (multi), `districtId`, `assignedTo=me|unassigned|<id>`, `channel`, `language`, `from`, `to`, `limit`, `cursor`.
+Query: `status` (multi), `band` (multi), `districtId`, `assignedTo=me|unassigned|<id>`, `channel`, `language`, `from`, `to`, `docket` (docket number or its start, case-insensitive), `limit`, `cursor`.
 Sorted by **band ↓, SVI ↓, waiting time ↑** (FR-CASE-01).
 
 **200** `Page<CaseQueueItem>`

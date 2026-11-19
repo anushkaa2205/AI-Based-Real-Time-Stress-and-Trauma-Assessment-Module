@@ -369,7 +369,11 @@
       "unassigned": "Unassigned",
       "limited": "limited",
       "limitedTitle": "Limited AI analysis",
-      "openAlert": "Open {level} alert"
+      "openAlert": "Open {level} alert",
+      "search": "Find a docket",
+      "searchPlaceholder": "Search docket number",
+      "noMatch": "No open case matches that docket number",
+      "loadMore": "Show more cases"
     },
     "alerts": {
       "critical": "Critical alert",

@@ -369,7 +369,11 @@
       "unassigned": "कोणाकडेही नाही",
       "limited": "मर्यादित",
       "limitedTitle": "मर्यादित AI विश्लेषण",
-      "openAlert": "उघडा {level} इशारा"
+      "openAlert": "उघडा {level} इशारा",
+      "search": "डॉकेट शोधा",
+      "searchPlaceholder": "डॉकेट क्रमांक शोधा",
+      "noMatch": "या डॉकेट क्रमांकाशी जुळणारे कोणतेही खुले प्रकरण नाही",
+      "loadMore": "आणखी प्रकरणे दाखवा"
     },
     "alerts": {
       "critical": "गंभीर इशारा",

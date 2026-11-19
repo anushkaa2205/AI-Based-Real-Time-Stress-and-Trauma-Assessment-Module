@@ -369,7 +369,11 @@
       "unassigned": "কাউকে দেওয়া হয়নি",
       "limited": "সীমিত",
       "limitedTitle": "সীমিত AI বিশ্লেষণ",
-      "openAlert": "খোলা {level} সতর্কতা"
+      "openAlert": "খোলা {level} সতর্কতা",
+      "search": "ডকেট খুঁজুন",
+      "searchPlaceholder": "ডকেট নম্বর খুঁজুন",
+      "noMatch": "এই ডকেট নম্বরের সাথে কোনো খোলা মামলা মেলেনি",
+      "loadMore": "আরও মামলা দেখান"
     },
     "alerts": {
       "critical": "সংকটজনক সতর্কতা",
