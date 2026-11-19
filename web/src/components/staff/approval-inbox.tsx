@@ -12,6 +12,7 @@ import { BandBadge } from "./band-badge";
 import { RecommendationActions, type RecLike } from "./recommendation-actions";
 import { DemoMark } from "./demo-mark";
 import { useEnumLabel } from "./use-labels";
+import { URGENCIES } from "@/models/enums";
 
 interface Item extends RecLike {
   caseId: string;
@@ -26,6 +27,20 @@ interface Item extends RecLike {
 
 const POLL_MS = 15_000;
 const PAGE = 50;
+
+/**
+ * Waiting proposals grouped by urgency, most urgent first (task H.7, plan §4.3). Empty groups are
+ * left out; an urgency outside URGENCIES goes last, in its own group. Order inside a group is kept.
+ */
+export function groupByUrgency<T extends { urgency: string }>(items: readonly T[]): { urgency: string; items: T[] }[] {
+  const rank = (u: string) => {
+    const i = (URGENCIES as readonly string[]).indexOf(u);
+    return i === -1 ? URGENCIES.length : i;
+  };
+  const groups = new Map<string, T[]>();
+  for (const it of items) groups.set(it.urgency, [...(groups.get(it.urgency) ?? []), it]);
+  return [...groups.entries()].sort(([a], [b]) => rank(a) - rank(b)).map(([urgency, list]) => ({ urgency, items: list }));
+}
 
 function List({ items, caseHref, onDone }: { items: Item[]; caseHref: string | null; onDone: (m: string) => void }) {
   const e = useEnumLabel();
@@ -66,6 +81,7 @@ export function ApprovalInbox({ caseHref, showReviews = true }: { caseHref: stri
   const [pages, setPages] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const t = useTranslations("staff");
+  const e = useEnumLabel();
 
   const load = useCallback(async () => {
     const get = async (q: string, maxPages: number) => {
@@ -124,7 +140,14 @@ export function ApprovalInbox({ caseHref, showReviews = true }: { caseHref: stri
         ) : proposed.length === 0 ? (
           <div className="empty">{t("approvals.empty")}</div>
         ) : (
-          <List items={proposed} caseHref={caseHref} onDone={done} />
+          groupByUrgency(proposed).map((g) => (
+            <div key={g.urgency} className="flex flex-col gap-2" data-testid="approval-group" data-group={g.urgency}>
+              <h3 className="mt-1 text-sm font-semibold text-ink-2 first-letter:uppercase">
+                {e("urgency", g.urgency)} ({g.items.length})
+              </h3>
+              <List items={g.items} caseHref={caseHref} onDone={done} />
+            </div>
+          ))
         )}
         {hasMore && (
           <button type="button" onClick={() => setPages((n) => n + 1)} className="link self-start text-sm" data-testid="inbox-more">

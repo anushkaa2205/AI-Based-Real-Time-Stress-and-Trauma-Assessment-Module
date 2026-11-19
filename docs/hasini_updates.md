@@ -64,3 +64,10 @@ Entry format:
 - **Files:** `web/src/components/staff/alert-sound.ts`, `web/tests/unit/alert-sound.test.ts`
 - **Anushka should know:** the demo key in `web/.seed-output/demo-api-key.txt` is older than the `DEMO_API_KEY` in `web/.env.local` (the file's key is rejected); the check left demo case NHAA-2026-MH-114895 with an open Critical alert in my local database.
 - **Next:** part 2 (the "Sound off" button) once Anushka answers about `layout.tsx`, `sign-out-button.tsx` and the strings.
+
+## 2026-11-19 · H.7 (part) · Approvals grouped by urgency
+- **Did:** "Waiting for approval" is split into groups, most urgent first (Immediate → within 15 min → 24 h → 72 h → none), each with a heading and a count; empty groups hidden; the "review after the fact" group stays on top. The district page uses the same inbox, so it is grouped too. Pure `groupByUrgency()` exported from the component, 4 unit tests. Checked in the app as counsellor at 1280 px and 375 px (no sideways scroll).
+- **Decided:** headings reuse the existing urgency labels (no new strings), first letter capitalised with CSS only.
+- **Files:** `web/src/components/staff/approval-inbox.tsx`, `web/tests/unit/portal-groups.test.ts` (new)
+- **Anushka should know:** the approval rows, buttons and `data-testid`s are unchanged; groups add `data-testid="approval-group"`.
+- **Next:** police and welfare cards grouped by status.
