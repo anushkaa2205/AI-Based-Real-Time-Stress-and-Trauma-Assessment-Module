@@ -28,3 +28,18 @@ Entry format:
 - **Files:** `web/src/core/cases/lifecycle.ts` (new), `web/tests/unit/lifecycle.test.ts` (new)
 - **Anushka should know:** no shared files touched. Section 8 doubts sent for answers; H.2 waits on D3 and D5.
 - **Next:** H.6 alert sound (without the mute button, D4).
+
+## 2026-11-19 · H.0 · Anushka's answers to doubts D1–D8
+- **Did:** recorded all eight answers in `hasini_portals.md` §9.
+- **Decided (all option A):**
+  - **D1:** a closed case is never reopened automatically; a new message on it shows the case in the default queue with a "New message on a closed case" note; safety alerts and the emergency panel fire as normal. Rule goes in the flow plan.
+  - **D2:** analytics batch later and optional; synthetic only, marked as samples so analytics can filter them out.
+  - **D3:** add `statusChangedAt`; update `DATABASE.md` and `models.ts` in the same commit as the code (H.2).
+  - **D4:** mute button: banner stays, "Sound off" always visible, session-only, resets at sign-in; note under FR-ALR in `REQUIREMENTS.md` (H.6).
+  - **D5:** one `syncCaseStatus` line in `score.ts` inside the existing transaction, events after commit; pull before touching it.
+  - **D6:** `--reset` before each demo; add the command to the pre-presentation checklist.
+  - **D7:** referral progress does not change what the person sees, for now.
+  - **D8:** "Try a sample" on `/track`, sample dockets only, worded "sample case", never "demo".
+- **Files:** `docs/hasini_portals.md` (§9), `docs/hasini_updates.md`
+- **Anushka should know:** D1's queue rule needs `core/cases/queue.ts` (not on my file lists) and probably a new case field; I will ask which task it belongs to. D6: no pre-presentation checklist exists yet (`IMPLEMENTATION_PLAN.md` 9.9 is deferred), so I need to know where to put the command. D4 adds "Sound off" text to `messages/*.json`; I will tell you the day before.
+- **Next:** D1 rule in the flow plan, then H.6 with the mute button.
