@@ -8,14 +8,14 @@
 import Link from "next/link";
 import { RotateCcw } from "lucide-react";
 import { useTranslations } from "next-intl";
-import type { DemoMode } from "@/contracts/demo";
+import type { PortalMode } from "@/contracts/portal";
 import { SpeakConversation, WriteConversation } from "./conversation";
 import { usePortal } from "./portal-provider";
 import { PortalShell } from "./portal-shell";
 import { Registered } from "./registered";
 import { Review } from "./review";
 
-export function Journey({ mode }: { mode: DemoMode }) {
+export function Journey({ mode }: { mode: PortalMode }) {
   const p = usePortal();
   const t = useTranslations("portal");
 

@@ -25,11 +25,6 @@ describe("staff navigation (task 1.11)", () => {
     }
   });
 
-  it("lists no demo page in the staff menu: the demo is the public site (plan N.7)", () => {
-    expect(Object.keys(STAFF_PAGES)).not.toContain("demo");
-    expect(Object.values(STAFF_PAGES).some((p) => p.href.startsWith("/demo"))).toBe(false);
-  });
-
   it("gives each analytics role the analytics page", () => {
     expect(STAFF_PAGES.analytics.roles).toEqual(
       expect.arrayContaining(["STATE_ADMIN", "MINISTRY_ADMIN", "NHAA_SUPERVISOR", "DISTRICT_OFFICER"]),

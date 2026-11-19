@@ -9,12 +9,11 @@ import { useCallback, useEffect, useState } from "react";
 import { useRealtime } from "@/components/realtime/realtime-provider";
 import { BandBadge, useWaitingFor } from "./band-badge";
 import { CASE_STATUSES } from "@/models/enums";
-import { DemoMark } from "./demo-mark";
 
 interface Row {
   id: string;
   docketNumber: string;
-  isDemo?: boolean;
+  isPortal?: boolean;
   band: string | null;
   svi: number | null;
   status: string;
@@ -84,8 +83,7 @@ export function DistrictCases({ channels }: { channels: string[] }) {
             </td>
             <td className="p-2 num">{r.svi ?? "–"}</td>
             <td className="p-2 num">
-              {r.docketNumber} <DemoMark show={r.isDemo} />
-            </td>
+              {r.docketNumber}            </td>
             <td className="p-2">{(CASE_STATUSES as readonly string[]).includes(r.status) ? t(`status.${r.status}`) : r.status}</td>
             <td className="p-2">{waitingFor(r.waitingSince, now)}</td>
             <td className="p-2 text-xs">{r.openAlert ? (r.openAlert.escalationLevel ? t("district.escalated", { level: t(`bands.${r.openAlert.level}`), n: r.openAlert.escalationLevel }) : t(`bands.${r.openAlert.level}`)) : "–"}</td>

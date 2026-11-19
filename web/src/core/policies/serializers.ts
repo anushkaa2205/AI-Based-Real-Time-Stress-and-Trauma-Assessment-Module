@@ -65,7 +65,7 @@ export function serializeCaseQueueItem(user: PolicyUser, c: CaseQueueItem, resou
     waitingSince: c.waitingSince,
     limitedConfidence: c.limitedConfidence,
     openAlert: c.openAlert,
-    isDemo: c.isDemo === true,
+    isPortal: c.isPortal === true,
   };
   if (level === "reduced") return base; // no topReason: it is derived from evidence
   return { ...base, channel: c.channel, language: c.language, topReason: c.topReason };
@@ -93,7 +93,7 @@ export function serializeCaseDetail(user: PolicyUser, c: CaseDetailDto, resource
     openAlerts: c.openAlerts,
     bandOverrides: c.bandOverrides,
     assignedTo: c.assignedTo,
-    isDemo: c.isDemo === true,
+    isPortal: c.isPortal === true,
   };
   if (level === "reduced") return shaped; // §5.2: no summary, context, dimensions, evidence
   return {
@@ -110,7 +110,7 @@ export function serializeReferral(user: PolicyUser, r: ReferralDto, resource?: P
   const out: ReferralDto = {
     id: r.id,
     docketNumber: r.docketNumber,
-    isDemo: r.isDemo === true,
+    isPortal: r.isPortal === true,
     type: r.type,
     actionRequested: r.actionRequested,
     contactRoute: r.contactRoute,

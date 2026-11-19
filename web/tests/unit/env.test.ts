@@ -52,11 +52,11 @@ describe("parseEnv (task 0.5)", () => {
     expect(() => parseEnv({ ...valid, REALTIME_DRIVER: "pusher" })).toThrowError(/PUSHER_KEY/);
   });
 
-  it("keeps the demo input layer off by default and needs its key when switched on (M.11, M.14)", () => {
-    expect(parseEnv(valid).DEMO_ENABLED).toBe("false");
-    expect(() => parseEnv({ ...valid, DEMO_ENABLED: "true" })).toThrowError(/DEMO_API_KEY/);
-    expect(() => parseEnv({ ...valid, DEMO_ENABLED: "true", DEMO_API_KEY: "not-a-key" })).toThrowError(/DEMO_API_KEY/);
+  it("keeps the Nivara portal off by default and needs its key when switched on (M.11, M.14)", () => {
+    expect(parseEnv(valid).PORTAL_ENABLED).toBe("false");
+    expect(() => parseEnv({ ...valid, PORTAL_ENABLED: "true" })).toThrowError(/PORTAL_API_KEY/);
+    expect(() => parseEnv({ ...valid, PORTAL_ENABLED: "true", PORTAL_API_KEY: "not-a-key" })).toThrowError(/PORTAL_API_KEY/);
     const key = `nhaa_${"a".repeat(12)}.${"b".repeat(43)}`;
-    expect(parseEnv({ ...valid, DEMO_ENABLED: "true", DEMO_API_KEY: key }).DEMO_API_KEY).toBe(key);
+    expect(parseEnv({ ...valid, PORTAL_ENABLED: "true", PORTAL_API_KEY: key }).PORTAL_API_KEY).toBe(key);
   });
 });

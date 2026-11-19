@@ -1,15 +1,15 @@
 /**
  * Home page (Phase P, task P.6; NIVARA_FLOW_AND_UI_PLAN.md §6.2). A reference portal built on Nivara,
- * part of the demo input layer. The hero speaks to the person and has one main action, Start. Never a
+ * part of the Nivara portal. The hero speaks to the person and has one main action, Start. Never a
  * score, band, indicator or staff screenshot (rule 1), and no invented numbers, testimonials or logos.
- * With the demo off, Start and the track field are hidden and the module is unaffected (FR-API-05).
+ * With the portal off, Start and the track field are hidden and the module is unaffected (FR-API-05).
  * All text comes from messages/*.json in the site language (P-D7).
  */
 import Link from "next/link";
 import { ArrowRight, Bot, Globe2, MessagesSquare, Phone, PhoneCall, Smartphone, Users } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { TrackForm } from "@/components/public/track-form";
-import { demoEnabled } from "@/core/demo/client";
+import { portalEnabled } from "@/core/portal/client";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +18,7 @@ export async function generateMetadata() {
 }
 
 export default async function HomePage() {
-  const demoOn = demoEnabled();
+  const portalOn = portalEnabled();
   const t = await getTranslations("public.home");
   const steps = [
     { n: "01", title: t("step1Title"), body: t("step1Body") },
@@ -52,7 +52,7 @@ export default async function HomePage() {
           <p className="rise eyebrow text-marigold">{t("label")}</p>
           <h1 className="display rise rise-2 max-w-3xl text-4xl text-white md:text-[3.5rem] md:leading-[1.08]">{t("headline")}</h1>
           <p className="rise rise-3 max-w-xl text-lg leading-relaxed text-white/75">{t("lead")}</p>
-          {demoOn ? (
+          {portalOn ? (
             <div className="rise rise-3 flex flex-col gap-4" data-testid="hero-actions">
               <div className="flex flex-wrap items-center gap-4">
                 <Link href="/start" className="btn btn-accent btn-lg" data-testid="start">
@@ -69,8 +69,8 @@ export default async function HomePage() {
               </p>
             </div>
           ) : (
-            <p className="rise rise-3 max-w-xl rounded-xl border border-white/15 px-4 py-3 text-white/80" data-testid="demo-off">
-              {t("demoOff")}
+            <p className="rise rise-3 max-w-xl rounded-xl border border-white/15 px-4 py-3 text-white/80" data-testid="portal-off">
+              {t("portalOff")}
             </p>
           )}
         </div>
@@ -140,7 +140,7 @@ export default async function HomePage() {
       </section>
 
       {/* Track a case */}
-      {demoOn && (
+      {portalOn && (
         <section className="border-t border-line bg-surface-2">
           <div id="track" className="mx-auto grid w-full max-w-6xl scroll-mt-20 gap-8 px-5 py-16 md:grid-cols-2 md:items-end md:px-8 md:py-20">
             <div>

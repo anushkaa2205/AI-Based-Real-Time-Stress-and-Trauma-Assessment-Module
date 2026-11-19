@@ -2,7 +2,7 @@
 import { generateSecret, generateURI, verify } from "otplib";
 import { TOTP_ROLES, type Role } from "@/models/enums";
 
-export const TOTP_ISSUER = "NHAA Assist (demo)";
+export const TOTP_ISSUER = "Nivara";
 
 export function roleRequiresTotp(role: Role): boolean {
   return TOTP_ROLES.includes(role);

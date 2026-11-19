@@ -114,15 +114,15 @@ export async function listApiClients() {
     scopes: c.scopes,
     rateLimitPerMin: c.rateLimitPerMin,
     isActive: c.isActive,
-    isDemo: c.isDemo === true,
+    isPortal: c.isPortal === true,
     createdAt: new Date(c.createdAt as unknown as Date).toISOString(),
   }));
 }
 
-export async function createApiClient(adminId: string, input: { name: string; scopes: Scope[]; rateLimitPerMin: number; isDemo?: boolean }) {
+export async function createApiClient(adminId: string, input: { name: string; scopes: Scope[]; rateLimitPerMin: number; isPortal?: boolean }) {
   const k = generateKey();
-  const c = await ApiClient.create({ name: input.name, keyPrefix: k.prefix, keyHash: k.keyHash, scopes: input.scopes, rateLimitPerMin: input.rateLimitPerMin, isActive: true, isDemo: input.isDemo === true });
-  await record({ actorType: "USER", actorId: adminId, action: "apiClient.create", entityType: "apiClient", entityId: String(c._id), metadata: { scopes: input.scopes, isDemo: input.isDemo === true } });
+  const c = await ApiClient.create({ name: input.name, keyPrefix: k.prefix, keyHash: k.keyHash, scopes: input.scopes, rateLimitPerMin: input.rateLimitPerMin, isActive: true, isPortal: input.isPortal === true });
+  await record({ actorType: "USER", actorId: adminId, action: "apiClient.create", entityType: "apiClient", entityId: String(c._id), metadata: { scopes: input.scopes, isPortal: input.isPortal === true } });
   return { id: String(c._id), keyPrefix: k.prefix, key: k.key };
 }
 

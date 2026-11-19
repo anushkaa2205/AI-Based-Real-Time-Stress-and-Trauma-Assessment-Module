@@ -1,7 +1,7 @@
 /**
  * Speak on the portal (Phase P, tasks P.4, P.7, P.9; earlier M.12, N.7). Edge plays the synthetic TTS
  * fixture as its microphone (`--use-file-for-fake-audio-capture`), so the real recorder, MediaRecorder
- * and /audio path run, turn by turn. Public: no sign-in. Needs DEMO_ENABLED and the analysis service;
+ * and /audio path run, turn by turn. Public: no sign-in. Needs PORTAL_ENABLED and the analysis service;
  * skipped otherwise. Synthetic audio only.
  */
 import { resolve } from "node:path";
@@ -20,7 +20,7 @@ test.use({
 });
 
 test.beforeAll(async () => {
-  test.skip(process.env.DEMO_ENABLED !== "true", "demo input layer switched off");
+  test.skip(process.env.PORTAL_ENABLED !== "true", "Nivara portal switched off");
 });
 
 test("speak turn by turn: windows go to /audio as the caller's channel, We heard shows the person's own words, then the next question (P.7)", async ({ page, baseURL }) => {
@@ -50,7 +50,7 @@ test("speak turn by turn: windows go to /audio as the caller's channel, We heard
   expect(docket).toMatch(/^NHAA-/);
   await withDb(async (db) => {
     const c = await db.collection("cases").findOne({ docketNumber: docket });
-    expect(c?.isDemo).toBe(true);
+    expect(c?.isPortal).toBe(true);
     const i = await db.collection("interactions").findOne({ caseId: c?._id });
     expect(i?.channel).toBe("VOICE_CALL");
     const ws = await db.collection("voice_windows").find({ interactionId: i?._id }).toArray();
@@ -65,7 +65,7 @@ test("one live call at a time, kept alive by any activity for 60 s; a supervisor
   const origin = baseURL ?? "http://localhost:3000";
   await page.context().setExtraHTTPHeaders({ "x-forwarded-for": freshIp(), origin });
   await page.goto("/");
-  const opened = await page.request.post("/api/demo/interactions", { data: START });
+  const opened = await page.request.post("/api/portal/interactions", { data: START });
   expect(opened.status()).toBe(201); // otherwise the checks below would test an empty line
   const first = (await opened.json()) as { interactionId: string };
   const setIdle = (ms: number) => withDb((db) => db.collection("interactions").updateOne({ _id: new mongoose.Types.ObjectId(first.interactionId) }, { $set: { updatedAt: new Date(Date.now() - ms) } }));
@@ -73,26 +73,26 @@ test("one live call at a time, kept alive by any activity for 60 s; a supervisor
   // 45 s since the last activity (the person is reading a question): still busy.
   await setIdle(45_000);
   const other = await browser.newContext({ extraHTTPHeaders: { "x-forwarded-for": freshIp(), origin } });
-  const busy = await other.request.post(`${origin}/api/demo/interactions`, { data: START });
+  const busy = await other.request.post(`${origin}/api/portal/interactions`, { data: START });
   expect(busy.status()).toBe(409);
   expect(((await busy.json()) as { code: string }).code).toBe("LINE_BUSY");
 
   // A next-question request is activity: it keeps the call alive.
   await setIdle(59_000);
-  expect((await page.request.post(`/api/demo/interactions/${first.interactionId}/next-question`)).status()).toBe(200);
-  expect((await other.request.post(`${origin}/api/demo/interactions`, { data: START })).status()).toBe(409);
+  expect((await page.request.post(`/api/portal/interactions/${first.interactionId}/next-question`)).status()).toBe(200);
+  expect((await other.request.post(`${origin}/api/portal/interactions`, { data: START })).status()).toBe(409);
   await other.close();
 
   // A supervisor takes the line over: the older call is ended.
   const sup = await browser.newPage();
   await sup.context().setExtraHTTPHeaders({ "x-forwarded-for": freshIp(), origin });
   await staffLogin(sup, "NHAA_SUPERVISOR");
-  const taken = (await (await sup.request.post("/api/demo/interactions", { data: { ...START, takeover: true } })).json()) as { interactionId: string };
+  const taken = (await (await sup.request.post("/api/portal/interactions", { data: { ...START, takeover: true } })).json()) as { interactionId: string };
   await withDb(async (db) => {
     const get = (id: string) => db.collection("interactions").findOne({ _id: new mongoose.Types.ObjectId(id) });
     expect((await get(first.interactionId))?.status).not.toBe("ACTIVE");
     expect((await get(taken.interactionId))?.status).toBe("ACTIVE");
   });
-  expect((await sup.request.post(`/api/demo/interactions/${taken.interactionId}/end`)).status()).toBe(200);
+  expect((await sup.request.post(`/api/portal/interactions/${taken.interactionId}/end`)).status()).toBe(200);
   await sup.close();
 });

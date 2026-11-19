@@ -2,7 +2,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { DemoLanguage, DemoLanguageResult } from "@/contracts/demo";
+import { PortalLanguage, PortalLanguageResult } from "@/contracts/portal";
 import { INTEGRATION_CONTRACT_VERSION, LanguageRequest, LanguageResponse } from "@/contracts/integration";
 import { t } from "@/core/i18n/messages";
 import { languageView } from "@/core/integration/language";
@@ -30,7 +30,7 @@ describe("PUT …/language view (P.11)", () => {
   it("accepts only the five languages", () => {
     expect(LanguageRequest.safeParse({ language: "hi" }).success).toBe(true);
     expect(LanguageRequest.safeParse({ language: "fr" }).success).toBe(false);
-    expect(DemoLanguage.safeParse({ language: "bn", sender: "OPERATOR" }).success).toBe(false);
+    expect(PortalLanguage.safeParse({ language: "bn", sender: "OPERATOR" }).success).toBe(false);
   });
 
   it("is contract 1.4, behind interactions:write, own interactions only, active only", () => {
@@ -48,11 +48,11 @@ describe("PUT …/language view (P.11)", () => {
   });
 });
 
-describe("demo relay and page (P.11)", () => {
+describe("portal relay and page (P.11)", () => {
   it("the public answer is the questions' text only, never their keys", () => {
-    expect(DemoLanguageResult.safeParse({ questions: ["क्या आप अभी किसी सुरक्षित जगह पर हैं?"] }).success).toBe(true);
-    expect(DemoLanguageResult.safeParse({ questions: [], asked: [] }).success).toBe(false);
-    const route = src("app/api/demo/interactions/[id]/language/route.ts");
+    expect(PortalLanguageResult.safeParse({ questions: ["क्या आप अभी किसी सुरक्षित जगह पर हैं?"] }).success).toBe(true);
+    expect(PortalLanguageResult.safeParse({ questions: [], asked: [] }).success).toBe(false);
+    const route = src("app/api/portal/interactions/[id]/language/route.ts");
     expect(route).toMatch(/owned: true/);
     expect(route).not.toMatch(/key:/);
   });

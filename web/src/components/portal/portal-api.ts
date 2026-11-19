@@ -1,11 +1,11 @@
 "use client";
 
 /**
- * The portal's calls to the demo relay (`/api/demo/*`, API_CONTRACTS §6.5). The page never learns
+ * The portal's calls to the portal relay (`/api/portal/*`, API_CONTRACTS §6.5). The page never learns
  * anything about the assessment: only receipts, the assistant's next question (text only), the
  * person's own heard words, the emergency panel and, at the end, the docket number (rule 1).
  */
-export async function demoFetch<T>(url: string, init: RequestInit = {}): Promise<{ ok: boolean; status: number; data: T | null; code: string | null }> {
+export async function portalFetch<T>(url: string, init: RequestInit = {}): Promise<{ ok: boolean; status: number; data: T | null; code: string | null }> {
   const res = await fetch(url, { credentials: "same-origin", ...init }).catch(() => null);
   if (!res) return { ok: false, status: 0, data: null, code: "ANALYSIS_DEGRADED" };
   let data: (T & { code?: string }) | null = null;
@@ -18,7 +18,7 @@ export async function demoFetch<T>(url: string, init: RequestInit = {}): Promise
 }
 
 export function postJson<T>(url: string, body?: unknown) {
-  return demoFetch<T>(url, { method: "POST", headers: { "content-type": "application/json" }, body: body === undefined ? undefined : JSON.stringify(body) });
+  return portalFetch<T>(url, { method: "POST", headers: { "content-type": "application/json" }, body: body === undefined ? undefined : JSON.stringify(body) });
 }
 
 /** Error codes the portal has scripted wording for (`portal.errors.*`). */

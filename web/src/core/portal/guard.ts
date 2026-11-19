@@ -1,5 +1,5 @@
 /**
- * The public demo's safeguards, pure parts (NIVARA_FLOW_AND_UI_PLAN.md §7, task N.4): limits,
+ * the public portal's safeguards, pure parts (NIVARA_FLOW_AND_UI_PLAN.md §7, task N.4): limits,
  * the signed own-cases cookie, the live-line rule and the same-site check. No Next.js imports,
  * so they are unit-tested directly; `./public` wires them into the route wrapper.
  */
@@ -8,7 +8,7 @@ import type { Limit } from "@/lib/ratelimit";
 import { LIVE_IDLE_MS, MAX_CASE_MS, MAX_LIVE_CALL_MS, WINDOW_MS } from "./limits";
 
 /** Starting values from the plan (§7). Named here so they are easy to tune after the first deployment. */
-export const DEMO_LIMITS = {
+export const PORTAL_LIMITS = {
   /** New cases per visitor */
   start: { limit: 5, windowMs: 10 * 60_000 },
   /** Text messages and next-question requests together, per visitor (Phase P) */
@@ -19,18 +19,18 @@ export const DEMO_LIMITS = {
   track: { limit: 20, windowMs: 60_000 },
   /** Everything else (end) */
   other: { limit: 60, windowMs: 60_000 },
-  /** Demo cases per day across all visitors */
+  /** Portal cases per day across all visitors */
   daily: { limit: 150, windowMs: 24 * 60 * 60_000 },
 } as const satisfies Record<string, Limit>;
 
 export { LIVE_IDLE_MS, MAX_CASE_MS, MAX_LIVE_CALL_MS, MAX_MESSAGES_PER_CASE } from "./limits";
 
-export const OWN_COOKIE = "nivara_demo";
+export const OWN_COOKIE = "nivara_portal";
 const OWN_MAX = 20;
 export const OWN_MAX_AGE_SEC = 24 * 60 * 60;
 
 export function ownKey(secret: string): Buffer {
-  return createHmac("sha256", secret).update("nivara-demo-own").digest();
+  return createHmac("sha256", secret).update("nivara-portal-own").digest();
 }
 
 function sign(payload: string, key: Buffer): string {
@@ -62,7 +62,7 @@ export function lineIsBusy(active: { updatedAt: Date } | null, nowMs: number, id
   return !!active && nowMs - active.updatedAt.getTime() < idleMs;
 }
 
-/** Phase P (§7): a demo conversation ends itself after MAX_CASE_MS. */
+/** Phase P (§7): a portal conversation ends itself after MAX_CASE_MS. */
 export function caseExpired(createdAt: Date, nowMs: number, maxMs = MAX_CASE_MS): boolean {
   return nowMs - createdAt.getTime() >= maxMs;
 }

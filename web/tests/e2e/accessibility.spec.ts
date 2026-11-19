@@ -21,7 +21,7 @@ test("public pages, sign-in and staff dashboards have no WCAG 2.1 AA violations 
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   await audit(page, "home");
-  if (process.env.DEMO_ENABLED === "true") {
+  if (process.env.PORTAL_ENABLED === "true") {
     // The portal journey (P.9): Before we begin, How to share, and both conversation pages.
     await page.goto("/start");
     await expect(page.getByTestId("begin")).toBeVisible();

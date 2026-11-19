@@ -33,7 +33,7 @@
     "updatedOn": "Last updated",
     "supportTitle": "Support arranged",
     "noSupport": "No support has been arranged yet. Helpline staff are reviewing the case.",
-    "notFound": "No demo case found with this number. Check the docket ID and try again.",
+    "notFound": "No case found with this number. Check the docket ID and try again.",
     "unavailable": "The case could not be looked up right now. Please try again.",
     "another": "Track another case",
     "status": {
@@ -76,8 +76,6 @@
     },
     "footer": {
       "about": "A real-time stress and trauma assessment module for the National Helpline Against Atrocities (14566). Smart India Hackathon 2026, problem statement SIH26093, Ministry of Social Justice and Empowerment.",
-      "demoTitle": "Demonstration",
-      "demoBody": "Demonstration. Do not enter real names, numbers or addresses.",
       "helpTitle": "If you need help",
       "helpBody": "Call the National Helpline Against Atrocities at 14566, or emergency services at 112.",
       "integrators": "For integrators: API documentation",
@@ -111,7 +109,7 @@
       "start": "Start",
       "trackLink": "Track a case",
       "preferTalk": "Prefer to talk? Call NHAA helpline 14566.",
-      "demoOff": "This portal is resting right now. If you need help, call the NHAA helpline 14566, or 112 in an emergency.",
+      "portalOff": "This portal is resting right now. If you need help, call the NHAA helpline 14566, or 112 in an emergency.",
       "howEyebrow": "How it works",
       "howTitle": "Three steps, at your pace.",
       "step1Title": "Share in your own words",
@@ -171,7 +169,6 @@
     "unavailable": "The server cannot reach the database right now, so nobody can sign in. Try again in a minute."
   },
   "portal": {
-    "notice": "Demonstration. Please don't enter real names, numbers or addresses.",
     "stepsLabel": "Progress",
     "steps": {
       "begin": "Before we begin",
@@ -326,8 +323,6 @@
     },
     "common": {
       "loading": "Loading",
-      "demo": "Demo",
-      "demoTitle": "Created by the demo input layer with synthetic data",
       "justNow": "just now",
       "minutes": "{n} min",
       "hoursMinutes": "{h} h {m} min",
@@ -701,8 +696,8 @@
       "resetPassword": "Reset password",
       "systemName": "System name",
       "rpm": "Requests / min",
-      "demoTitle": "Everything this key creates is marked Demo on staff screens",
-      "demoLayer": "Demo input layer",
+      "portalTitle": "Cases this key creates are counted as Nivara portal cases",
+      "portalLayer": "Nivara portal",
       "createKey": "Create key",
       "system": "System",
       "keyPrefix": "Key prefix",
@@ -746,10 +741,10 @@
       "channel": "Channel",
       "all": "All",
       "language": "Language",
-      "demoCases": "Demo cases",
+      "portalCases": "Portal cases",
       "included": "Included",
       "excluded": "Excluded",
-      "onlyDemo": "Only demo",
+      "onlyPortal": "Only portal",
       "trendBy": "Trend by",
       "day": "Day",
       "week": "Week",

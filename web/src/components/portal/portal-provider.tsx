@@ -15,9 +15,9 @@
  */
 import { useLocale } from "next-intl";
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import type { DemoAudioReceipt, DemoLanguageResult, DemoMode, DemoNextQuestion, DemoQuestion, DemoReceipt, DemoStarted } from "@/contracts/demo";
+import type { PortalAudioReceipt, PortalLanguageResult, PortalMode, PortalNextQuestion, PortalQuestion, PortalReceipt, PortalStarted } from "@/contracts/portal";
 import { toVictimLang, type EmergencyPanel, type VictimLang } from "@/contracts/interaction";
-import { consentRequest, DEFAULT_DISTRICT, FULL_CONSENT, type DemoConsent } from "./consent-fields";
+import { consentRequest, DEFAULT_DISTRICT, FULL_CONSENT, type PortalConsent } from "./consent-fields";
 import { errorKey, postJson, type KNOWN_ERRORS } from "./portal-api";
 import { relabel } from "./relabel";
 
@@ -37,13 +37,13 @@ type ErrorCode = (typeof KNOWN_ERRORS)[number];
 interface PortalState {
   district: string;
   setDistrict(v: string): void;
-  consent: DemoConsent;
-  setConsent(v: DemoConsent): void;
+  consent: PortalConsent;
+  setConsent(v: PortalConsent): void;
   /** Step 1 completed */
   ready: boolean;
   setReady(v: boolean): void;
 
-  mode: DemoMode | null;
+  mode: PortalMode | null;
   language: VictimLang | null;
   interactionId: string | null;
   turns: Turn[];
@@ -56,11 +56,11 @@ interface PortalState {
   /** No more scripted questions in this conversation */
   closed: boolean;
 
-  start(mode: DemoMode, takeover?: boolean): Promise<boolean>;
+  start(mode: PortalMode, takeover?: boolean): Promise<boolean>;
   sendText(text: string): Promise<void>;
   skip(): Promise<void>;
   /** Speak: one window's reply (the emergency panel, and the person's own heard words) */
-  audioReply(r: DemoAudioReceipt): void;
+  audioReply(r: PortalAudioReceipt): void;
   /** Speak: the person pressed Done; their heard words become one answer, then the next question comes */
   finishAnswer(): Promise<void>;
   toReview(): void;
@@ -79,16 +79,16 @@ export function usePortal(): PortalState {
 
 let seq = 0;
 const key = () => `t${Date.now().toString(36)}${(seq++).toString(36)}`;
-const assistant = (q: DemoQuestion): Turn => ({ key: key(), who: "assistant", text: q.text, state: "sent" });
+const assistant = (q: PortalQuestion): Turn => ({ key: key(), who: "assistant", text: q.text, state: "sent" });
 
 const closingTurn = (): Turn => ({ key: key(), who: "assistant", text: "", state: "sent", closing: true });
 
 export function PortalProvider({ children }: { children: React.ReactNode }) {
   const locale = useLocale();
   const [district, setDistrict] = useState(DEFAULT_DISTRICT);
-  const [consent, setConsent] = useState<DemoConsent>(FULL_CONSENT);
+  const [consent, setConsent] = useState<PortalConsent>(FULL_CONSENT);
   const [ready, setReady] = useState(false);
-  const [mode, setMode] = useState<DemoMode | null>(null);
+  const [mode, setMode] = useState<PortalMode | null>(null);
   const [language, setLanguage] = useState<VictimLang | null>(null);
   const [interactionId, setInteractionId] = useState<string | null>(null);
   const [turns, setTurns] = useState<Turn[]>([]);
@@ -101,7 +101,7 @@ export function PortalProvider({ children }: { children: React.ReactNode }) {
   const heard = useRef<string[]>([]);
   const closedRef = useRef(false);
 
-  const base = interactionId ? `/api/demo/interactions/${interactionId}` : "";
+  const base = interactionId ? `/api/portal/interactions/${interactionId}` : "";
 
   // Task P.11: the site language changed mid-conversation → the conversation follows it.
   const switchingTo = useRef<VictimLang | null>(null);
@@ -109,7 +109,7 @@ export function PortalProvider({ children }: { children: React.ReactNode }) {
     const lang = toVictimLang(locale);
     if (!base || !language || lang === language || stage === "registered" || switchingTo.current === lang) return;
     switchingTo.current = lang;
-    void postJson<DemoLanguageResult>(`${base}/language`, { language: lang }).then((r) => {
+    void postJson<PortalLanguageResult>(`${base}/language`, { language: lang }).then((r) => {
       switchingTo.current = null;
       const data = r.data;
       if (!r.ok || !data) return setError(errorKey(r.code));
@@ -123,7 +123,7 @@ export function PortalProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   /** Adds the next question, or the closing line once nothing is left. */
-  const follow = useCallback((q: DemoQuestion | null) => {
+  const follow = useCallback((q: PortalQuestion | null) => {
     if (q) setTurns((ts) => [...ts, assistant(q)]);
     else if (!closedRef.current) {
       closedRef.current = true;
@@ -137,7 +137,7 @@ export function PortalProvider({ children }: { children: React.ReactNode }) {
       setBusy(true);
       setError(null);
       const lang = toVictimLang(locale); // the conversation's language is the site language now (P-D7)
-      const r = await postJson<DemoStarted>("/api/demo/interactions", {
+      const r = await postJson<PortalStarted>("/api/portal/interactions", {
         mode: m,
         language: lang,
         districtCode: district,
@@ -172,7 +172,7 @@ export function PortalProvider({ children }: { children: React.ReactNode }) {
       setTurns((ts) => [...ts, { key: k, who: "person", text: clean, state: "sending" }]);
       setBusy(true);
       setError(null);
-      const r = await postJson<DemoReceipt>(`${base}/messages`, { text: clean });
+      const r = await postJson<PortalReceipt>(`${base}/messages`, { text: clean });
       setBusy(false);
       setTurns((ts) => ts.map((x) => (x.key === k ? { ...x, state: r.ok ? "sent" : "failed" } : x)));
       if (!r.ok || !r.data) return setError(errorKey(r.code));
@@ -186,7 +186,7 @@ export function PortalProvider({ children }: { children: React.ReactNode }) {
     if (!base) return;
     setBusy(true);
     setError(null);
-    const r = await postJson<DemoNextQuestion>(`${base}/next-question`);
+    const r = await postJson<PortalNextQuestion>(`${base}/next-question`);
     setBusy(false);
     if (!r.ok || !r.data) return setError(errorKey(r.code));
     follow(r.data.question);
@@ -214,7 +214,7 @@ export function PortalProvider({ children }: { children: React.ReactNode }) {
       setError(null);
       const n = note.trim();
       if (n) {
-        const r = await postJson<DemoReceipt>(`${base}/messages`, { text: n, note: true });
+        const r = await postJson<PortalReceipt>(`${base}/messages`, { text: n, note: true });
         if (!r.ok) {
           setBusy(false);
           return setError(errorKey(r.code));

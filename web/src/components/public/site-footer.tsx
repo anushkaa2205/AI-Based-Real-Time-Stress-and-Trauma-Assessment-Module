@@ -3,7 +3,7 @@ import { getTranslations } from "next-intl/server";
 import { Wordmark } from "./wordmark";
 
 /**
- * Public footer (Phase P, plan §6.2 item 6): the demonstration notice, the problem statement credit
+ * Public footer (Phase P, plan §6.2 item 6): the wordmark, the problem statement credit
  * and a link for integrators to the API documentation. The helpline numbers live in the header.
  * Text from messages/*.json in the site language.
  */
@@ -15,9 +15,6 @@ export async function SiteFooter() {
       <div className="mx-auto grid w-full max-w-6xl gap-8 px-5 py-10 md:grid-cols-[1.4fr_1fr] md:px-8">
         <div className="flex flex-col gap-3">
           <Wordmark />
-          <p className="max-w-md text-sm font-medium text-ink" data-testid="footer-notice">
-            {t("demoBody")}
-          </p>
           <p className="max-w-md text-sm text-ink-2">{t("credit")}</p>
         </div>
         <div className="flex flex-col gap-2 text-sm md:items-end">

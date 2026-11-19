@@ -13,6 +13,6 @@ export function apiKey(): string {
     .map((f) => resolve(dir, f))
     .sort((a, b) => statSync(b).mtimeMs - statSync(a).mtimeMs);
   const key = files[0] ? /key:\s+(\S+)/.exec(readFileSync(files[0], "utf8"))?.[1] : undefined;
-  if (!key) throw new Error("No API key. Run: npm run api:client -- --name \"Demo\"");
+  if (!key) throw new Error("No API key. Run: npm run api:client -- --name \"Partner system\"");
   return key;
 }

@@ -1,20 +1,20 @@
 /**
- * The demo input layer's way into the module (API_CONTRACTS §6.5, PRODUCT_VISION.md §6):
- * plain HTTP calls to `/api/v1/integration/*` with the demo's own API key, exactly as an
+ * the portal's way into the module (API_CONTRACTS §6.5, PRODUCT_VISION.md §6):
+ * plain HTTP calls to `/api/v1/integration/*` with the portal's own API key, exactly as an
  * NHAA system would make them. Server-only: the key never reaches the browser.
- * Demo layer only; the module never imports this.
+ * Portal only; the module never imports this.
  */
 import { env } from "@/lib/env";
 import { ApiError } from "@/lib/problem";
 
-/** The demo pages and routes exist only when switched on (FR-API-05: the module never needs them). */
-export function demoEnabled(): boolean {
+/** The portal pages and routes exist only when switched on (FR-API-05: the module never needs them). */
+export function portalEnabled(): boolean {
   const e = env();
-  return e.DEMO_ENABLED === "true" && !!e.DEMO_API_KEY;
+  return e.PORTAL_ENABLED === "true" && !!e.PORTAL_API_KEY;
 }
 
-export function assertDemoEnabled(): void {
-  if (!demoEnabled()) throw new ApiError("NOT_FOUND");
+export function assertPortalEnabled(): void {
+  if (!portalEnabled()) throw new ApiError("NOT_FOUND");
 }
 
 export interface CallInfo {
@@ -30,7 +30,7 @@ export interface ModuleReply<T = unknown> {
 
 /** One call to the integration API. `origin` is this app's own origin (from the incoming request). */
 export async function callModule<T = unknown>(origin: string, path: string, init: { method?: string; json?: unknown; form?: FormData } = {}): Promise<ModuleReply<T>> {
-  const headers: Record<string, string> = { authorization: `ApiKey ${env().DEMO_API_KEY}` };
+  const headers: Record<string, string> = { authorization: `ApiKey ${env().PORTAL_API_KEY}` };
   let body: BodyInit | undefined;
   if (init.json !== undefined) {
     headers["content-type"] = "application/json";

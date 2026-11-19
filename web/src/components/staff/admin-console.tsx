@@ -9,7 +9,6 @@
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { API_SCOPES } from "@/models/enums";
-import { DemoMark } from "./demo-mark";
 import { useEnumLabel } from "./use-labels";
 
 interface UserRow {
@@ -27,7 +26,7 @@ interface ClientRow {
   keyPrefix: string;
   scopes: string[];
   rateLimitPerMin: number;
-  isDemo?: boolean;
+  isPortal?: boolean;
   isActive: boolean;
 }
 interface ConfigRow {
@@ -125,7 +124,7 @@ export function AdminConsole({ districts }: { districts: { id: string; name: str
     const form = e.currentTarget;
     const f = new FormData(form);
     const scopes = API_SCOPES.filter((s) => f.get(s));
-    const r = await call<{ key: string }>("POST", "/api/v1/staff/admin/api-clients", { name: f.get("name"), scopes, rateLimitPerMin: Number(f.get("rpm") || 120), isDemo: f.get("isDemo") === "on" });
+    const r = await call<{ key: string }>("POST", "/api/v1/staff/admin/api-clients", { name: f.get("name"), scopes, rateLimitPerMin: Number(f.get("rpm") || 120), isPortal: f.get("isPortal") === "on" });
     say(r.ok, r.data, t("clientCreated"));
     if (r.ok) {
       setSecrets([{ label: t("apiKey"), value: r.data.key }]);
@@ -290,8 +289,8 @@ export function AdminConsole({ districts }: { districts: { id: string; name: str
               {t("rpm")}
               <input name="rpm" type="number" min={1} max={10000} defaultValue={120} className={`${input} w-24`} />
             </label>
-            <label className="flex items-center gap-1 text-xs" title={t("demoTitle")}>
-              <input type="checkbox" name="isDemo" /> {t("demoLayer")}
+            <label className="flex items-center gap-1 text-xs" title={t("portalTitle")}>
+              <input type="checkbox" name="isPortal" /> {t("portalLayer")}
             </label>
             <button type="submit" className="btn btn-primary">
               {t("createKey")}
@@ -311,8 +310,7 @@ export function AdminConsole({ districts }: { districts: { id: string; name: str
               {clients.map((c) => (
                 <tr key={c.id} className={`border-t border-border ${c.isActive ? "" : "text-ink-3 line-through"}`}>
                   <td className="p-1">
-                    {c.name} <DemoMark show={c.isDemo} />
-                  </td>
+                    {c.name}                  </td>
                   <td className="p-1 num">{c.keyPrefix}</td>
                   <td className="p-1 text-xs">{c.scopes.join(", ")}</td>
                   <td className="p-1">{t("perMin", { n: c.rateLimitPerMin })}</td>

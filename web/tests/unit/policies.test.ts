@@ -35,7 +35,7 @@ const MATRIX: Record<Action, string> = {
   "scoringConfig.write": "- - - - - - - - F -",
   "admin.users": "- - - - - - - - F -",
   "audit.read": "- - - - - - - - - F",
-  "demo.use": "- F - - - - - - - -",
+  "portal.takeover": "- F - - - - - - - -",
 };
 
 const userOf = (role: Role, extra: Partial<PolicyUser> = {}): PolicyUser => ({

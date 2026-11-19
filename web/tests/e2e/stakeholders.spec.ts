@@ -36,8 +36,8 @@ async function recFor(page: Page, docket: string, query: string, type: string) {
   return undefined;
 }
 
-// isDemo: the Demo mark (task M.7, PRODUCT_VISION.md §7), a yes/no flag, never case content.
-const REFERRAL_KEYS = ["actionRequested", "contactRoute", "createdAt", "docketNumber", "dueAt", "id", "isDemo", "locationHint", "outcomeNote", "status", "type", "urgency"];
+// isPortal (task M.7, PRODUCT_VISION.md §7): a yes/no flag, never case content.
+const REFERRAL_KEYS = ["actionRequested", "contactRoute", "createdAt", "docketNumber", "dueAt", "id", "isPortal", "locationHint", "outcomeNote", "status", "type", "urgency"];
 
 test("police see nothing until a counsellor approves; then only a minimal action request (AC-REC-03, AC-REC-05, AC-DSH-01)", async ({ browser, request }) => {
   const v = await policeCase(request);

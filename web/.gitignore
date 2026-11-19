@@ -41,7 +41,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# seed output (demo passwords, TOTP URIs, API key) - never commit
+# seed output (staff passwords, TOTP URIs, API key) - never commit
 /.seed-output/
 
 # playwright

@@ -7,14 +7,14 @@
  */
 import { useTranslations } from "next-intl";
 
-export interface DemoConsent {
+export interface PortalConsent {
   textAnalysis: boolean;
   voiceAnalysis: boolean;
   shareWithCounsellor: boolean;
   followUpContact: boolean;
 }
 
-export const FULL_CONSENT: DemoConsent = { textAnalysis: true, voiceAnalysis: true, shareWithCounsellor: true, followUpContact: false };
+export const FULL_CONSENT: PortalConsent = { textAnalysis: true, voiceAnalysis: true, shareWithCounsellor: true, followUpContact: false };
 
 export interface DistrictOption {
   code: string;
@@ -22,9 +22,9 @@ export interface DistrictOption {
   state: string;
 }
 
-const KEYS: (keyof DemoConsent)[] = ["textAnalysis", "voiceAnalysis", "shareWithCounsellor", "followUpContact"];
+const KEYS: (keyof PortalConsent)[] = ["textAnalysis", "voiceAnalysis", "shareWithCounsellor", "followUpContact"];
 
-export function ConsentFields({ value, onChange, disabled }: { value: DemoConsent; onChange: (v: DemoConsent) => void; disabled?: boolean }) {
+export function ConsentFields({ value, onChange, disabled }: { value: PortalConsent; onChange: (v: PortalConsent) => void; disabled?: boolean }) {
   const t = useTranslations("portal");
   return (
     <fieldset className="flex flex-col gap-2" disabled={disabled} data-testid="consent-fields">
@@ -60,7 +60,7 @@ export function DistrictSelect({ districts, value, onChange, disabled }: { distr
 }
 
 /** The request body part the integration API expects (ConsentRequest). */
-export function consentRequest(c: DemoConsent, language: string) {
+export function consentRequest(c: PortalConsent, language: string) {
   return { noticeVersion: "2026-11-v1", language, ...c, audioRetention: false };
 }
 

@@ -2,7 +2,7 @@
 
 /**
  * The progress line for one case (plan §6.4): status, dates and the support arranged, in plain
- * words. Read through /api/demo/track, which only ever returns those fields (rule 1).
+ * words. Read through /api/portal/track, which only ever returns those fields (rule 1).
  */
 import Link from "next/link";
 import { Check, CircleDashed } from "lucide-react";
@@ -38,7 +38,7 @@ export function TrackResult({ docket, t }: { docket: string; t: TrackMessages })
 
   useEffect(() => {
     let live = true;
-    fetch(`/api/demo/track?docket=${encodeURIComponent(docket)}`, { credentials: "same-origin" })
+    fetch(`/api/portal/track?docket=${encodeURIComponent(docket)}`, { credentials: "same-origin" })
       .then(async (res) => {
         if (!live) return;
         if (res.status === 404) return setState({ kind: "notFound" });

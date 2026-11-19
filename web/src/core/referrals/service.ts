@@ -36,7 +36,7 @@ const DISTRICT_DECIDE_TYPES: readonly SupportType[] = ["POLICE_INTERVENTION", "W
 interface ReferralDocLike {
   _id: unknown;
   docketNumber: string;
-  isDemo?: boolean;
+  isPortal?: boolean;
   type: string;
   targetRole: string;
   districtId?: unknown;
@@ -58,7 +58,7 @@ function referralDto(r: ReferralDocLike): ReferralDto {
   return {
     id: ID(r._id),
     docketNumber: r.docketNumber,
-    isDemo: r.isDemo === true,
+    isPortal: r.isPortal === true,
     type: r.type as ReferralDto["type"],
     actionRequested: r.actionRequested,
     ...(r.locationHint ? { locationHint: r.locationHint } : {}),
@@ -116,7 +116,7 @@ export async function recommendationInbox(
     .lean();
   const page = rows.slice(0, q.limit);
   const cases = await Case.find({ _id: { $in: page.map((r) => r.caseId) } })
-    .select("docketNumber currentBand districtId isDemo")
+    .select("docketNumber currentBand districtId isPortal")
     .lean();
   const byCase = new Map(cases.map((c) => [ID(c._id), c]));
   const names = await userNames(page.map((r) => r.decision?.byUserId));
@@ -131,7 +131,7 @@ export async function recommendationInbox(
         ...recommendationDto(r, names),
         caseId: ID(r.caseId),
         docketNumber: c.docketNumber,
-        isDemo: c.isDemo === true,
+        isPortal: c.isPortal === true,
         band: (c.currentBand ?? null) as RecommendationInboxItem["band"],
         postReviewedAt: r.postReviewedAt ? iso(r.postReviewedAt) : null,
       },
@@ -146,7 +146,7 @@ export async function decideRecommendation(user: PolicyUser & { name: string }, 
   if (!isId(id)) throw new ApiError("NOT_FOUND");
   const rec = await Recommendation.findById(id).lean();
   if (!rec) throw new ApiError("NOT_FOUND");
-  const caseDoc = await Case.findById(rec.caseId).select("docketNumber districtId stateId isDemo").lean();
+  const caseDoc = await Case.findById(rec.caseId).select("docketNumber districtId stateId isPortal").lean();
   if (!caseDoc) throw new ApiError("NOT_FOUND");
   const resource: PolicyResource = {
     districtId: caseDoc.districtId ? ID(caseDoc.districtId) : null,
@@ -175,7 +175,7 @@ export async function decideRecommendation(user: PolicyUser & { name: string }, 
       recommendationId: rec._id,
       caseId: rec.caseId,
       docketNumber: caseDoc.docketNumber,
-      isDemo: caseDoc.isDemo === true,
+      isPortal: caseDoc.isPortal === true,
       type: rec.type,
       targetRole: rec.responsibleRole,
       districtId: caseDoc.districtId ?? undefined,
@@ -260,7 +260,7 @@ export async function listReferrals(
   const offset = decodeCursor(q.cursor);
   // Projection whitelists the fields; case links never leave this function.
   const rows = await Referral.find(filter)
-    .select("docketNumber isDemo type targetRole districtId actionRequested locationHint contactRoute urgency dueAt status outcomeNote createdAt")
+    .select("docketNumber isPortal type targetRole districtId actionRequested locationHint contactRoute urgency dueAt status outcomeNote createdAt")
     .sort({ status: 1, dueAt: 1, _id: 1 })
     .skip(offset)
     .limit(q.limit + 1)

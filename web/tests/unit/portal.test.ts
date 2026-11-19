@@ -13,16 +13,8 @@ const files = (dir: string): string[] =>
   });
 
 describe("portal journey (P.7)", () => {
-  it("has /start, /start/write and /start/speak, and no old demo pages", () => {
+  it("has /start, /start/write and /start/speak", () => {
     for (const p of ["start/page.tsx", "start/layout.tsx", "start/write/page.tsx", "start/speak/page.tsx"]) expect(existsSync(resolve(WEB, "src/app/(public)", p)), p).toBe(true);
-    expect(existsSync(resolve(WEB, "src/app/(public)/demo"))).toBe(false);
-    expect(existsSync(resolve(WEB, "src/components/demo"))).toBe(false);
-  });
-
-  it("sends the old demo URLs to /start for good", () => {
-    const cfg = readFileSync(resolve(WEB, "next.config.ts"), "utf8");
-    for (const u of ["/demo", "/demo/text", "/demo/call", "/demo/recording"]) expect(cfg).toContain(`"${u}"`);
-    expect(cfg).toMatch(/destination: "\/start", permanent: true/);
   });
 
   it("never imports staff screens, scoring or score labels into public pages (rule 1)", () => {

@@ -9,7 +9,6 @@ import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { useRealtime } from "@/components/realtime/realtime-provider";
 import { BandBadge } from "./band-badge";
-import { DemoMark } from "./demo-mark";
 import { PageHeader } from "./page-header";
 import { RecommendationActions } from "./recommendation-actions";
 import { useEnumLabel } from "./use-labels";
@@ -101,7 +100,7 @@ interface FollowUp {
 interface CaseDetail {
   id: string;
   docketNumber: string;
-  isDemo?: boolean;
+  isPortal?: boolean;
   status: string;
   band: string | null;
   svi: number | null;
@@ -313,7 +312,6 @@ export function CaseDetailView({ caseId }: { caseId: string }) {
   return (
     <div className="flex flex-col gap-6">
       <PageHeader title={c.docketNumber}>
-        <DemoMark show={c.isDemo} />
         <BandBadge band={c.band} />
         {c.overrideLockedBand && <span className="tag tag-brand">{t("lockedAt", { band: e("bands", c.overrideLockedBand) })}</span>}
         {a?.limitedConfidence && <span className="tag tag-warn">{t("limited")}</span>}

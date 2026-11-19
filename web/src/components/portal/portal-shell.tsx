@@ -2,8 +2,7 @@
 
 /**
  * The portal journey's frame (plan §6.3, §9.6): one centred column, the quiet five-step indicator
- * (Before we begin · How to share · Conversation · Review · Registered) and the demonstration
- * notice on every step (rule 11).
+ * (Before we begin · How to share · Conversation · Review · Registered).
  */
 import { Check } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -34,9 +33,6 @@ export function PortalShell({ step, children }: { step: StepKey; children: React
           );
         })}
       </ol>
-      <p role="note" className="rounded-lg border border-warn/30 bg-warn-soft px-3.5 py-2 text-sm text-warn" data-testid="demo-notice">
-        {t("notice")}
-      </p>
       {children}
     </main>
   );

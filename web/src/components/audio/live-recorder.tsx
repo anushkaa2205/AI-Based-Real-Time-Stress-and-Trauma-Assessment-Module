@@ -3,7 +3,7 @@
 /**
  * Live microphone recorder (task 7.1, FR-CH-03, C-TEC-04, NFR-REL-02), used by the portal's Speak
  * conversation (tasks M.12, N.7, P.7). It knows nothing about the module's API: the caller passes
- * `send`, which delivers one window (the demo relays it server-side with its own API key, so no key
+ * `send`, which delivers one window (the portal relays it server-side with its own API key, so no key
  * ever reaches the browser) and returns the HTTP response; `onReply` receives each window's reply
  * (since Phase P it carries the person's own heard words for "We heard"). It shows nothing about the
  * assessment, only the emergency options (CLAUDE.md rule 1).

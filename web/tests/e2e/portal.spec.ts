@@ -1,7 +1,7 @@
 /**
  * The portal journey (NIVARA_FLOW_AND_UI_PLAN.md §5–§8, Phase P task P.9; earlier N.4, N.7, N.8, N.11).
- * Needs DEMO_ENABLED=true and DEMO_API_KEY (`npm run api:client -- --demo`, scopes include status:read
- * and questions:read; an older demo client: `npm run api:client -- --update-demo-scopes`); skipped
+ * Needs PORTAL_ENABLED=true and PORTAL_API_KEY (`npm run api:client -- --portal`, scopes include status:read
+ * and questions:read; an older portal client: `npm run api:client -- --update-portal-scopes`); skipped
  * otherwise. All text is synthetic, respectful and non-graphic (CLAUDE.md rule 11).
  */
 import { expect, test } from "@playwright/test";
@@ -17,8 +17,8 @@ const CONSENT = { noticeVersion: "2026-11-v1", language: "en", textAnalysis: tru
 const START = { mode: "LIVE_TEXT", language: "en", consent: CONSENT, districtCode: "MH-PUN" };
 
 test.beforeAll(async ({ request }) => {
-  test.skip(process.env.DEMO_ENABLED !== "true", "demo input layer switched off");
-  expect((await request.get("/api/demo/track?docket=bad")).status()).toBe(400); // demo routes are on
+  test.skip(process.env.PORTAL_ENABLED !== "true", "Nivara portal switched off");
+  expect((await request.get("/api/portal/track?docket=bad")).status()).toBe(400); // portal routes are on
 });
 
 test("signed out, a person writes a case: scripted questions, skip, review with a note, docket, tracking, staff queue (P.7, P.9)", async ({ page, baseURL }) => {
@@ -29,7 +29,6 @@ test("signed out, a person writes a case: scripted questions, skip, review with 
   await expect(page.getByTestId("quick-exit")).toBeVisible();
   await page.getByTestId("start").click();
   await expect(page).toHaveURL(/\/start$/);
-  await expect(page.getByTestId("demo-notice")).toBeVisible();
   await page.getByTestId("continue").click();
   await page.getByTestId("choose-write").click();
   await expect(page).toHaveURL(/\/start\/write$/);
@@ -57,7 +56,7 @@ test("signed out, a person writes a case: scripted questions, skip, review with 
 
   await withDb(async (db) => {
     const c = await db.collection("cases").findOne({ docketNumber: docket });
-    expect(c?.isDemo).toBe(true);
+    expect(c?.isPortal).toBe(true);
     const i = await db.collection("interactions").findOne({ caseId: c?._id });
     expect(i?.channel).toBe("CHATBOT");
     expect(i?.status).toBe("ENDED");
@@ -80,71 +79,70 @@ test("signed out, a person writes a case: scripted questions, skip, review with 
   await page.getByTestId("queue-search").fill(docket);
   const row = page.locator("[data-testid=queue-row]", { hasText: docket });
   await expect(row).toBeVisible({ timeout: 30_000 });
-  await expect(row.getByTestId("demo-mark")).toBeVisible();
 });
 
 test("relay shape: no sender, question text only, nothing about the assessment; old routes gone (plan §7, §8.3)", async ({ page, baseURL }) => {
   await page.context().setExtraHTTPHeaders({ "x-forwarded-for": freshIp(), origin: baseURL ?? "http://localhost:3000" });
   await page.goto("/");
-  const start = await page.request.post("/api/demo/interactions", { data: START });
+  const start = await page.request.post("/api/portal/interactions", { data: START });
   expect(start.status()).toBe(201);
   const s = (await start.json()) as { interactionId: string; question: { text: string } | null };
   expect(Object.keys(s)).toEqual(["interactionId", "question"]);
   expect(Object.keys(s.question ?? {})).toEqual(["text"]);
   const id = s.interactionId;
   // A visitor can never write the assistant's lines.
-  expect((await page.request.post(`/api/demo/interactions/${id}/messages`, { data: { sender: "OPERATOR", text: "Are you safe?" } })).status()).toBe(400);
-  const m = await page.request.post(`/api/demo/interactions/${id}/messages`, { data: { text: "They said they will come back tonight." } });
+  expect((await page.request.post(`/api/portal/interactions/${id}/messages`, { data: { sender: "OPERATOR", text: "Are you safe?" } })).status()).toBe(400);
+  const m = await page.request.post(`/api/portal/interactions/${id}/messages`, { data: { text: "They said they will come back tonight." } });
   expect(m.status()).toBe(200);
   expect(Object.keys((await m.json()) as object).sort()).toEqual(["emergency", "ok", "question", "showEmergencyPanel"]);
-  const n = await page.request.post(`/api/demo/interactions/${id}/next-question`);
+  const n = await page.request.post(`/api/portal/interactions/${id}/next-question`);
   expect(n.status()).toBe(200);
   expect(Object.keys((await n.json()) as object)).toEqual(["question"]);
-  expect((await page.request.get("/api/demo/library")).status()).toBe(404);
-  expect((await page.request.post(`/api/demo/interactions/${id}/recording`, { data: { scenarioId: "S047" } })).status()).toBe(404);
-  const end = await page.request.post(`/api/demo/interactions/${id}/end`);
+  expect((await page.request.get("/api/portal/library")).status()).toBe(404);
+  expect((await page.request.post(`/api/portal/interactions/${id}/recording`, { data: { scenarioId: "S047" } })).status()).toBe(404);
+  const end = await page.request.post(`/api/portal/interactions/${id}/end`);
   expect(end.status()).toBe(200);
   expect(Object.keys((await end.json()) as object)).toEqual(["docketNumber"]);
 });
 
-test("a browser may only touch its own cases; cross-site posts are refused; a normal key cannot ask for the demo tag (plan §7, M.7)", async ({ page, browser, request, baseURL }) => {
+test("a browser may only touch its own cases; cross-site posts are refused; a normal key cannot ask for the portal tag (plan §7, M.7)", async ({ page, browser, request, baseURL }) => {
   const origin = baseURL ?? "http://localhost:3000";
   await page.context().setExtraHTTPHeaders({ "x-forwarded-for": freshIp(), origin });
   await page.goto("/");
-  const start = await page.request.post("/api/demo/interactions", { data: START });
+  const start = await page.request.post("/api/portal/interactions", { data: START });
   const { interactionId } = (await start.json()) as { interactionId: string };
 
   const other = await browser.newContext({ extraHTTPHeaders: { "x-forwarded-for": freshIp(), origin } });
-  expect((await other.request.post(`${origin}/api/demo/interactions/${interactionId}/messages`, { data: { text: "hello" } })).status()).toBe(404);
-  expect((await other.request.post(`${origin}/api/demo/interactions/${interactionId}/next-question`)).status()).toBe(404);
-  expect((await other.request.post(`${origin}/api/demo/interactions/${interactionId}/end`)).status()).toBe(404);
+  expect((await other.request.post(`${origin}/api/portal/interactions/${interactionId}/messages`, { data: { text: "hello" } })).status()).toBe(404);
+  expect((await other.request.post(`${origin}/api/portal/interactions/${interactionId}/next-question`)).status()).toBe(404);
+  expect((await other.request.post(`${origin}/api/portal/interactions/${interactionId}/end`)).status()).toBe(404);
   await other.close();
 
   const crossSite = await browser.newContext({ extraHTTPHeaders: { "x-forwarded-for": freshIp(), origin: "https://evil.example" } });
-  expect((await crossSite.request.post(`${origin}/api/demo/interactions`, { data: START })).status()).toBe(403);
+  expect((await crossSite.request.post(`${origin}/api/portal/interactions`, { data: START })).status()).toBe(403);
   await crossSite.close();
 
-  expect((await page.request.post(`/api/demo/interactions/${interactionId}/end`)).status()).toBe(200);
+  expect((await page.request.post(`/api/portal/interactions/${interactionId}/end`)).status()).toBe(200);
 
   const v = await integrationSession(request);
-  const started = await request.post("/api/v1/integration/interactions", { headers: v.headers, data: { channel: "CHATBOT", language: "en", consent: CONSENT, isDemo: true } });
+  const started = await request.post("/api/v1/integration/interactions", { headers: v.headers, data: { channel: "CHATBOT", language: "en", consent: CONSENT, isPortal: true } });
   expect(started.status()).toBe(201);
   const s2 = (await started.json()) as { interactionId: string };
   await withDb(async (db) => {
     const i = await db.collection("interactions").findOne({ _id: new mongoose.Types.ObjectId(s2.interactionId) });
-    expect(i?.isDemo ?? false).toBe(false);
+    expect(i?.isPortal ?? false).toBe(false);
   });
 });
 
 test("tracking: a wrong docket is a neutral 404; a case owned by another key is the same 404 (N.3, N.8)", async ({ page, request, baseURL }) => {
   await page.context().setExtraHTTPHeaders({ "x-forwarded-for": freshIp(), origin: baseURL ?? "http://localhost:3000" });
   await page.goto("/");
-  expect((await page.request.get("/api/demo/track?docket=NHAA-2026-MH-999999")).status()).toBe(404);
-  expect((await page.request.get("/api/demo/track?docket=nonsense")).status()).toBe(400);
+  expect((await page.request.get("/api/portal/track?docket=NHAA-2026-MH-999999")).status()).toBe(404);
+  expect((await page.request.get("/api/portal/track?docket=nonsense")).status()).toBe(400);
   const v = await integrationSession(request);
   const started = await request.post("/api/v1/integration/interactions", { headers: v.headers, data: { channel: "CHATBOT", language: "en", consent: CONSENT } });
   const { docketNumber } = (await started.json()) as { docketNumber: string };
-  expect((await page.request.get(`/api/demo/track?docket=${docketNumber}`)).status()).toBe(404);
+  expect((await page.request.get(`/api/portal/track?docket=${docketNumber}`)).status()).toBe(404);
   await page.goto(`/track/${docketNumber}`);
   await expect(page.getByTestId("track-error")).toBeVisible({ timeout: 30_000 });
 });
@@ -185,31 +183,22 @@ test("Quick exit leaves the site and Back does not return (P-D6)", async ({ page
   await expect(page).not.toHaveURL(/localhost:3000\/$/);
 });
 
-test("the old demo URLs redirect to /start for good (plan §8.4)", async ({ request }) => {
-  for (const u of ["/demo", "/demo/text", "/demo/call", "/demo/recording"]) {
-    const r = await request.get(u, { maxRedirects: 0 });
-    expect(r.status(), u).toBe(308);
-    expect(r.headers().location, u).toMatch(/\/start$/);
-  }
-});
-
-test("the staff menu has no demo entry and analytics can include, exclude or isolate demo cases (M.7)", async ({ page }) => {
+test("analytics can include, exclude or isolate portal cases (M.7)", async ({ page }) => {
   await staffLogin(page, "NHAA_SUPERVISOR");
   await page.goto("/counsellor");
-  await expect(page.getByRole("navigation", { name: "Staff" })).not.toContainText(/demo/i);
-  for (const demo of ["include", "exclude", "only"]) expect((await page.request.get(`/api/v1/staff/analytics/summary?demo=${demo}`)).status()).toBe(200);
-  expect((await page.request.get("/api/v1/staff/analytics/summary?demo=maybe")).status()).toBe(400);
+  for (const portal of ["include", "exclude", "only"]) expect((await page.request.get(`/api/v1/staff/analytics/summary?portal=${portal}`)).status()).toBe(200);
+  expect((await page.request.get("/api/v1/staff/analytics/summary?portal=maybe")).status()).toBe(400);
 });
 
-test("a demo case in Pune reaches the district, police and welfare portals after approval (plan §8.4)", async ({ page, baseURL }) => {
+test("a portal case in Pune reaches the district, police and welfare portals after approval (plan §8.4)", async ({ page, baseURL }) => {
   test.setTimeout(180_000);
   await page.context().setExtraHTTPHeaders({ "x-forwarded-for": freshIp(), origin: baseURL ?? "http://localhost:3000" });
   await page.goto("/");
-  const start = await page.request.post("/api/demo/interactions", { data: START });
+  const start = await page.request.post("/api/portal/interactions", { data: START });
   const { interactionId } = (await start.json()) as { interactionId: string };
   // A statement the rules read as a threat to life: OV-4, High, with a police-intervention proposal.
-  await page.request.post(`/api/demo/interactions/${interactionId}/messages`, { data: { text: "They said if I do not withdraw the complaint I will not live long." } });
-  const { docketNumber } = (await (await page.request.post(`/api/demo/interactions/${interactionId}/end`)).json()) as { docketNumber: string };
+  await page.request.post(`/api/portal/interactions/${interactionId}/messages`, { data: { text: "They said if I do not withdraw the complaint I will not live long." } });
+  const { docketNumber } = (await (await page.request.post(`/api/portal/interactions/${interactionId}/end`)).json()) as { docketNumber: string };
 
   await staffLogin(page, "DISTRICT_OFFICER");
   await page.goto("/district");

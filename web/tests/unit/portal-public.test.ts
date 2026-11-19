@@ -1,12 +1,12 @@
-/** Tasks N.4 and P.4: the public demo's safeguards (NIVARA_FLOW_AND_UI_PLAN.md §7, §8.3), pure parts and relay shape. */
+/** Tasks N.4 and P.4: the public portal's safeguards (NIVARA_FLOW_AND_UI_PLAN.md §7, §8.3), pure parts and relay shape. */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { DEMO_MODES, DemoAudioReceipt, DemoMessage, DemoNextQuestion, DemoReceipt, DemoStart, DemoStarted } from "@/contracts/demo";
-import { DEMO_LIMITS, caseExpired, decodeOwned, encodeOwned, lineIsBusy, ownKey, sameSite, speechLeft } from "@/core/demo/guard";
-import { LIVE_IDLE_MS, MAX_CASE_MS, MAX_LIVE_CALL_MS } from "@/core/demo/limits";
+import { PORTAL_MODES, PortalAudioReceipt, PortalMessage, PortalNextQuestion, PortalReceipt, PortalStart, PortalStarted } from "@/contracts/portal";
+import { PORTAL_LIMITS, caseExpired, decodeOwned, encodeOwned, lineIsBusy, ownKey, sameSite, speechLeft } from "@/core/portal/guard";
+import { LIVE_IDLE_MS, MAX_CASE_MS, MAX_LIVE_CALL_MS } from "@/core/portal/limits";
 
-const routeSrc = (p: string) => readFileSync(resolve(__dirname, "../../src/app/api/demo", p), "utf8");
+const routeSrc = (p: string) => readFileSync(resolve(__dirname, "../../src/app/api/portal", p), "utf8");
 
 const key = ownKey("a-test-secret-that-is-long-enough-123456");
 const a = "aaaaaaaaaaaaaaaaaaaaaaaa";
@@ -65,31 +65,31 @@ describe("per-case caps (P.4)", () => {
 
 describe("relay shape (P.4)", () => {
   it("offers two inputs only", () => {
-    expect([...DEMO_MODES]).toEqual(["LIVE_TEXT", "LIVE_AUDIO"]);
+    expect([...PORTAL_MODES]).toEqual(["LIVE_TEXT", "LIVE_AUDIO"]);
     const base = { language: "en", consent: { noticeVersion: "v", language: "en", textAnalysis: true, voiceAnalysis: true, shareWithCounsellor: true, followUpContact: false, audioRetention: false }, districtCode: "MH-PUN" };
-    expect(DemoStart.safeParse({ ...base, mode: "RECORDED_AUDIO" }).success).toBe(false);
+    expect(PortalStart.safeParse({ ...base, mode: "RECORDED_AUDIO" }).success).toBe(false);
   });
   it("takes no sender: a visitor can never write the assistant's lines", () => {
-    expect(DemoMessage.safeParse({ text: "hello" }).success).toBe(true);
-    expect(DemoMessage.safeParse({ text: "Are you safe?", sender: "OPERATOR" }).success).toBe(false);
+    expect(PortalMessage.safeParse({ text: "hello" }).success).toBe(true);
+    expect(PortalMessage.safeParse({ text: "Are you safe?", sender: "OPERATOR" }).success).toBe(false);
     expect(routeSrc("interactions/[id]/messages/route.ts")).toMatch(/sender: "VICTIM"/);
     expect(routeSrc("interactions/[id]/messages/route.ts")).not.toMatch(/body\.sender/);
   });
   it("returns only the question's text, never its key or reason, and nothing about the assessment", () => {
     const receipt = { ok: true, showEmergencyPanel: false, emergency: null, question: { text: "Are you in a safe place right now?" } };
-    expect(DemoReceipt.parse(receipt)).toEqual(receipt);
-    expect(DemoReceipt.safeParse({ ...receipt, question: { ...receipt.question, key: "operatorQuestions.safeNow" } }).success).toBe(false);
-    expect(DemoReceipt.safeParse({ ...receipt, band: "HIGH" }).success).toBe(false);
-    expect(Object.keys(DemoStarted.parse({ interactionId: "x", question: null }))).toEqual(["interactionId", "question"]);
-    expect(DemoNextQuestion.safeParse({ question: { text: "…", reason: "Check safety first" } }).success).toBe(false);
+    expect(PortalReceipt.parse(receipt)).toEqual(receipt);
+    expect(PortalReceipt.safeParse({ ...receipt, question: { ...receipt.question, key: "operatorQuestions.safeNow" } }).success).toBe(false);
+    expect(PortalReceipt.safeParse({ ...receipt, band: "HIGH" }).success).toBe(false);
+    expect(Object.keys(PortalStarted.parse({ interactionId: "x", question: null }))).toEqual(["interactionId", "question"]);
+    expect(PortalNextQuestion.safeParse({ question: { text: "…", reason: "Check safety first" } }).success).toBe(false);
   });
   it("gives Speak the person's own words for the window, and nothing else", () => {
     const a = { ok: true, analysed: true, showEmergencyPanel: false, emergency: null, heard: "I am at home" };
-    expect(DemoAudioReceipt.parse(a)).toEqual(a);
-    expect(DemoAudioReceipt.safeParse({ ...a, transcript: "x" }).success).toBe(false);
+    expect(PortalAudioReceipt.parse(a)).toEqual(a);
+    expect(PortalAudioReceipt.safeParse({ ...a, transcript: "x" }).success).toBe(false);
   });
   it("records the assistant's question as an OPERATOR turn on the server before returning it", () => {
-    const src = readFileSync(resolve(__dirname, "../../src/core/demo/assistant.ts"), "utf8");
+    const src = readFileSync(resolve(__dirname, "../../src/core/portal/assistant.ts"), "utf8");
     expect(src).toMatch(/next-question`, \{ method: "GET" \}/);
     expect(src).toMatch(/sender: "OPERATOR"/);
     expect(src.indexOf('sender: "OPERATOR"')).toBeLessThan(src.indexOf("return { text: q.text }"));
@@ -111,10 +111,10 @@ describe("same-site check", () => {
 
 describe("limits", () => {
   it("match the plan's starting values", () => {
-    expect(DEMO_LIMITS.start).toEqual({ limit: 5, windowMs: 600_000 });
-    expect(DEMO_LIMITS.message).toEqual({ limit: 30, windowMs: 60_000 });
-    expect("recording" in DEMO_LIMITS).toBe(false); // P.2: no recordings on the public site
-    expect(DEMO_LIMITS.track).toEqual({ limit: 20, windowMs: 60_000 });
-    expect(DEMO_LIMITS.daily.limit).toBe(150);
+    expect(PORTAL_LIMITS.start).toEqual({ limit: 5, windowMs: 600_000 });
+    expect(PORTAL_LIMITS.message).toEqual({ limit: 30, windowMs: 60_000 });
+    expect("recording" in PORTAL_LIMITS).toBe(false); // P.2: no recordings on the public site
+    expect(PORTAL_LIMITS.track).toEqual({ limit: 20, windowMs: 60_000 });
+    expect(PORTAL_LIMITS.daily.limit).toBe(150);
   });
 });

@@ -1,7 +1,7 @@
-/** Track a case (plan §6.4): the docket ID field. Public; off (404) unless DEMO_ENABLED. */
+/** Track a case (plan §6.4): the docket ID field. Public; off (404) unless PORTAL_ENABLED. */
 import { notFound } from "next/navigation";
 import { TrackForm } from "@/components/public/track-form";
-import { demoEnabled } from "@/core/demo/client";
+import { portalEnabled } from "@/core/portal/client";
 import { getTranslations } from "next-intl/server";
 
 export async function generateMetadata() {
@@ -9,7 +9,7 @@ export async function generateMetadata() {
 }
 
 export default async function Page() {
-  if (!demoEnabled()) notFound();
+  if (!portalEnabled()) notFound();
   const t = await getTranslations("track");
   const f = await getTranslations("public.trackForm");
   return (

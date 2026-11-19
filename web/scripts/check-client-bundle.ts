@@ -7,7 +7,7 @@ import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
 import "./load-env";
 
-const SECRET_VARS = ["MONGODB_URI", "MONGODB_PII_URI", "ENCRYPTION_KEYS", "AUTH_SECRET", "ANALYSIS_HMAC_SECRET", "PUSHER_SECRET", "JOBS_SECRET", "PUSHER_APP_ID", "DEMO_API_KEY"];
+const SECRET_VARS = ["MONGODB_URI", "MONGODB_PII_URI", "ENCRYPTION_KEYS", "AUTH_SECRET", "ANALYSIS_HMAC_SECRET", "PUSHER_SECRET", "JOBS_SECRET", "PUSHER_APP_ID", "PORTAL_API_KEY"];
 const STATIC = resolve(__dirname, "../.next/static");
 
 function files(dir: string): string[] {

@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Quick exit (Phase P, P-D6, FR-DEMO-06; plan §6.1). Always visible. Replaces this page with a neutral
+ * Quick exit (Phase P, P-D6, FR-PORTAL-06; plan §6.1). Always visible. Replaces this page with a neutral
  * public site through `location.replace`, so Back does not return to Nivara, and drops anything this
  * tab kept (the conversation lives in memory and goes with the page).
  */

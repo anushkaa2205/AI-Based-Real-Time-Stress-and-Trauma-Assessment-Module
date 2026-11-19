@@ -200,7 +200,7 @@ export function AnalyticsDashboard({ fixedDistrict }: { fixedDistrict: boolean }
   const [to, setTo] = useState("");
   const [channel, setChannel] = useState("");
   const [language, setLanguage] = useState("");
-  const [demo, setDemo] = useState<"include" | "exclude" | "only">("include");
+  const [portal, setPortal] = useState<"include" | "exclude" | "only">("include");
   const [district, setDistrict] = useState("");
   const [interval, setInterval] = useState<"day" | "week">("day");
   const [summary, setSummary] = useState<Summary | null>(null);
@@ -226,13 +226,13 @@ export function AnalyticsDashboard({ fixedDistrict }: { fixedDistrict: boolean }
     if (to) p.set("to", to);
     if (channel) p.set("channel", channel);
     if (language) p.set("language", language);
-    if (demo !== "include") p.set("demo", demo); // M.7
+    if (portal !== "include") p.set("portal", portal); // M.7
     if (district && !fixedDistrict) {
       p.set("scope", "district");
       p.set("districtId", district);
     }
     return p.toString();
-  }, [from, to, channel, language, demo, district, fixedDistrict]);
+  }, [from, to, channel, language, portal, district, fixedDistrict]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -322,11 +322,11 @@ export function AnalyticsDashboard({ fixedDistrict }: { fixedDistrict: boolean }
           </select>
         </label>
         <label className="flex flex-col text-xs">
-          {t("demoCases")}
-          <select value={demo} onChange={(ev) => setDemo(ev.target.value as "include" | "exclude" | "only")} className={input} data-testid="filter-demo">
+          {t("portalCases")}
+          <select value={portal} onChange={(ev) => setPortal(ev.target.value as "include" | "exclude" | "only")} className={input} data-testid="filter-portal">
             <option value="include">{t("included")}</option>
             <option value="exclude">{t("excluded")}</option>
-            <option value="only">{t("onlyDemo")}</option>
+            <option value="only">{t("onlyPortal")}</option>
           </select>
         </label>
         <label className="flex flex-col text-xs">

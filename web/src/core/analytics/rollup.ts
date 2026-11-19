@@ -9,7 +9,7 @@
  * Group key: day × district × channel × language × band (the highest band the interaction reached).
  * Referrals and SLA breaches are attributed to the group of the case's latest interaction that day.
  * (DATABASE.md describes a single `$merge` aggregation; computing in code gives the same rows
- * and is easier to test at demo volumes. Logged for the docs.)
+ * and is easier to test at our current volumes. Logged for the docs.)
  */
 import mongoose from "mongoose";
 import { median } from "@/core/analytics/aggregate";
@@ -31,7 +31,7 @@ interface Group {
   channel: string;
   language: string;
   band: RiskBand | null;
-  isDemo: boolean;
+  isPortal: boolean;
   interactions: number;
   criticalAlerts: number;
   ackSecs: number[];
@@ -42,9 +42,9 @@ interface Group {
   topDimensions: Record<string, number>;
 }
 
-/** Group key: day × district × channel × language × band × demo (task M.7). */
-function groupKey(districtId: string, channel: string, language: string, band: RiskBand | null, isDemo: boolean): string {
-  return [districtId, channel, language, band ?? "", isDemo ? "demo" : ""].join("|");
+/** Group key: day × district × channel × language × band × portal (task M.7). */
+function groupKey(districtId: string, channel: string, language: string, band: RiskBand | null, isPortal: boolean): string {
+  return [districtId, channel, language, band ?? "", isPortal ? "portal" : ""].join("|");
 }
 
 export async function rollupDay(day: Date, now: Date = new Date()): Promise<{ rows: number; interactions: number }> {
@@ -52,7 +52,7 @@ export async function rollupDay(day: Date, now: Date = new Date()): Promise<{ ro
   const to = new Date(from.getTime() + DAY_MS);
 
   const interactions = await Interaction.find({ startedAt: { $gte: from, $lt: to } })
-    .select("caseId channel uiLanguage startedAt isDemo")
+    .select("caseId channel uiLanguage startedAt isPortal")
     .lean();
   const caseIds = [...new Set(interactions.map((i) => ID(i.caseId)))];
   const iids = interactions.map((i) => i._id);
@@ -96,7 +96,7 @@ export async function rollupDay(day: Date, now: Date = new Date()): Promise<{ ro
   for (const i of sorted) {
     const c = caseById.get(ID(i.caseId));
     const band = bandOf.get(ID(i._id)) ?? null;
-    const key = groupKey(ID(c?.districtId), i.channel, i.uiLanguage, band, i.isDemo === true);
+    const key = groupKey(ID(c?.districtId), i.channel, i.uiLanguage, band, i.isPortal === true);
     let g = groups.get(key);
     if (!g) {
       g = {
@@ -106,7 +106,7 @@ export async function rollupDay(day: Date, now: Date = new Date()): Promise<{ ro
         channel: i.channel,
         language: i.uiLanguage,
         band,
-        isDemo: i.isDemo === true, // M.7
+        isPortal: i.isPortal === true, // M.7
         interactions: 0,
         criticalAlerts: 0,
         ackSecs: [],
@@ -129,7 +129,7 @@ export async function rollupDay(day: Date, now: Date = new Date()): Promise<{ ro
   const groupOfInteraction = new Map<string, Group>();
   for (const i of interactions) {
     const c = caseById.get(ID(i.caseId));
-    groupOfInteraction.set(ID(i._id), groups.get(groupKey(ID(c?.districtId), i.channel, i.uiLanguage, bandOf.get(ID(i._id)) ?? null, i.isDemo === true))!);
+    groupOfInteraction.set(ID(i._id), groups.get(groupKey(ID(c?.districtId), i.channel, i.uiLanguage, bandOf.get(ID(i._id)) ?? null, i.isPortal === true))!);
   }
   for (const a of alerts) {
     const g = groupOfInteraction.get(ID(a.interactionId));
@@ -155,7 +155,7 @@ export async function rollupDay(day: Date, now: Date = new Date()): Promise<{ ro
     channel: g.channel,
     language: g.language,
     band: g.band,
-    isDemo: g.isDemo,
+    isPortal: g.isPortal,
     interactions: g.interactions,
     criticalAlerts: g.criticalAlerts,
     medianAckSec: median(g.ackSecs),

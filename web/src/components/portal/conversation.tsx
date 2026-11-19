@@ -9,9 +9,9 @@
 import { MessageCircleQuestion, Send, SkipForward, User } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
-import { MAX_LIVE_CALL_MS } from "@/core/demo/limits";
+import { MAX_LIVE_CALL_MS } from "@/core/portal/limits";
 import { LiveRecorder, type RecorderLabels } from "@/components/audio/live-recorder";
-import type { DemoAudioReceipt } from "@/contracts/demo";
+import type { PortalAudioReceipt } from "@/contracts/portal";
 import { EmergencyPanel } from "./emergency-panel";
 import { usePortal, type Turn } from "./portal-provider";
 import { ErrorLine } from "./portal-shell";
@@ -153,8 +153,8 @@ export function SpeakConversation() {
               interactionId={id}
               labels={labels}
               maxTotalMs={MAX_LIVE_CALL_MS}
-              send={(form) => fetch(`/api/demo/interactions/${id}/audio`, { method: "POST", body: form, credentials: "same-origin" }).catch(() => null)}
-              onReply={(r) => p.audioReply(r as DemoAudioReceipt)}
+              send={(form) => fetch(`/api/portal/interactions/${id}/audio`, { method: "POST", body: form, credentials: "same-origin" }).catch(() => null)}
+              onReply={(r) => p.audioReply(r as PortalAudioReceipt)}
               onEmergency={() => undefined}
               onFinished={async () => {
                 setProblem(null);

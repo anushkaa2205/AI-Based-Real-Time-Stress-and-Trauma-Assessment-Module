@@ -10,8 +10,8 @@ const ApiClientSchema = new Schema(
     scopes: { type: [String], default: [] }, // "interactions:write", "assessments:read", …
     rateLimitPerMin: { type: Number, default: 120 },
     isActive: { type: Boolean, default: true },
-    /** Task M.7: the demo input layer's client. Everything it creates is tagged demo, on the server. */
-    isDemo: { type: Boolean, default: false },
+    /** Task M.7: the portal's client. Everything it creates is tagged as a portal case, on the server. */
+    isPortal: { type: Boolean, default: false },
   },
   base,
 );

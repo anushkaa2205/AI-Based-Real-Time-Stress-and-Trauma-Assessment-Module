@@ -52,9 +52,9 @@ describe("pending-login token", () => {
 
 describe("passwords", () => {
   it("hashes with bcrypt and verifies", async () => {
-    const hash = await hashPassword("synthetic-demo-password");
+    const hash = await hashPassword("synthetic-test-password");
     expect(hash).toMatch(/^\$2[aby]\$12\$/);
-    expect(await verifyPassword("synthetic-demo-password", hash)).toBe(true);
+    expect(await verifyPassword("synthetic-test-password", hash)).toBe(true);
     expect(await verifyPassword("wrong", hash)).toBe(false);
   });
 

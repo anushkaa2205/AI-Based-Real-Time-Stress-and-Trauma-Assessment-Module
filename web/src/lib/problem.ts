@@ -19,7 +19,7 @@ export const ERROR_CODES = {
   ALREADY_ACKNOWLEDGED: { status: 409, title: "Already acknowledged" },
   INVALID_TRANSITION: { status: 409, title: "Invalid status change" },
   DUPLICATE_WINDOW: { status: 409, title: "Duplicate voice window" },
-  LINE_BUSY: { status: 409, title: "The demo line is busy" }, // public demo (plan §7): one live microphone call at a time
+  LINE_BUSY: { status: 409, title: "The line is busy" }, // public portal (plan §7): one live microphone call at a time
   PAYLOAD_TOO_LARGE: { status: 413, title: "Payload too large" },
   REASON_REQUIRED: { status: 422, title: "Reason required" },
   FOLLOW_UP_REQUIRED: { status: 422, title: "Follow-up required" },

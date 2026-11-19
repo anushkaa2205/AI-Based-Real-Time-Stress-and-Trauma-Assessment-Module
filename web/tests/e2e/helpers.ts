@@ -1,4 +1,4 @@
-/** Shared helpers for end-to-end tests. Demo logins come from the git-ignored seed output; nothing is printed. */
+/** Shared helpers for end-to-end tests. Staff logins come from the git-ignored seed output; nothing is printed. */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import type { APIRequestContext, Page } from "@playwright/test";
@@ -7,15 +7,15 @@ import { generate } from "otplib";
 
 process.loadEnvFile(resolve(__dirname, "../../.env.local"));
 
-export interface DemoUser {
+export interface PortalUser {
   role: string;
   email: string;
   password: string;
   totpSecret: string | null;
 }
 
-export function demoUser(role: string): DemoUser {
-  const text = readFileSync(resolve(__dirname, "../../.seed-output/demo-credentials.txt"), "utf8");
+export function portalUser(role: string): PortalUser {
+  const text = readFileSync(resolve(__dirname, "../../.seed-output/staff-credentials.txt"), "utf8");
   for (const block of text.split(/\n\s*\n/)) {
     if (!new RegExp(`^${role}\\s*$`, "m").test(block)) continue;
     const email = block.match(/email:\s+(\S+)/)?.[1];
@@ -23,7 +23,7 @@ export function demoUser(role: string): DemoUser {
     const totp = block.match(/totp:\s+(otpauth:\S+)/)?.[1];
     if (email && password) return { role, email, password, totpSecret: totp ? new URL(totp).searchParams.get("secret") : null };
   }
-  throw new Error(`No demo credentials for ${role}. Run: npm run seed -- --reset-totp`);
+  throw new Error(`No staff credentials for ${role}. Run: npm run seed -- --reset-totp`);
 }
 
 let ip = Math.floor(Math.random() * 200);
@@ -45,7 +45,7 @@ export async function staffLogin(page: Page, role: string): Promise<void> {
 }
 
 async function signIn(page: Page, role: string): Promise<void> {
-  const u = demoUser(role);
+  const u = portalUser(role);
   await page.setExtraHTTPHeaders({ "x-forwarded-for": freshIp() });
   const r = await page.request.post("/api/v1/staff/auth/login", { data: { email: u.email, password: u.password } });
   if (r.status() !== 200) throw new Error(`login failed for ${role}: ${r.status()}`);

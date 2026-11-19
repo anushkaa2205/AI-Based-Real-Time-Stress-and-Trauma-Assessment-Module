@@ -16,11 +16,11 @@ import { MobileMenu } from "./mobile-menu";
 import { QuickExit } from "./quick-exit";
 import { Wordmark } from "./wordmark";
 
-export function SiteNav({ signedIn, demoOn }: { signedIn: boolean; demoOn: boolean }) {
+export function SiteNav({ signedIn, portalOn }: { signedIn: boolean; portalOn: boolean }) {
   const dark = usePathname() === "/";
   const t = useTranslations("public.nav");
   const h = useTranslations("public.header");
-  const links = [{ href: "/#how-it-works", label: t("howItWorks") }, ...(demoOn ? [{ href: "/track", label: t("track") }] : [])];
+  const links = [{ href: "/#how-it-works", label: t("howItWorks") }, ...(portalOn ? [{ href: "/track", label: t("track") }] : [])];
   const quiet = dark ? "text-white/75 hover:text-white" : "text-ink-2 hover:text-ink";
   const staff = signedIn ? { href: "/staff", label: t("openPortal"), testId: "nav-portal" } : { href: "/login", label: t("staffLogin"), testId: "nav-staff-login" };
   return (

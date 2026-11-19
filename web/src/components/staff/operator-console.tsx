@@ -13,14 +13,13 @@ import { Mic } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { useRealtime } from "@/components/realtime/realtime-provider";
-import { DemoMark } from "./demo-mark";
 import { BandBadge } from "./band-badge";
 import { useEnumLabel } from "./use-labels";
 
 interface Live {
   id: string;
   docketNumber: string;
-  isDemo?: boolean;
+  isPortal?: boolean;
   channel: string;
   language: string;
   startedAt: string;
@@ -230,7 +229,7 @@ function CallView({ live, onMessage }: { live: Live; onMessage: (m: string) => v
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h2 className="flex items-center gap-2 num text-xl font-semibold">
-            {live.docketNumber} <DemoMark show={live.isDemo} />
+            {live.docketNumber}
           </h2>
           <p className="text-xs text-ink-3">
             {e("channels", live.channel)} · {live.language}
@@ -364,7 +363,6 @@ export function OperatorConsole({ me, queueChannels }: { me: string; queueChanne
               <li key={l.id} data-testid="live-row" className={`rounded-lg border bg-surface px-3 py-2.5 text-sm transition-colors ${selected === l.id ? "border-brand ring-2 ring-brand-soft" : "border-line"}`}>
                 <div className="flex items-center gap-2">
                   <span className="num">{l.docketNumber}</span>
-                  <DemoMark show={l.isDemo} />
                   <BandBadge band={l.band} />
                 </div>
                 <p className="text-xs text-ink-3">

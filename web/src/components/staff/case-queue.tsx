@@ -9,7 +9,6 @@ import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRealtime } from "@/components/realtime/realtime-provider";
 import { BandBadge, useWaitingFor } from "./band-badge";
-import { DemoMark } from "./demo-mark";
 import { EmptyState, PageHeader, TableSkeleton } from "./page-header";
 
 import { CASE_STATUSES, CHANNELS } from "@/models/enums";
@@ -17,7 +16,7 @@ import { CASE_STATUSES, CHANNELS } from "@/models/enums";
 interface Item {
   id: string;
   docketNumber: string;
-  isDemo?: boolean;
+  isPortal?: boolean;
   band: string | null;
   svi: number | null;
   status: string;
@@ -174,7 +173,6 @@ export function CaseQueue({ channels, caseHref }: { channels: string[]; caseHref
                     ) : (
                       c.docketNumber
                     )}{" "}
-                    <DemoMark show={c.isDemo} />
                   </td>
                   <td className="whitespace-nowrap text-ink-2">{waitingFor(c.waitingSince, now)}</td>
                   <td className="max-w-[18rem] text-ink-2">{c.topReason ?? ""}</td>

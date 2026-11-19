@@ -45,13 +45,13 @@ describe("every API route is guarded (task 9.5)", () => {
         expect(f.src).toMatch(/currentStaff|staffCanSubscribe|auth: "staff"/);
         return;
       }
-      if (f.path.startsWith("demo/")) {
-        // Public demo (plan §7, task N.4): every handler goes through publicDemoRoute (checked below),
+      if (f.path.startsWith("portal/")) {
+        // Public portal (plan §7, task N.4): every handler goes through publicPortalRoute (checked below),
         // and a route under /interactions/{id}/ must be limited to the browser's own cases.
         const exported = [...f.src.matchAll(/export const (GET|POST|PUT|PATCH|DELETE) = (\w+)\(/g)];
         expect(exported.length, "exports a handler").toBeGreaterThan(0);
-        for (const m of exported) expect(m[2], `${m[1]}: publicDemoRoute`).toBe("publicDemoRoute");
-        if (f.path.startsWith("demo/interactions/[id]/")) expect(f.src, `${f.path}: owned`).toMatch(/owned: true/);
+        for (const m of exported) expect(m[2], `${m[1]}: publicPortalRoute`).toBe("publicPortalRoute");
+        if (f.path.startsWith("portal/interactions/[id]/")) expect(f.src, `${f.path}: owned`).toMatch(/owned: true/);
         return;
       }
       const hs = handlers(f.src);
@@ -71,11 +71,11 @@ describe("every API route is guarded (task 9.5)", () => {
     });
   }
 
-  it("publicDemoRoute answers 404 when the demo is off, refuses cross-site posts and limits every visitor (plan §7)", () => {
-    const src = readFileSync(resolve(__dirname, "../../src/core/demo/public.ts"), "utf8");
-    expect(src).toMatch(/if \(!demoEnabled\(\)\) return problemResponse\(new ApiError\("NOT_FOUND"\)/);
+  it("publicPortalRoute answers 404 when the portal is off, refuses cross-site posts and limits every visitor (plan §7)", () => {
+    const src = readFileSync(resolve(__dirname, "../../src/core/portal/public.ts"), "utf8");
+    expect(src).toMatch(/if \(!portalEnabled\(\)\) return problemResponse\(new ApiError\("NOT_FOUND"\)/);
     expect(src).toMatch(/!sameSite\(req\.headers\)/);
-    expect(src).toMatch(/rateLimit: \{ limit: DEMO_LIMITS\[opts\.limit\]/);
+    expect(src).toMatch(/rateLimit: \{ limit: PORTAL_LIMITS\[opts\.limit\]/);
     expect(src).toMatch(/if \(opts\.owned\) assertOwned/);
   });
 

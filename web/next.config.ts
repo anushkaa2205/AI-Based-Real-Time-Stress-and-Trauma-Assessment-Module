@@ -32,7 +32,7 @@ const securityHeaders = [
   { key: "X-Frame-Options", value: "DENY" },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "no-referrer" },
-  // Microphone only for our own pages (demo live microphone, task M.12)
+  // Microphone only for our own pages (the portal's live microphone, task M.12)
   { key: "Permissions-Policy", value: "camera=(), geolocation=(), microphone=(self)" },
 ];
 
@@ -40,7 +40,7 @@ const securityHeaders = [
  * Files outside `web/` that server code reads at run time (the evaluation scenarios the admin "simulate"
  * feature uses). Without this they would not be packaged into Vercel's serverless functions. Needs
  * "Include files outside the Root Directory" on in the Vercel project (the default for new projects) and
- * Root Directory = web. The demo scenario library was removed in Phase P (P.2).
+ * Root Directory = web. The scenario library was removed in Phase P (P.2).
  */
 
 const nextConfig: NextConfig = {
@@ -64,10 +64,6 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
-  },
-  /** Phase P (plan §8.4): the old demo pages now live in the portal journey. */
-  async redirects() {
-    return ["/demo", "/demo/text", "/demo/call", "/demo/recording"].map((source) => ({ source, destination: "/start", permanent: true }));
   },
 };
 

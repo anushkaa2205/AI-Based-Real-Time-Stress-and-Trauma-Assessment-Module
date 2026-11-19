@@ -1,4 +1,4 @@
-/** Task N.3: the case status an integrating system (or the demo's tracking page) may read. */
+/** Task N.3: the case status an integrating system (or the portal's tracking page) may read. */
 import { describe, expect, it } from "vitest";
 import { CaseStatusResponse } from "@/contracts/integration";
 import { caseStatusView } from "@/core/integration/status";

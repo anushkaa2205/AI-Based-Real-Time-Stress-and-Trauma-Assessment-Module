@@ -1,14 +1,14 @@
 /**
- * `npm run api:client -- --name "Portal (demo)" [--scopes interactions:write,assessments:read,stream:read] [--rpm 120]`
+ * `npm run api:client -- --name "Partner system" [--scopes interactions:write,assessments:read,stream:read] [--rpm 120]`
  * (task 8.4). Creates an integration client. The key is shown once: it is written to the
  * git-ignored `.seed-output/api-client-<prefix>.txt`, never printed or logged.
  *
- * `npm run api:client -- --demo` (task M.7) creates the demo input layer's client (`isDemo: true`,
- * so everything it creates is marked demo) and writes `DEMO_API_KEY` and `DEMO_ENABLED=true` into the
+ * `npm run api:client -- --portal` (task M.7) creates the portal's client (`isPortal: true`,
+ * so everything it creates is tagged as a portal case) and writes `PORTAL_API_KEY` and `PORTAL_ENABLED=true` into the
  * git-ignored `.env.local` instead. Restart the dev server afterwards.
  *
- * `npm run api:client -- --update-demo-scopes` (task P.3) gives every active demo client all current
- * scopes (status:read, questions:read, …) without issuing a new key, so DEMO_API_KEY keeps working.
+ * `npm run api:client -- --update-portal-scopes` (task P.3) gives every active portal client all current
+ * scopes (status:read, questions:read, …) without issuing a new key, so PORTAL_API_KEY keeps working.
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -35,24 +35,24 @@ function setEnvLines(file: string, values: Record<string, string>) {
 }
 
 async function main() {
-  if (process.argv.includes("--update-demo-scopes")) {
+  if (process.argv.includes("--update-portal-scopes")) {
     await db();
-    const r = await ApiClient.updateMany({ isDemo: true, isActive: true }, { $addToSet: { scopes: { $each: [...SCOPES] } } });
-    console.log(`Updated ${r.modifiedCount} demo client(s) to scopes: ${SCOPES.join(", ")}.`);
+    const r = await ApiClient.updateMany({ isPortal: true, isActive: true }, { $addToSet: { scopes: { $each: [...SCOPES] } } });
+    console.log(`Updated ${r.modifiedCount} portal client(s) to scopes: ${SCOPES.join(", ")}.`);
     await mongoose.disconnect();
     return;
   }
-  const demo = process.argv.includes("--demo");
-  const name = arg("name") ?? (demo ? "Demo input layer" : "Demo integration client");
+  const portal = process.argv.includes("--portal");
+  const name = arg("name") ?? (portal ? "Nivara portal" : "Integration client");
   const scopes = (arg("scopes") ?? SCOPES.join(",")).split(",").map((s) => s.trim()) as Scope[];
   for (const s of scopes) if (!SCOPES.includes(s)) throw new Error(`Unknown scope: ${s}`);
   const rpm = Math.max(1, Math.min(10_000, Number(arg("rpm") ?? 120)));
   await db();
   const k = generateKey();
-  await ApiClient.create({ name, keyPrefix: k.prefix, keyHash: k.keyHash, scopes, rateLimitPerMin: rpm, isActive: true, isDemo: demo });
-  if (demo) {
-    setEnvLines(resolve(__dirname, "../.env.local"), { DEMO_ENABLED: "true", DEMO_API_KEY: k.key });
-    console.log(`Created the demo client ${k.prefix}. DEMO_API_KEY and DEMO_ENABLED=true are in .env.local; restart the dev server.`);
+  await ApiClient.create({ name, keyPrefix: k.prefix, keyHash: k.keyHash, scopes, rateLimitPerMin: rpm, isActive: true, isPortal: portal });
+  if (portal) {
+    setEnvLines(resolve(__dirname, "../.env.local"), { PORTAL_ENABLED: "true", PORTAL_API_KEY: k.key });
+    console.log(`Created the portal client ${k.prefix}. PORTAL_API_KEY and PORTAL_ENABLED=true are in .env.local; restart the dev server.`);
     await mongoose.disconnect();
     return;
   }

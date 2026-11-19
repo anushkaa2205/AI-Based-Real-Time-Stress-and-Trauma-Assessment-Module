@@ -11,7 +11,7 @@ import { ArrowLeft, ArrowRight, Keyboard, Mic, Phone, PhoneCall, Siren } from "l
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState, useTransition, type FormEvent } from "react";
-import type { DemoMode } from "@/contracts/demo";
+import type { PortalMode } from "@/contracts/portal";
 import type { VictimLang } from "@/contracts/interaction";
 import { setSiteLanguage } from "@/components/ui/language-switcher";
 import { SITE_LOCALES } from "@/i18n/locale";
@@ -40,7 +40,7 @@ export function StartJourney({ districts, canTakeOver }: { districts: DistrictOp
     p.setReady(true);
   }
 
-  async function choose(mode: DemoMode, takeover = false) {
+  async function choose(mode: PortalMode, takeover = false) {
     const ok = await p.start(mode, takeover);
     if (ok) router.push(mode === "LIVE_TEXT" ? "/start/write" : "/start/speak");
   }

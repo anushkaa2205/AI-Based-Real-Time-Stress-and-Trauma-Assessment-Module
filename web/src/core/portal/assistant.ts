@@ -1,6 +1,6 @@
 /**
  * The portal assistant on the server side (Phase P, task P.4; NIVARA_FLOW_AND_UI_PLAN.md §7, §8.3).
- * Demo layer only; the module never imports this.
+ * Portal only; the module never imports this.
  *
  * - `askNext` reads the next scripted question from the module (`GET …/next-question`, scope
  *   questions:read) and records it as an OPERATOR turn **before** the page shows it, so the person's
@@ -18,7 +18,7 @@ import { caseExpired } from "./guard";
 export function passThrough(status: number, code: string | undefined): never {
   if (status === 409 && (code === "CONSENT_REQUIRED" || code === "INTERACTION_ENDED")) throw new ApiError(code as ErrorCode);
   if (status === 404) throw new ApiError("NOT_FOUND");
-  if (status === 403 && code === "SCOPE_MISSING") throw new ApiError("ANALYSIS_DEGRADED", "The demo key needs the questions:read scope (npm run api:client -- --update-demo-scopes)");
+  if (status === 403 && code === "SCOPE_MISSING") throw new ApiError("ANALYSIS_DEGRADED", "The portal key needs the questions:read scope (npm run api:client -- --update-portal-scopes)");
   throw new ApiError("ANALYSIS_DEGRADED", "The module could not take this input");
 }
 
@@ -44,6 +44,6 @@ export async function openCase(interactionId: string, nowMs: number): Promise<vo
   const i = await Interaction.findById(interactionId).select("createdAt status").lean();
   if (!i) throw new ApiError("NOT_FOUND");
   if (i.status !== "ACTIVE") throw new ApiError("INTERACTION_ENDED");
-  if (caseExpired(i.createdAt as Date, nowMs)) throw new ApiError("INTERACTION_ENDED", "A demo conversation lasts at most fifteen minutes; press Submit to register it");
+  if (caseExpired(i.createdAt as Date, nowMs)) throw new ApiError("INTERACTION_ENDED", "A portal conversation lasts at most fifteen minutes; press Submit to register it");
   await Interaction.updateOne({ _id: interactionId }, { $set: { updatedAt: new Date(nowMs) } }, { timestamps: false });
 }

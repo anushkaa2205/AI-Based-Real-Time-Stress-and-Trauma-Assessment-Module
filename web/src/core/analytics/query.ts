@@ -52,8 +52,8 @@ export async function loadRows(user: PolicyUser, q: AnalyticsQuery, now = new Da
   if (q.channel) filter.channel = q.channel;
   if (q.language) filter.language = q.language;
   if (q.band) filter.band = q.band;
-  if (q.demo === "exclude") filter.isDemo = { $ne: true }; // M.7; rows from before M.7 have no flag
-  if (q.demo === "only") filter.isDemo = true;
+  if (q.portal === "exclude") filter.isPortal = { $ne: true }; // M.7; rows from before M.7 have no flag
+  if (q.portal === "only") filter.isPortal = true;
   const docs = await DailyStat.find(filter).limit(50_000).lean();
   const rows: StatRow[] = docs.map((d) => ({
     day: new Date(d.day),

@@ -8,13 +8,12 @@
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { useRealtime } from "@/components/realtime/realtime-provider";
-import { DemoMark } from "./demo-mark";
 import { useEnumLabel } from "./use-labels";
 
 interface Referral {
   id: string;
   docketNumber: string;
-  isDemo?: boolean;
+  isPortal?: boolean;
   type: string;
   actionRequested: string;
   locationHint?: string;
@@ -106,7 +105,6 @@ export function ReferralQueue({
               <li key={r.id} data-testid="referral-row" data-status={r.status} className="card flex flex-col gap-1.5 px-4 py-3 text-sm">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="num font-medium text-ink">{r.docketNumber}</span>
-                  <DemoMark show={r.isDemo} />
                   <span className="tag">{e("support", r.type)}</span>
                   <span className={`tag ${r.urgency === "IMMEDIATE" || r.urgency === "WITHIN_15_MIN" ? "tag-danger" : ""}`}>{e("urgency", r.urgency)}</span>
                   <span className={`tag ${r.status === "DONE" ? "tag-ok" : r.status === "DECLINED" ? "" : "tag-brand"}`}>{e("referralStatus", r.status)}</span>

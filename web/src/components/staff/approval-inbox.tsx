@@ -10,13 +10,12 @@ import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { BandBadge } from "./band-badge";
 import { RecommendationActions, type RecLike } from "./recommendation-actions";
-import { DemoMark } from "./demo-mark";
 import { useEnumLabel } from "./use-labels";
 
 interface Item extends RecLike {
   caseId: string;
   docketNumber: string;
-  isDemo?: boolean;
+  isPortal?: boolean;
   band: string | null;
   reason: string;
   urgency: string;
@@ -42,7 +41,6 @@ function List({ items, caseHref, onDone }: { items: Item[]; caseHref: string | n
             ) : (
               <span className="num">{r.docketNumber}</span>
             )}
-            <DemoMark show={r.isDemo} />
             <BandBadge band={r.band} />
             <strong>{e("support", r.type)}</strong>
             <span className="text-xs">{e("urgency", r.urgency)}</span>
