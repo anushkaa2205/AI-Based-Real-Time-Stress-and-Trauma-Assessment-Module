@@ -1,6 +1,7 @@
 /** Grouping on the staff portals (task H.7; docs/hasini_portals.md §4.3, §4.5, §4.6). */
 import { describe, expect, it } from "vitest";
 import { groupByUrgency } from "@/components/staff/approval-inbox";
+import { groupByStatus } from "@/components/staff/referral-queue";
 
 const rec = (id: string, urgency: string) => ({ id, urgency });
 
@@ -21,5 +22,24 @@ describe("groupByUrgency (approvals, §4.3)", () => {
   });
   it("an unknown urgency goes last, in its own group", () => {
     expect(groupByUrgency([rec("a", "SOMEDAY"), rec("b", "NONE")]).map((g) => g.urgency)).toEqual(["NONE", "SOMEDAY"]);
+  });
+});
+
+describe("groupByStatus (police and welfare, §4.5–4.6)", () => {
+  const ref = (id: string, status: string) => ({ id, status });
+
+  it("orders groups pending → accepted → in progress → done → declined", () => {
+    const groups = groupByStatus([ref("a", "DONE"), ref("b", "DECLINED"), ref("c", "IN_PROGRESS"), ref("d", "PENDING"), ref("e", "ACCEPTED")]);
+    expect(groups.map((g) => g.status)).toEqual(["PENDING", "ACCEPTED", "IN_PROGRESS", "DONE", "DECLINED"]);
+  });
+  it("leaves out empty groups", () => {
+    expect(groupByStatus([ref("a", "PENDING"), ref("b", "PENDING")]).map((g) => g.status)).toEqual(["PENDING"]);
+    expect(groupByStatus([])).toEqual([]);
+  });
+  it("shows every card exactly once and keeps the order inside a group", () => {
+    const items = [ref("a", "PENDING"), ref("b", "DONE"), ref("c", "PENDING"), ref("d", "IN_PROGRESS")];
+    const groups = groupByStatus(items);
+    expect(groups.flatMap((g) => g.items.map((i) => i.id)).sort()).toEqual(["a", "b", "c", "d"]);
+    expect(groups[0]?.items.map((i) => i.id)).toEqual(["a", "c"]);
   });
 });

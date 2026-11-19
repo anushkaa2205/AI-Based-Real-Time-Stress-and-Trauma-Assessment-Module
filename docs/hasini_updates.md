@@ -71,3 +71,10 @@ Entry format:
 - **Files:** `web/src/components/staff/approval-inbox.tsx`, `web/tests/unit/portal-groups.test.ts` (new)
 - **Anushka should know:** the approval rows, buttons and `data-testid`s are unchanged; groups add `data-testid="approval-group"`.
 - **Next:** police and welfare cards grouped by status.
+
+## 2026-11-20 · H.7 (part) · Police and welfare cards grouped by status
+- **Did:** on the police and welfare pages, referral cards are grouped by status in the order pending → accepted → in progress → done → declined, each with a heading and a count; empty groups hidden. The two district lists ("missed" and "open", which use a filter) stay flat. While loading, the list shows the grey skeleton bar instead of the word "Loading". Pure `groupByStatus()` exported from the component, 3 unit tests.
+- **Decided:** five groups using the existing status labels instead of the plan's three (a combined "Accepted / in progress" heading would need a new string). Grouping turns on when the list has no filter, so no page files changed (option A1). The cards show exactly the same fields: nothing new reaches police or welfare (rule 8).
+- **Files:** `web/src/components/staff/referral-queue.tsx`, `web/tests/unit/portal-groups.test.ts`
+- **Anushka should know:** not checked in the browser yet as police or welfare (needs those sign-ins). The accessibility e2e could not sign in: `web/.seed-output/demo-credentials.txt` is out of date (counsellor login 401), so the staff part of AC-ACC-01 was not re-checked; public pages and login passed. Unit tests time out (5 s) at random when the laptop is busy; with `--maxWorkers=4` all 763 pass.
+- **Next:** check police and welfare in the browser; the rest of H.7 waits on H.4, H.5 and the strings.
