@@ -19,17 +19,24 @@ export type HeardMap = Record<string, number>;
 /** Key in sessionStorage (per tab). Holds alert ids and numbers only, never case text. */
 export const HEARD_KEY = "nivara.alerts.heard";
 
-/** Whether this check should beep, and what to remember afterwards (only alerts still open are kept). */
+/**
+ * How many alerts the memory keeps. The open-alerts list returns only the newest 50, so an alert
+ * missing from one check may still be open: it is kept, and the ones not seen for longest go first.
+ */
+export const HEARD_MAX = 500;
+
+/** Whether this check should beep, and what to remember afterwards (alerts in this check are kept last, so they survive trimming). */
 export function decideBeep(alerts: readonly SoundAlert[], heard: HeardMap): { beep: boolean; heard: HeardMap } {
   let beep = false;
-  const next: HeardMap = {};
+  const seen: HeardMap = {};
   for (const a of alerts) {
     if (a.level !== "CRITICAL") continue;
     const before = heard[a.id];
     if (before === undefined || a.escalationLevel > before) beep = true;
-    next[a.id] = Math.max(before ?? a.escalationLevel, a.escalationLevel);
+    seen[a.id] = Math.max(before ?? a.escalationLevel, a.escalationLevel);
   }
-  return { beep, heard: next };
+  const ordered = [...Object.entries(heard).filter(([id]) => !(id in seen)), ...Object.entries(seen)];
+  return { beep, heard: Object.fromEntries(ordered.slice(-HEARD_MAX)) };
 }
 
 /** Reads the memory; anything missing, blocked or malformed counts as empty. */

@@ -57,3 +57,10 @@ Entry format:
 - **Files:** `web/src/components/staff/alert-sound.ts` (new), `web/tests/unit/alert-sound.test.ts` (new), `web/src/components/staff/alert-banner.tsx`
 - **Anushka should know:** only the beep logic in `alert-banner.tsx` changed; layout and text are untouched. Part 2 (the "Sound off" button, D4) needs your OK for `app/(staff)/layout.tsx`, `app/(staff)/sign-out-button.tsx` and two strings in `messages/*.json`.
 - **Next:** check it in the running app; then part 2 once Anushka answers.
+
+## 2026-11-19 · H.6 (part 1) · Checked in the app; memory survives the 50-alert list
+- **Did:** checked part 1 in the running app (counsellor, local dev server, beeps counted by a temporary in-page script): a reload with 50 open Critical alerts made no beep; a new Critical alert (synthetic demo case NHAA-2026-MH-114895) beeped once and did not repeat; its escalation to level 1 about 2 minutes later beeped once. Then fixed an edge case found there: the open-alerts list returns only the newest 50, and the memory forgot any alert not in it, so an older alert coming back onto the list would beep once more. The memory now keeps alerts that drop off the list, up to 500; the ones not seen for longest go first, and alerts in the current check are always kept. 17 unit tests, 100% coverage; reload re-checked in the app (no beep).
+- **Decided:** limit of 500 remembered alerts per tab (ids and levels only).
+- **Files:** `web/src/components/staff/alert-sound.ts`, `web/tests/unit/alert-sound.test.ts`
+- **Anushka should know:** the demo key in `web/.seed-output/demo-api-key.txt` is older than the `DEMO_API_KEY` in `web/.env.local` (the file's key is rejected); the check left demo case NHAA-2026-MH-114895 with an open Critical alert in my local database.
+- **Next:** part 2 (the "Sound off" button) once Anushka answers about `layout.tsx`, `sign-out-button.tsx` and the strings.
