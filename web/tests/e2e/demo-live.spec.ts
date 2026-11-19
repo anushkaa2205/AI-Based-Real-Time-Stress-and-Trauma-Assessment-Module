@@ -28,7 +28,7 @@ test("speak turn by turn: windows go to /audio as the caller's channel, We heard
   const url = process.env.ANALYSIS_URL;
   const ok = url ? await fetch(new URL("/v1/health", url), { signal: AbortSignal.timeout(3000) }).then((r) => r.ok).catch(() => false) : false;
   test.skip(!ok, "analysis service not running");
-  await page.setExtraHTTPHeaders({ "x-forwarded-for": freshIp(), origin: baseURL ?? "http://localhost:3000" });
+  await page.context().setExtraHTTPHeaders({ "x-forwarded-for": freshIp(), origin: baseURL ?? "http://localhost:3000" });
   await page.goto("/start");
   await page.getByTestId("continue").click();
   await page.getByTestId("choose-speak").click();
@@ -63,9 +63,11 @@ test("speak turn by turn: windows go to /audio as the caller's channel, We heard
 
 test("one live call at a time, kept alive by any activity for 60 s; a supervisor may take it over (plan §7)", async ({ page, browser, baseURL }) => {
   const origin = baseURL ?? "http://localhost:3000";
-  await page.setExtraHTTPHeaders({ "x-forwarded-for": freshIp(), origin });
+  await page.context().setExtraHTTPHeaders({ "x-forwarded-for": freshIp(), origin });
   await page.goto("/");
-  const first = (await (await page.request.post("/api/demo/interactions", { data: START })).json()) as { interactionId: string };
+  const opened = await page.request.post("/api/demo/interactions", { data: START });
+  expect(opened.status()).toBe(201); // otherwise the checks below would test an empty line
+  const first = (await opened.json()) as { interactionId: string };
   const setIdle = (ms: number) => withDb((db) => db.collection("interactions").updateOne({ _id: new mongoose.Types.ObjectId(first.interactionId) }, { $set: { updatedAt: new Date(Date.now() - ms) } }));
 
   // 45 s since the last activity (the person is reading a question): still busy.
@@ -83,7 +85,7 @@ test("one live call at a time, kept alive by any activity for 60 s; a supervisor
 
   // A supervisor takes the line over: the older call is ended.
   const sup = await browser.newPage();
-  await sup.setExtraHTTPHeaders({ "x-forwarded-for": freshIp(), origin });
+  await sup.context().setExtraHTTPHeaders({ "x-forwarded-for": freshIp(), origin });
   await staffLogin(sup, "NHAA_SUPERVISOR");
   const taken = (await (await sup.request.post("/api/demo/interactions", { data: { ...START, takeover: true } })).json()) as { interactionId: string };
   await withDb(async (db) => {

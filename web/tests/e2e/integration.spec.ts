@@ -4,6 +4,7 @@
  */
 import { expect, test, type APIRequestContext } from "@playwright/test";
 import mongoose from "mongoose";
+import { INTEGRATION_CONTRACT_VERSION } from "../../src/contracts/integration";
 import { generateKey } from "../../src/core/integration/apikey";
 import { withDb } from "./helpers";
 
@@ -108,15 +109,15 @@ test("every integration response states the contract version; the input method i
   // Errors carry the version too.
   const unauth = await api(request, null).post("/interactions", {});
   expect(unauth.status()).toBe(401);
-  expect(unauth.headers()["x-contract-version"]).toBe("1.1");
+  expect(unauth.headers()["x-contract-version"]).toBe(INTEGRATION_CONTRACT_VERSION);
 
   const c = api(request, await client(["interactions:write", "assessments:read"]));
   const start = await c.post("/interactions", { channel: "API", language: "en", consent });
-  expect(start.headers()["x-contract-version"]).toBe("1.1");
+  expect(start.headers()["x-contract-version"]).toBe(INTEGRATION_CONTRACT_VERSION);
   const { interactionId } = await start.json();
   const said = await c.post(`/interactions/${interactionId}/messages`, { text: "I am worried about the hearing next week.", inputMethod: "TRANSCRIPT" });
   expect(said.status()).toBe(201);
-  expect(said.headers()["x-contract-version"]).toBe("1.1");
+  expect(said.headers()["x-contract-version"]).toBe(INTEGRATION_CONTRACT_VERSION);
   expect((await c.post(`/interactions/${interactionId}/messages`, { text: "ok", inputMethod: "LIVE_AUDIO" })).status()).toBe(400);
   await withDb(async (db) => {
     const m = await db.collection("messages").findOne({ interactionId: new mongoose.Types.ObjectId(interactionId), sender: "VICTIM" });

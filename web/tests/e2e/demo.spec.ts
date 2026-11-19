@@ -23,7 +23,7 @@ test.beforeAll(async ({ request }) => {
 
 test("signed out, a person writes a case: scripted questions, skip, review with a note, docket, tracking, staff queue (P.7, P.9)", async ({ page, baseURL }) => {
   test.setTimeout(180_000);
-  await page.setExtraHTTPHeaders({ "x-forwarded-for": freshIp(), origin: baseURL ?? "http://localhost:3000" });
+  await page.context().setExtraHTTPHeaders({ "x-forwarded-for": freshIp(), origin: baseURL ?? "http://localhost:3000" });
   await page.goto("/");
   await expect(page.getByTestId("call-emergency")).toBeVisible();
   await expect(page.getByTestId("quick-exit")).toBeVisible();
@@ -75,13 +75,16 @@ test("signed out, a person writes a case: scripted questions, skip, review with 
 
   await staffLogin(page, "COUNSELLOR");
   await page.goto("/counsellor");
+  // The queue is risk-sorted and shows 100 cases at a time; a new low-risk case can sit below them,
+  // so the counsellor finds it by its docket number.
+  await page.getByTestId("queue-search").fill(docket);
   const row = page.locator("[data-testid=queue-row]", { hasText: docket });
   await expect(row).toBeVisible({ timeout: 30_000 });
   await expect(row.getByTestId("demo-mark")).toBeVisible();
 });
 
 test("relay shape: no sender, question text only, nothing about the assessment; old routes gone (plan §7, §8.3)", async ({ page, baseURL }) => {
-  await page.setExtraHTTPHeaders({ "x-forwarded-for": freshIp(), origin: baseURL ?? "http://localhost:3000" });
+  await page.context().setExtraHTTPHeaders({ "x-forwarded-for": freshIp(), origin: baseURL ?? "http://localhost:3000" });
   await page.goto("/");
   const start = await page.request.post("/api/demo/interactions", { data: START });
   expect(start.status()).toBe(201);
@@ -106,7 +109,7 @@ test("relay shape: no sender, question text only, nothing about the assessment; 
 
 test("a browser may only touch its own cases; cross-site posts are refused; a normal key cannot ask for the demo tag (plan §7, M.7)", async ({ page, browser, request, baseURL }) => {
   const origin = baseURL ?? "http://localhost:3000";
-  await page.setExtraHTTPHeaders({ "x-forwarded-for": freshIp(), origin });
+  await page.context().setExtraHTTPHeaders({ "x-forwarded-for": freshIp(), origin });
   await page.goto("/");
   const start = await page.request.post("/api/demo/interactions", { data: START });
   const { interactionId } = (await start.json()) as { interactionId: string };
@@ -134,7 +137,7 @@ test("a browser may only touch its own cases; cross-site posts are refused; a no
 });
 
 test("tracking: a wrong docket is a neutral 404; a case owned by another key is the same 404 (N.3, N.8)", async ({ page, request, baseURL }) => {
-  await page.setExtraHTTPHeaders({ "x-forwarded-for": freshIp(), origin: baseURL ?? "http://localhost:3000" });
+  await page.context().setExtraHTTPHeaders({ "x-forwarded-for": freshIp(), origin: baseURL ?? "http://localhost:3000" });
   await page.goto("/");
   expect((await page.request.get("/api/demo/track?docket=NHAA-2026-MH-999999")).status()).toBe(404);
   expect((await page.request.get("/api/demo/track?docket=nonsense")).status()).toBe(400);
@@ -149,7 +152,7 @@ test("tracking: a wrong docket is a neutral 404; a case owned by another key is 
 test("switching to Hindi changes the header, the portal, the questions and the login page (P-D7, AC-LANG-05)", async ({ page, baseURL }) => {
   test.setTimeout(120_000);
   const origin = baseURL ?? "http://localhost:3000";
-  await page.setExtraHTTPHeaders({ "x-forwarded-for": freshIp(), origin });
+  await page.context().setExtraHTTPHeaders({ "x-forwarded-for": freshIp(), origin });
   await page.goto("/");
   const switcher = page.getByTestId("language-switcher").first();
   if (await switcher.isVisible()) await switcher.selectOption("hi");
@@ -200,7 +203,7 @@ test("the staff menu has no demo entry and analytics can include, exclude or iso
 
 test("a demo case in Pune reaches the district, police and welfare portals after approval (plan §8.4)", async ({ page, baseURL }) => {
   test.setTimeout(180_000);
-  await page.setExtraHTTPHeaders({ "x-forwarded-for": freshIp(), origin: baseURL ?? "http://localhost:3000" });
+  await page.context().setExtraHTTPHeaders({ "x-forwarded-for": freshIp(), origin: baseURL ?? "http://localhost:3000" });
   await page.goto("/");
   const start = await page.request.post("/api/demo/interactions", { data: START });
   const { interactionId } = (await start.json()) as { interactionId: string };
