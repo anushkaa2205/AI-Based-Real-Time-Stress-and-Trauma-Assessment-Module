@@ -45,7 +45,9 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
-  outputFileTracingRoot: resolve(process.cwd(), ".."),
+  // Build only. In `next dev` this root makes Turbopack watch web/.next/dev/logs, which Next writes on
+  // every page load: each write triggers a rebuild and a full reload, so pages reload in a loop.
+  ...(isDev ? {} : { outputFileTracingRoot: resolve(process.cwd(), "..") }),
   outputFileTracingIncludes: {
     "/api/v1/staff/admin/scoring-configs/**": ["../evaluation/scenarios/*.json"],
   },
