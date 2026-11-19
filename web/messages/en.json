@@ -233,7 +233,7 @@
       "send": "Send",
       "skip": "Skip this question",
       "finish": "Finish",
-      "languageNote": "The conversation stays in the language chosen at the start; changing the language changes only the screen."
+      "languageNote": "If you change the language, the assistant's questions change to it too. Your own words stay as you wrote or said them."
     },
     "closing": "Thank you. You can add anything else, or press Finish when you are ready.",
     "speak": {

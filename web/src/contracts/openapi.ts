@@ -67,6 +67,7 @@ export const OPERATIONS: Op[] = [
   { method: "post", path: `${ig}/{id}/messages`, tag: "Integration", summary: "Send a text message (sender VICTIM is scored; OPERATOR is context only)", auth: "api", scope: "interactions:write", body: I.IntegrationMessage, status: 201 },
   { method: "post", path: `${ig}/{id}/audio`, tag: "Integration", summary: "Send a 5-second audio window (multipart: audio, windowIndex, startMs)", auth: "api", scope: "interactions:write", multipart: true, response: V.AudioResponse, status: 202 },
   { method: "put", path: `${ig}/{id}/context`, tag: "Integration", summary: "Case details from NHAA's record", auth: "api", scope: "interactions:write", body: V.ContextRequest },
+  { method: "put", path: `${ig}/{id}/language`, tag: "Integration", summary: "Change the conversation's language; returns the questions asked so far, re-worded in it", auth: "api", scope: "interactions:write", body: I.LanguageRequest, response: I.LanguageResponse },
   { method: "post", path: `${ig}/{id}/consent/withdraw`, tag: "Integration", summary: "Withdraw consent (analysis stops, stored audio deleted)", auth: "api", scope: "interactions:write", body: V.WithdrawRequest, response: V.WithdrawResponse },
   { method: "get", path: `${ig}/{id}/assessment`, tag: "Integration", summary: "Current SVI, band and top dimensions", auth: "api", scope: "assessments:read" },
   { method: "get", path: `${ig}/{id}/recommendations`, tag: "Integration", summary: "Recommendations", auth: "api", scope: "assessments:read" },

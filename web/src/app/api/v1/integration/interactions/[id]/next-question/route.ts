@@ -13,5 +13,5 @@ import { route } from "@/lib/route";
 
 export const GET = route({ auth: "api", scope: "questions:read" }, async ({ client, params }) => {
   const own = await loadOwned(String(params.id), client.id);
-  return nextQuestionView(own.lang, nextChatbotQuestion(await loadQuestionInput(own.id, own.lang)));
+  return nextQuestionView(own.lang, nextChatbotQuestion(await loadQuestionInput(own.id)));
 });

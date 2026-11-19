@@ -65,3 +65,11 @@ export type DemoStarted = z.infer<typeof DemoStarted>;
 /** POST /api/demo/interactions/{id}/next-question → 200 */
 export const DemoNextQuestion = z.object({ question: DemoQuestion.nullable() }).strict();
 export type DemoNextQuestion = z.infer<typeof DemoNextQuestion>;
+
+/** POST /api/demo/interactions/{id}/language (task P.11, plan §6.7): the site language changed mid-conversation. */
+export const DemoLanguage = z.object({ language: VictimLang }).strict();
+export type DemoLanguage = z.infer<typeof DemoLanguage>;
+
+/** → 200: the text of the assistant's questions asked so far, in order, in the new language. Never their keys. */
+export const DemoLanguageResult = z.object({ questions: z.array(z.string()) }).strict();
+export type DemoLanguageResult = z.infer<typeof DemoLanguageResult>;

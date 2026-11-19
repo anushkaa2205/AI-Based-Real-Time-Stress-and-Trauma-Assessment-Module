@@ -4,10 +4,10 @@ import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import { NextQuestionResponse } from "@/contracts/integration";
 import { VICTIM_LANGS } from "@/contracts/interaction";
-import { hasKey, t } from "@/core/i18n/messages";
+import { hasKey, MESSAGES, t } from "@/core/i18n/messages";
 import { SCOPES } from "@/core/integration/apikey";
 import { nextQuestionView } from "@/core/integration/next-question";
-import { askedKeys } from "@/core/operator/asked";
+import { askedKeys, questionKeyOf } from "@/core/operator/asked";
 import { MAX_CHATBOT_QUESTIONS, OPENING_KEY, nextChatbotQuestion, suggestQuestions, type NextQuestionInput } from "@/core/operator/suggest";
 
 const q = (name: string) => `operatorQuestions.${name}`;
@@ -47,12 +47,23 @@ describe("nextChatbotQuestion (P.3)", () => {
   });
 });
 
-describe("askedKeys (P.3)", () => {
-  it("finds a scripted question in an OPERATOR turn, ignoring spacing and case, in the interaction's language", () => {
+describe("askedKeys (P.3, P.11)", () => {
+  it("finds a scripted question in an OPERATOR turn, ignoring spacing and case", () => {
     const hi = t("hi", q("safeNow"));
-    expect(askedKeys("hi", [`  ${hi.toUpperCase()}  `, "कुछ और"])).toEqual([q("safeNow")]);
-    expect(askedKeys("en", [t("en", OPENING_KEY), "Can you tell me more about that?"])).toEqual([OPENING_KEY]);
-    expect(askedKeys("en", [hi])).toEqual([]); // another language's wording is not this interaction's question
+    expect(askedKeys([`  ${hi.toUpperCase()}  `, "कुछ और"])).toEqual([q("safeNow")]);
+    expect(askedKeys([t("en", OPENING_KEY), "Can you tell me more about that?"])).toEqual([OPENING_KEY]);
+  });
+
+  it("counts a question asked in another language, so a language switch never repeats it (P.11)", () => {
+    expect(askedKeys([t("en", OPENING_KEY), t("hi", q("safeNow")), t("ta", q("accusedNearby"))])).toEqual([OPENING_KEY, q("safeNow"), q("accusedNearby")]);
+    expect(askedKeys([t("en", q("safeNow")), t("bn", q("safeNow"))])).toEqual([q("safeNow")]); // once, in the order first asked
+  });
+
+  it("every scripted question in every language maps back to its own key", () => {
+    for (const lang of VICTIM_LANGS) {
+      for (const name of Object.keys(MESSAGES.en.operatorQuestions)) expect(questionKeyOf(t(lang, q(name))), `${lang} ${name}`).toBe(q(name));
+    }
+    expect(questionKeyOf("Can you tell me more about that?")).toBeNull();
   });
 });
 

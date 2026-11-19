@@ -8,13 +8,18 @@
  * Every assistant line is the text of a scripted question the module returned and the server recorded
  * as an OPERATOR turn (P-D4); the page never writes one. The page never learns anything about the
  * assessment beyond the emergency panel (rule 1).
+ *
+ * Task P.11 (plan §6.7): when the site language changes during a conversation, the conversation
+ * follows it. The relay stores the new language and returns the questions asked so far, re-worded
+ * in it, and they replace the assistant's lines in order. The person's own words are never changed.
  */
 import { useLocale } from "next-intl";
-import { createContext, useCallback, useContext, useMemo, useRef, useState } from "react";
-import type { DemoAudioReceipt, DemoMode, DemoNextQuestion, DemoQuestion, DemoReceipt, DemoStarted } from "@/contracts/demo";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import type { DemoAudioReceipt, DemoLanguageResult, DemoMode, DemoNextQuestion, DemoQuestion, DemoReceipt, DemoStarted } from "@/contracts/demo";
 import { toVictimLang, type EmergencyPanel, type VictimLang } from "@/contracts/interaction";
 import { consentRequest, DEFAULT_DISTRICT, FULL_CONSENT, type DemoConsent } from "./consent-fields";
 import { errorKey, postJson, type KNOWN_ERRORS } from "./portal-api";
+import { relabel } from "./relabel";
 
 export interface Turn {
   key: string;
@@ -75,6 +80,7 @@ export function usePortal(): PortalState {
 let seq = 0;
 const key = () => `t${Date.now().toString(36)}${(seq++).toString(36)}`;
 const assistant = (q: DemoQuestion): Turn => ({ key: key(), who: "assistant", text: q.text, state: "sent" });
+
 const closingTurn = (): Turn => ({ key: key(), who: "assistant", text: "", state: "sent", closing: true });
 
 export function PortalProvider({ children }: { children: React.ReactNode }) {
@@ -96,6 +102,21 @@ export function PortalProvider({ children }: { children: React.ReactNode }) {
   const closedRef = useRef(false);
 
   const base = interactionId ? `/api/demo/interactions/${interactionId}` : "";
+
+  // Task P.11: the site language changed mid-conversation → the conversation follows it.
+  const switchingTo = useRef<VictimLang | null>(null);
+  useEffect(() => {
+    const lang = toVictimLang(locale);
+    if (!base || !language || lang === language || stage === "registered" || switchingTo.current === lang) return;
+    switchingTo.current = lang;
+    void postJson<DemoLanguageResult>(`${base}/language`, { language: lang }).then((r) => {
+      switchingTo.current = null;
+      const data = r.data;
+      if (!r.ok || !data) return setError(errorKey(r.code));
+      setLanguage(lang);
+      setTurns((ts) => relabel(ts, data.questions));
+    });
+  }, [locale, base, language, stage]);
 
   const raise = useCallback((r: { showEmergencyPanel: boolean; emergency: EmergencyPanel | null } | null | undefined) => {
     if (r?.showEmergencyPanel && r.emergency) setEmergency(r.emergency);

@@ -179,7 +179,7 @@ interface Page<T> { items: T[]; nextCursor: string | null }
 
 | Scope | Endpoints |
 |---|---|
-| `interactions:write` | `POST /interactions`, `/messages`, `/audio`, `PUT /context`, `/consent/withdraw`, `/end` |
+| `interactions:write` | `POST /interactions`, `/messages`, `/audio`, `PUT /context`, `PUT /language` (§6.8), `/consent/withdraw`, `/end` |
 | `assessments:read` | `GET /assessment`, `GET /recommendations` |
 | `stream:read` | `GET /stream` |
 | `indicators:read` | `GET /indicators` (§6.4a) |
@@ -372,7 +372,7 @@ Base: `/api/v1/integration`. **The module's only input interface** (FR-API-05), 
 
 | Scope | Allows |
 |---|---|
-| `interactions:write` | Start interactions, send text and audio, send case context, withdraw consent, end |
+| `interactions:write` | Start interactions, send text and audio, send case context, change the conversation's language, withdraw consent, end |
 | `assessments:read` | Read current assessment and recommendations for interactions this client created |
 | `stream:read` | Subscribe to the live stream of an interaction this client created |
 | `indicators:read` | Read indicators with their evidence for interactions this client created (§6.4a, task M.5). Granted only to systems that need it; never shown to the person |
@@ -385,6 +385,7 @@ Base: `/api/v1/integration`. **The module's only input interface** (FR-API-05), 
 | `POST` | `/interactions/{id}/messages` | `{ text, sender: "VICTIM" \| "OPERATOR" }` → `201 { messageId, showEmergencyPanel, emergency }` (§6.2) |
 | `POST` | `/interactions/{id}/audio` | Audio window (§6.3) → `202` |
 | `PUT` | `/interactions/{id}/context` | Case context from NHAA's record (§6.4) → `200 { showEmergencyPanel, emergency }` |
+| `PUT` | `/interactions/{id}/language` | `{ language }` → `200 { language, asked: [{ key, text }] }` (§6.8) |
 | `POST` | `/interactions/{id}/consent/withdraw` | `{ reason?: string }` → `200 { mode: "SAFETY_ONLY" }` (§6.1) |
 | `GET` | `/interactions/{id}/assessment` | `200 { svi, band, confidence, limitedConfidence, explanation, overridesFired, topDimensions: [{dimension, score}], updatedAt }` |
 | `GET` | `/interactions/{id}/recommendations` | `200 { items: RecommendationDto[] }` |
@@ -403,7 +404,7 @@ data: {"interactionId":"6735a1f0c2a4b1e0f0a1in01","svi":81,"band":"CRITICAL","se
 
 Errors specific to integration: `401 INVALID_API_KEY`, `403 SCOPE_MISSING`, `404` for interactions created by another client, `429 RATE_LIMITED`.
 
-**Contract version (task M.6, gap V2).** Every integration response, errors included, carries `X-Contract-Version` (now `1.3`: `GET /interactions/{id}/next-question` added to 1.2, which had added `GET /cases/{docket}/status` to 1.1, which had added `inputMethod` and `GET …/indicators` to 1.0). The path stays `/api/v1`; additions are backwards compatible, and a breaking change would mean `/api/v2`.
+**Contract version (task M.6, gap V2).** Every integration response, errors included, carries `X-Contract-Version` (now `1.4`: `PUT /interactions/{id}/language` added to 1.3, which had added `GET /interactions/{id}/next-question` to 1.2, which had added `GET /cases/{docket}/status` to 1.1, which had added `inputMethod` and `GET …/indicators` to 1.0). The path stays `/api/v1`; additions are backwards compatible, and a breaking change would mean `/api/v2`.
 
 ### 6.1 Consent
 The calling system obtains consent in its own workflow and sends it on start as `consent: ConsentRequest`:
@@ -512,10 +513,11 @@ The demo calls the module **only through this integration API**, over HTTP, with
 
 | Method | Path | Request → Response |
 |---|---|---|
-| `POST` | `/api/demo/interactions` | `{ mode: "LIVE_TEXT" \| "LIVE_AUDIO", language, consent: ConsentRequest, districtCode, takeover? }` → `201 { interactionId, question: { text } }` and the `nivara_demo` cookie. Calls `POST /integration/interactions` with channel `CHATBOT` (Write) or `VOICE_CALL` (Speak) and the chosen seeded district (plan §6.3, default Pune). `language` is the site language at this moment and stays fixed for the interaction (P-D7). The relay then reads the opening question (§6.7, `operatorQuestions.opening`), records it as an `OPERATOR` turn and returns its text. `LIVE_AUDIO`: one call at a time on the free tier; while another call is live the answer is `409 LINE_BUSY`, unless `takeover: true` comes from a signed-in staff member with `demo.use` (a supervisor), which ends the older call. |
+| `POST` | `/api/demo/interactions` | `{ mode: "LIVE_TEXT" \| "LIVE_AUDIO", language, consent: ConsentRequest, districtCode, takeover? }` → `201 { interactionId, question: { text } }` and the `nivara_demo` cookie. Calls `POST /integration/interactions` with channel `CHATBOT` (Write) or `VOICE_CALL` (Speak) and the chosen seeded district (plan §6.3, default Pune). `language` is the site language at this moment; it changes only through `…/language` below (P-D7, task P.11). The relay then reads the opening question (§6.7, `operatorQuestions.opening`), records it as an `OPERATOR` turn and returns its text. `LIVE_AUDIO`: one call at a time on the free tier; while another call is live the answer is `409 LINE_BUSY`, unless `takeover: true` comes from a signed-in staff member with `demo.use` (a supervisor), which ends the older call. |
 | `POST` | `/api/demo/interactions/{id}/messages` | `{ text, note? }` (no `sender`; `note: true` marks the Review note, after which no question is asked) → `200 DemoReceipt = { ok: true, showEmergencyPanel, emergency, question: { text } \| null }`. The person's message is sent with `sender: "VICTIM"`, `inputMethod: "TEXT"`; the relay then reads the next question, records it as an `OPERATOR` turn if there is one, and returns its text (`null` when nothing is left or six questions have been asked). Also used for the Review note (one more message before `…/end`) and, on Speak, for that note only. At most 40 messages per case (`429`). The module's `409 CONSENT_REQUIRED` / `INTERACTION_ENDED` pass through; anything else is `503 ANALYSIS_DEGRADED`. |
 | `POST` | `/api/demo/interactions/{id}/audio` | One live-microphone window: multipart `audio`, `windowIndex`, `startMs`, relayed to `POST /integration/…/audio` as `audioSource: CALLER_ONLY`, `inputMethod: LIVE_AUDIO`. More than 3 minutes of speech in the case → `409 INTERACTION_ENDED`. → `200 { ok: true, analysed, showEmergencyPanel, emergency, heard }`, where `heard` is the person's own words for that window, taken from the module's `transcript` (the caller's words only; may be empty), shown as "We heard: …" and on the Review step. Nothing is stored. |
 | `POST` | `/api/demo/interactions/{id}/next-question` | No body → `200 { question: { text } \| null }`. Used after **Done** on Speak and for **Skip this question** on both inputs: reads the next question (§6.7), records it as an `OPERATOR` turn, returns its text. A skipped question stays recorded as asked, so it is not suggested again. Counts toward the 30 / min limit. |
+| `POST` | `/api/demo/interactions/{id}/language` | `{ language }` → `200 { questions: string[] }`. Sent by the page when the site language changes during the conversation (P-D7, task P.11). Calls `PUT /integration/…/language` (§6.8) and returns only the **text** of the assistant's questions asked so far, in the order asked, re-worded in the new language, so the page can replace the lines it shows (never their keys). Counts toward the 30 / min limit. `409 INTERACTION_ENDED` once the conversation is over. |
 | `POST` | `/api/demo/interactions/{id}/end` | → `200 { docketNumber }`; calls `POST /integration/…/end`. The docket number is revealed only here, when the person presses **Submit** on the Review step (plan §6.3). |
 | `GET` | `/api/demo/track?docket=` | → `200 CaseStatusResponse` (§6.6) read through `GET /integration/cases/{docket}/status` with the demo key; `404` for any other docket, demo or not; `400` for a malformed one |
 
@@ -548,13 +550,27 @@ or `{ "question": null }`.
 
 - `key` is an `operatorQuestions.*` key; `text` is its scripted, pre-translated wording in the **interaction's language** (`messages/*.json`). The module suggests; the calling system's chatbot decides whether to ask it, and if it does, sends it back as an `OPERATOR` turn (§6.2) so the answer is read with its question. The module never talks to the person (CLAUDE.md rule 2), and there is no fixed order and no quiz.
 - **Rules** (the pure function in `core/operator/suggest.ts`: no database, no clock; the same rules as the operator console's `suggested-questions`, §5.3):
-  - `asked`: the keys whose scripted text, in the interaction's language, equals an `OPERATOR` turn already stored in the interaction. An asked question is never suggested again.
+  - `asked`: the keys whose scripted text, in **any** of the five languages, equals an `OPERATOR` turn already stored in the interaction (so a question asked before a language change, §6.8, still counts as asked). An asked question is never suggested again.
   - No turns yet: `operatorQuestions.opening`.
   - Otherwise: the first suggestion in the existing order that has not been asked: safety first (`safePlace` after "not safe now", else `safeNow`), suicide questions on any sign, the accused nearby, then what the evidence points at, then `sayMore`.
   - After `MAX_CHATBOT_QUESTIONS = 6` scripted questions in the interaction, or when nothing is left: `null`.
 - The endpoint loads the latest dimensions and fired overrides exactly as the staff route `GET /staff/interactions/{id}/suggested-questions` does.
 - The key set is exactly `question.key` and `question.text`. It never returns the staff-facing `reason`, dimensions, overrides, a score or a band (a unit test asserts the keys).
 - Additive: contract version `1.3`.
+
+### 6.8 Conversation language (task P.11, FR-LANG-07)
+
+`PUT /interactions/{id}/language`, scope **`interactions:write`**, only for interactions that this client created (`404` otherwise). Body `{ "language": "hi" }` (a `VictimLang`). Only while the interaction is `ACTIVE` (`409 INTERACTION_ENDED` otherwise).
+
+```json
+{ "language": "hi", "asked": [{ "key": "operatorQuestions.opening", "text": "आप केवल उतना ही बताएँ जितना बताने में आप सहज हों। आप हमें क्या बताना चाहेंगे?" }] }
+```
+
+- Stores the interaction's language (`uiLanguage`). From then on the scripted questions (§6.7), the emergency options (§6.2) and the speech-to-text language hint for audio (§6.3) use it.
+- `asked` lists the scripted questions already sent as `OPERATOR` turns, in the order they were sent, each with its wording in the new language, so the calling system can re-show them. An `OPERATOR` turn that is not a scripted question (an operator's own words) is left out. Stored turns are never rewritten: what was said stays as it was said, and the person's answers are still read with the question as it was asked (FR-NLP-11).
+- The key set is exactly `language` and `asked[].key`, `asked[].text`. Never a score, band or indicator (rule 1).
+- Setting the language it already has is allowed and changes nothing.
+- Additive: contract version `1.4`.
 
 ---
 

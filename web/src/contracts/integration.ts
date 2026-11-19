@@ -18,9 +18,9 @@ export const IntegrationStart = z.object({
 /**
  * Version of the integration contract, sent as `X-Contract-Version` on every integration response
  * (task M.6, gap V2). 1.1: `inputMethod`, `GET …/indicators` (M.5). 1.2: `GET /cases/{docket}/status`
- * (N.3). 1.3: `GET …/next-question` (P.3).
+ * (N.3). 1.3: `GET …/next-question` (P.3). 1.4: `PUT …/language` (P.11).
  */
-export const INTEGRATION_CONTRACT_VERSION = "1.3";
+export const INTEGRATION_CONTRACT_VERSION = "1.4";
 
 export const IntegrationMessage = z.object({
   text: z.string().trim().min(1).max(2000),
@@ -49,3 +49,16 @@ export const NextQuestionResponse = z.object({
     .nullable(),
 }).strict();
 export type NextQuestionResponse = z.infer<typeof NextQuestionResponse>;
+
+/** PUT …/language (task P.11, API_CONTRACTS §6.8): the conversation's new language. */
+export const LanguageRequest = z.object({ language: VictimLang }).strict();
+export type LanguageRequest = z.infer<typeof LanguageRequest>;
+
+/** The new language and the scripted questions asked so far, re-worded in it. Nothing else (rule 1). */
+export const LanguageResponse = z
+  .object({
+    language: VictimLang,
+    asked: z.array(z.object({ key: z.string().regex(/^operatorQuestions\.[A-Za-z]+$/), text: z.string().min(1) }).strict()),
+  })
+  .strict();
+export type LanguageResponse = z.infer<typeof LanguageResponse>;

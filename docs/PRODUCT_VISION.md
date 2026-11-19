@@ -116,7 +116,7 @@ A separate, **public** set of pages (no sign-in; `NIVARA_FLOW_AND_UI_PLAN.md` §
 - In the conversation a **portal assistant** asks scripted, pre-translated questions (`operatorQuestions.*`). The next one comes from the module's next-question rules (§5): no fixed order, no quiz, no Yes/No buttons; the person answers in their own words, can skip any question and can finish at any time (P-D4). Each question is recorded in the module as an `OPERATOR` turn **by the server**, so the answer is read with its question; a visitor can never send `OPERATOR` turns. The AI never writes or says anything to the person (rule 2).
 - **Review** shows the person their own words (for Speak, "what we heard": their own transcribed words, the caller's words only) and lets them add one note, sent as one more message. Never an AI summary (P-D5).
 - A header on every public page shows **NHAA helpline 14566**, **Emergency 112**, a **Quick exit**, the language switcher and Staff login (P-D6).
-- **Languages (P-D7):** English by default; the choice switches the whole website (public pages, login and staff portals) and sets the conversation's language.
+- **Languages (P-D7):** English by default; the choice switches the whole website (public pages, login and staff portals) and sets the conversation's language, also when it is changed mid-conversation (the assistant's questions switch with it).
 
 Rules for every input:
 - One module, one scoring implementation. No mode has its own scoring.

@@ -18,7 +18,7 @@ export const GET = route({ auth: "staff", action: "case.read" }, async ({ params
   authorize("case.read", resource);
   const interaction = await Interaction.findById(id).select("uiLanguage").lean();
   const lang = toVictimLang(interaction?.uiLanguage);
-  const items = suggestQuestions(await loadQuestionInput(id, lang)).map((s) => ({
+  const items = suggestQuestions(await loadQuestionInput(id)).map((s) => ({
     key: s.key,
     text: t(lang, s.key),
     textEn: t("en", s.key),
