@@ -351,7 +351,11 @@ export function OperatorConsole({ me, queueChannels }: { me: string; queueChanne
             {msg}
           </p>
         )}
-        {live === null && <div className="skeleton h-16 w-full" aria-busy="true" aria-label={tc("loading")} />}
+        {live === null && (
+          <div className="skeleton h-16 w-full" role="status" aria-busy="true">
+            <span className="sr-only">{tc("loading")}</span>
+          </div>
+        )}
         {live?.length === 0 && <div className="empty">{t("noLive")}</div>}
         <ul className="flex flex-col gap-2" data-testid="live-sessions">
           {live?.map((l) => {

@@ -49,8 +49,10 @@ export default async function StaffLayout({ children }: { children: React.ReactN
       <div className="flex min-h-full flex-1 flex-col md:flex-row">
         <aside className="panel-night flex flex-col gap-6 px-3 py-4 md:sticky md:top-0 md:h-screen md:w-60 md:shrink-0 md:px-4 md:py-5">
           <div className="flex items-center justify-between gap-3 px-1">
-            <Link href="/staff" className="no-underline" aria-label={t("shell.myPortal")}>
+            {/* Named "Nivara, My portal": the spoken name starts with the visible word (WCAG 2.5.3, AC-ACC-01). */}
+            <Link href="/staff" className="no-underline">
               <Wordmark tone="light" />
+              <span className="sr-only">, {t("shell.myPortal")}</span>
             </Link>
             <span className="tag border-white/15 bg-white/10 text-white/80 md:hidden">{roleLabel}</span>
           </div>
