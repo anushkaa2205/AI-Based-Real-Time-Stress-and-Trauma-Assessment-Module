@@ -14,14 +14,14 @@ import { LanguageSwitcher } from "@/components/ui/language-switcher";
 
 type Step = "password" | "totp";
 
-async function post(path: string, body: unknown): Promise<{ ok: boolean; data: Record<string, unknown> }> {
+async function post(path: string, body: unknown): Promise<{ ok: boolean; status: number; data: Record<string, unknown> }> {
   const res = await fetch(path, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
   const data = res.status === 204 ? {} : ((await res.json().catch(() => ({}))) as Record<string, unknown>);
-  return { ok: res.ok, data };
+  return { ok: res.ok, status: res.status, data };
 }
 
 export function LoginForm() {
@@ -36,9 +36,10 @@ export function LoginForm() {
     const form = new FormData(e.currentTarget);
     setBusy(true);
     setError(null);
-    const { ok, data } = await post("/api/v1/staff/auth/login", { email: form.get("email"), password: form.get("password") });
+    const { ok, status, data } = await post("/api/v1/staff/auth/login", { email: form.get("email"), password: form.get("password") });
     setBusy(false);
-    if (!ok) return setError(t("failed"));
+    // A server fault (usually the database being unreachable) is not a wrong password: say so.
+    if (!ok) return setError(status >= 500 ? t("unavailable") : t("failed"));
     if (data.requiresTotp) return setStep("totp");
     router.replace("/staff");
   }
@@ -48,9 +49,10 @@ export function LoginForm() {
     const form = new FormData(e.currentTarget);
     setBusy(true);
     setError(null);
-    const { ok, data } = await post("/api/v1/staff/auth/totp", { code: String(form.get("code") ?? "").trim() });
+    const { ok, status, data } = await post("/api/v1/staff/auth/totp", { code: String(form.get("code") ?? "").trim() });
     setBusy(false);
     if (!ok) {
+      if (status >= 500) return setError(t("unavailable"));
       if (data.code === "SESSION_EXPIRED") {
         setStep("password");
         return setError(t("expired"));

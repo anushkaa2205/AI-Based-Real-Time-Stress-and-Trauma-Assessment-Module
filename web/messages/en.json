@@ -167,7 +167,8 @@
     "signIn": "Sign in",
     "another": "Use another account",
     "failed": "Sign-in failed. Check your details and try again.",
-    "expired": "The sign-in took too long. Start again with your e-mail and password."
+    "expired": "The sign-in took too long. Start again with your e-mail and password.",
+    "unavailable": "The server cannot reach the database right now, so nobody can sign in. Try again in a minute."
   },
   "portal": {
     "notice": "Demonstration. Please don't enter real names, numbers or addresses.",
