@@ -52,7 +52,7 @@ export function MobileMenu({
               {staff.label}
             </Link>
           </nav>
-          <LanguageSwitcher tone={dark ? "light" : "dark"} className="mt-2 inline-flex" />
+          <LanguageSwitcher tone={dark ? "light" : "dark"} align="start" className="mt-2 inline-flex" />
         </div>
       )}
     </div>

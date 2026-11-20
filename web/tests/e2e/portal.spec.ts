@@ -153,12 +153,13 @@ test("switching to Hindi changes the header, the portal, the questions and the l
   await page.context().setExtraHTTPHeaders({ "x-forwarded-for": freshIp(), origin });
   await page.goto("/");
   const switcher = page.getByTestId("language-switcher").first();
-  if (await switcher.isVisible()) await switcher.selectOption("hi");
+  if (await switcher.isVisible()) await switcher.click();
   else {
     // On a phone the switcher sits in the menu.
     await page.getByTestId("menu-toggle").click();
-    await page.getByTestId("language-switcher").last().selectOption("hi");
+    await page.getByTestId("language-switcher").last().click();
   }
+  await page.getByTestId("language-option-hi").click();
   await expect(page.locator("html")).toHaveAttribute("lang", "hi", { timeout: 20_000 });
   await expect(page.getByTestId("quick-exit")).toContainText(hi.public.header.quickExit);
   await page.reload();
