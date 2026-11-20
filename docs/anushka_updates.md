@@ -29,6 +29,13 @@ Entry format:
 - **Hasini should know:** create your branch only after tonight's merge. In your plan the old source tag is gone, so the Sample pill is a new component (`components/staff/sample-tag.tsx`). Use `isPortal`, `PORTAL_*`, `/api/portal/track`.
 - **Next:** on the deployment: rename the two Vercel variables, run `npm run db:migrate-portal-names`, then `npm run db:indexes` and `npm run seed`.
 
+## 2026-11-20 · UI · Themed language dropdown and README
+- **Did:** replaced the native `<select>` in the language switcher with a Base UI Select styled in the Nivara theme (petrol panel with a marigold tick on the public header; white panel with a petrol tick on paper pages and staff screens). Each option shows the language in its own script and its code. Keyboard and screen-reader behaviour stay the same. Rewrote the root `README.md` for Nivara and replaced the boilerplate `web/README.md`.
+- **Decided:** these two commits go straight on `master` (after fast-forwarding `master` to `anushka`).
+- **Files:** `web/src/components/ui/language-switcher.tsx`, `web/src/components/public/mobile-menu.tsx`, `web/tests/e2e/portal.spec.ts`, `README.md`, `web/README.md`
+- **Hasini should know:** the switcher is no longer a `<select>`: in Playwright, click `language-switcher` and then `language-option-<code>` instead of `selectOption`.
+- **Next:** push `master`.
+
 ## 2026-11-20 · CI · Two long lines in the analysis-service text test
 - **Did:** wrapped the docstring and the request body in `test_previous_question_is_context_only` so `ruff check` passes (E501, over 100 characters). CI had failed on every branch at this step. No change to what the test checks.
 - **Decided:** nothing new.
