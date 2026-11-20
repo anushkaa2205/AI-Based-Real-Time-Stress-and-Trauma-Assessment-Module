@@ -88,7 +88,3 @@ Run from `web/`.
 - [`docs/EVALUATION_REPORT.md`](docs/EVALUATION_REPORT.md): accuracy and latency results
 - [`CLAUDE.md`](CLAUDE.md): project rules and team workflow
 
-## Team
-
-- Anushka Kumari
-- Hasini Boddu
