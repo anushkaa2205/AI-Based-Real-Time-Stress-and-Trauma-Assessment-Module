@@ -113,3 +113,10 @@ Entry format:
 - **Files:** `web/src/components/staff/alert-banner.tsx`, `web/src/components/staff/alert-sound.ts`, `web/tests/unit/tab-title.test.ts` (new)
 - **Anushka should know:** the count tops out at 50 because the alert list returns 50 at a time (there are more open demo alerts than that).
 - **Next:** band filter on the queue.
+
+## 2026-11-20 · H.7 (Batch 1) · Band filter on the case queue
+- **Did:** buttons above the queue: All · Critical · High · Moderate · Low; the chosen band goes to the existing `band` query (no server change) and works with the docket search, "Only my cases" and live refresh. 2 unit tests. Checked as counsellor: High shows only High cases, Low only Low, All everything; fits one row at 375 px.
+- **Decided:** reused the band names and `staff.analytics.all` ("All"); no counts (would need server work). With a band chosen and nothing found, the existing "No cases are waiting" text shows.
+- **Files:** `web/src/components/staff/case-queue.tsx`, `web/tests/unit/portal-groups.test.ts`
+- **Anushka should know:** first idea of my proposal list done inside my files; the rest wait for your answers.
+- **Next:** H.2 once GitHub is reachable (the network blocks it with an SSL certificate error), so I can pull before touching `score.ts`.

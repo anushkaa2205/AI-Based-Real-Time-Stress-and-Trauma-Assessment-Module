@@ -1,6 +1,7 @@
 /** Grouping on the staff portals (task H.7; docs/hasini_portals.md §4.3, §4.5, §4.6). */
 import { describe, expect, it } from "vitest";
 import { groupByUrgency, isProposalOverdue } from "@/components/staff/approval-inbox";
+import { BAND_FILTERS, queueQuery } from "@/components/staff/case-queue";
 import { COLLAPSED_STATUSES, byDue, groupByStatus } from "@/components/staff/referral-queue";
 
 const rec = (id: string, urgency: string) => ({ id, urgency });
@@ -73,5 +74,17 @@ describe("isProposalOverdue (approvals, H.7)", () => {
   it("no due time or an unreadable one is never overdue", () => {
     expect(isProposalOverdue(undefined, now)).toBe(false);
     expect(isProposalOverdue("not a date", now)).toBe(false);
+  });
+});
+
+describe("band filter (case queue, H.7)", () => {
+  it("offers All, then the bands most urgent first", () => {
+    expect(BAND_FILTERS).toEqual(["", "CRITICAL", "HIGH", "MODERATE", "LOW"]);
+  });
+  it("adds the band to the query only when one is chosen, alongside the other options", () => {
+    const base = { mine: false, docket: "", cursor: null };
+    expect(new URLSearchParams(queueQuery({ ...base, band: "" })).has("band")).toBe(false);
+    const q = new URLSearchParams(queueQuery({ mine: true, docket: " NHAA-2026 ", band: "HIGH", cursor: "abc" }));
+    expect(Object.fromEntries(q)).toEqual({ limit: "100", assignedTo: "me", docket: "NHAA-2026", band: "HIGH", cursor: "abc" });
   });
 });

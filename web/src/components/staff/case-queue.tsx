@@ -12,7 +12,20 @@ import { BandBadge, useWaitingFor } from "./band-badge";
 import { DemoMark } from "./demo-mark";
 import { EmptyState, PageHeader, TableSkeleton } from "./page-header";
 
-import { CASE_STATUSES, CHANNELS } from "@/models/enums";
+import { CASE_STATUSES, CHANNELS, RISK_BANDS, type RiskBand } from "@/models/enums";
+
+/** Band filter buttons, most urgent first; "" is All (H.7). */
+export const BAND_FILTERS: readonly ("" | RiskBand)[] = ["", ...[...RISK_BANDS].reverse()];
+
+/** Query string for one queue page (H.7 adds the band filter to the existing options). */
+export function queueQuery(o: { mine: boolean; docket: string; band: "" | RiskBand; cursor: string | null }): string {
+  const qs = new URLSearchParams({ limit: "100" });
+  if (o.mine) qs.set("assignedTo", "me");
+  if (o.docket.trim()) qs.set("docket", o.docket.trim());
+  if (o.band) qs.set("band", o.band);
+  if (o.cursor) qs.set("cursor", o.cursor);
+  return qs.toString();
+}
 
 interface Item {
   id: string;
@@ -35,6 +48,7 @@ export function CaseQueue({ channels, caseHref }: { channels: string[]; caseHref
   const [items, setItems] = useState<Item[] | null>(null);
   const [mine, setMine] = useState(false);
   const [docket, setDocket] = useState("");
+  const [band, setBand] = useState<"" | RiskBand>("");
   const [pages, setPages] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [now, setNow] = useState(() => Date.now());
@@ -53,10 +67,7 @@ export function CaseQueue({ channels, caseHref }: { channels: string[]; caseHref
       const all: Item[] = [];
       let cursor: string | null = null;
       for (let page = 0; page < pages; page++) {
-        const qs = new URLSearchParams({ limit: "100" });
-        if (mine) qs.set("assignedTo", "me");
-        if (docket.trim()) qs.set("docket", docket.trim());
-        if (cursor) qs.set("cursor", cursor);
+        const qs = queueQuery({ mine, docket, band, cursor });
         const res = await fetch(`/api/v1/staff/cases?${qs}`, { cache: "no-store" });
         if (!res.ok) throw new Error(String(res.status));
         const body = (await res.json()) as { items: Item[]; nextCursor: string | null };
@@ -72,7 +83,7 @@ export function CaseQueue({ channels, caseHref }: { channels: string[]; caseHref
     } catch {
       if (run === latest.current) setError(true);
     }
-  }, [mine, docket, pages]);
+  }, [mine, docket, band, pages]);
 
   // While a docket is being typed, wait for a pause before asking the server.
   const delay = docket.trim() ? 300 : 0;
@@ -121,6 +132,23 @@ export function CaseQueue({ channels, caseHref }: { channels: string[]; caseHref
           </label>
         </div>
       </PageHeader>
+      <div role="group" aria-label={t("queue.band")} className="flex flex-wrap gap-2" data-testid="band-filter">
+        {BAND_FILTERS.map((b) => (
+          <button
+            key={b || "all"}
+            type="button"
+            aria-pressed={band === b}
+            onClick={() => {
+              setBand(b);
+              setPages(1);
+            }}
+            className={`btn btn-sm ${band === b ? "btn-primary" : "btn-secondary"}`}
+            data-band-filter={b || "ALL"}
+          >
+            {b ? t(`bands.${b}`) : t("analytics.all")}
+          </button>
+        ))}
+      </div>
       {error && (
         <p role="status" className="text-sm text-warn">
           {t("queue.refreshFailed")}
