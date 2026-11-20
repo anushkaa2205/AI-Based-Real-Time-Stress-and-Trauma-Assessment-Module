@@ -9,6 +9,7 @@ import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { useRealtime } from "@/components/realtime/realtime-provider";
 import { useEnumLabel } from "./use-labels";
+import { REFERRAL_STATUSES } from "@/models/enums";
 
 interface Referral {
   id: string;
@@ -33,6 +34,26 @@ const NEXT: Partial<Record<Referral["status"], { to: Referral["status"]; label: 
 const OPEN = new Set(["PENDING", "ACCEPTED", "IN_PROGRESS"]);
 const POLL_MS = 15_000;
 
+/**
+ * Police and welfare cards grouped by status, in the order of REFERRAL_STATUSES (pending → accepted →
+ * in progress → done → declined; task H.7, plan §4.5–4.6). Empty groups are left out; order inside a group is kept.
+ */
+export function groupByStatus<T extends { status: string }>(items: readonly T[]): { status: string; items: T[] }[] {
+  return REFERRAL_STATUSES.map((status) => ({ status: status as string, items: items.filter((r) => r.status === status) })).filter((g) => g.items.length > 0);
+}
+
+/** Earliest due first (so the most overdue is on top); no due time goes last; ties keep their order (H.7). */
+export function byDue<T extends { dueAt?: string }>(items: readonly T[]): T[] {
+  const due = (r: T) => {
+    const ms = r.dueAt ? new Date(r.dueAt).getTime() : NaN;
+    return Number.isFinite(ms) ? ms : Infinity;
+  };
+  return [...items].sort((a, b) => due(a) - due(b));
+}
+
+/** Finished groups start closed, so the open work stays at the top (H.7). */
+export const COLLAPSED_STATUSES: readonly string[] = ["DONE", "DECLINED"];
+
 export function ReferralQueue({
   channels,
   query = "",
@@ -51,7 +72,10 @@ export function ReferralQueue({
   const [declining, setDeclining] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const t = useTranslations("staff.referrals");
+  const tc = useTranslations("staff.common");
   const e = useEnumLabel();
+  /** Police and welfare pages list every referral with no filter: those are grouped by status (H.7). */
+  const grouped = !query;
 
   const load = useCallback(async () => {
     const res = await fetch(`/api/v1/staff/referrals${query}`, { cache: "no-store" }).catch(() => null);
@@ -93,12 +117,22 @@ export function ReferralQueue({
         </p>
       )}
       {items === null ? (
-        <p className="text-ink-3">{t("loading")}</p>
+        <div className="skeleton h-20 w-full" role="status" aria-busy="true">
+          <span className="sr-only">{tc("loading")}</span>
+        </div>
       ) : items.length === 0 ? (
         <div className="empty">{emptyText ?? t("empty")}</div>
       ) : (
-        <ul className="flex flex-col gap-2" data-testid="referrals">
-          {items.map((r) => {
+        <div className="flex flex-col gap-4" data-testid="referrals">
+        {(grouped ? groupByStatus(items).map((x) => ({ ...x, items: byDue(x.items) })) : [{ status: "", items }]).map((g) => {
+        const heading = (
+          <h3 className="mt-1 inline text-sm font-semibold text-ink-2 first-letter:uppercase">
+            {e("referralStatus", g.status)} ({g.items.length})
+          </h3>
+        );
+        const list = (
+        <ul className="flex flex-col gap-2">
+          {g.items.map((r) => {
             const overdue = !!r.dueAt && OPEN.has(r.status) && new Date(r.dueAt).getTime() < now;
             const next = NEXT[r.status];
             return (
@@ -157,6 +191,22 @@ export function ReferralQueue({
             );
           })}
         </ul>
+        );
+        if (!grouped) return <div key="all">{list}</div>;
+        // Done and Declined start closed: the heading (with its count) is the toggle, so no new text is needed.
+        return COLLAPSED_STATUSES.includes(g.status) ? (
+          <details key={g.status} className="flex flex-col gap-2" data-testid="referral-group" data-group={g.status}>
+            <summary className="cursor-pointer">{heading}</summary>
+            <div className="mt-2">{list}</div>
+          </details>
+        ) : (
+          <div key={g.status} className="flex flex-col gap-2" data-testid="referral-group" data-group={g.status}>
+            {heading}
+            {list}
+          </div>
+        );
+        })}
+        </div>
       )}
     </section>
   );

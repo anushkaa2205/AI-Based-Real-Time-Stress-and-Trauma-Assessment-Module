@@ -64,6 +64,8 @@ export function DistrictCases({ channels }: { channels: string[] }) {
   if (rows === null) return <div className="skeleton h-24 w-full" aria-busy="true" aria-label={t("common.loading")} />;
   if (rows.length === 0) return <div className="empty">{t("district.empty")}</div>;
   return (
+    // Scrolls inside its card on a phone, so the page itself never scrolls sideways (H.7).
+    <div className="card overflow-x-auto">
     <table className="data-table" data-testid="district-cases">
       <thead className="bg-surface-2">
         <tr>
@@ -91,5 +93,6 @@ export function DistrictCases({ channels }: { channels: string[] }) {
         ))}
       </tbody>
     </table>
+    </div>
   );
 }

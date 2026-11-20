@@ -192,6 +192,7 @@ A quiet five-step indicator sits at the top: **Before we begin Â· How to share Â
 
 - Shows **Support arranged**: one plain line for each recommendation whose status is `APPROVED` or `AUTO_TRIGGERED` (for example "Counselling has been arranged", "Legal aid has been arranged"). Proposed, rejected and superseded ones are not shown.
 - Shows the date registered and the date last updated.
+- **A new message on a closed case** (doubt D1, answered 19 Nov 2026): the case is **not** reopened automatically and the tracking page still shows Closed. The case appears in the staff's **default queue** (not only under the Closed filter) with a "New message on a closed case" note, so a staff member decides whether to reopen it. The safety check, alerts and the emergency panel run exactly as for any other message.
 - Never shows: score, band, urgency, indicators, transcript, staff names, notes, district, or anything diagnostic (rule 1).
 - Works only for cases created by the portal key. Any other docket, or a wrong one, gets the same neutral "No portal case found with this number".
 - All wording lives in `web/messages/*.json` (project convention for person-facing text). `npm run i18n:check` needs the keys in all five languages; the four non-English versions are drafts that need native review.
