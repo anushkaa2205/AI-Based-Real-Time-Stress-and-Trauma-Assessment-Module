@@ -85,3 +85,10 @@ Entry format:
 - **Files:** `docs/hasini_updates.md`
 - **Anushka should know:** welfare uses the same component but was not opened in the browser (needs the welfare sign-in).
 - **Next:** waiting on Anushka's answers (mute button files, D1 queue, D6 checklist) and on H.4/H.5 for the rest of H.7.
+
+## 2026-11-20 · H.7 (Batch 1) · District table scrolls inside its card
+- **Did:** wrapped the district "High and Critical cases" table in the same scrolling card the case queue uses. Checked as district officer at 375 px: 220 rows, the table scrolls inside its card and the page no longer scrolls sideways.
+- **Decided:** wrapper only; columns and data unchanged.
+- **Files:** `web/src/components/staff/district-cases.tsx`
+- **Anushka should know:** nothing else on the district page changed.
+- **Next:** police and welfare order.
