@@ -439,4 +439,11 @@ Write each doubt as you raise it, then Anushka's answer.
 
 | # | Date | Task | File(s) | Question | Anushka's answer | Date answered |
 |---|---|---|---|---|---|---|
-| | | | | | | |
+| D1 | 2026-11-19 | H.2 | `core/interactions/service.ts`, `core/cases/queue.ts` | A person writes again on a Closed case: reopen, or keep closed? | A: keep it Closed automatically, with a "New message on a closed case" note for staff. The case must also show in the **default queue** (not only under the Closed filter), and safety alerts and the emergency panel fire as normal. Add the rule to the flow plan doc. | 2026-11-19 |
+| D2 | 2026-11-19 | after H.5 | `scripts/seed-samples.ts` | Seed a larger anonymous batch for analytics? | A: later and optional. Synthetic scenarios only, marked as samples so analytics can filter them out. | 2026-11-19 |
+| D3 | 2026-11-19 | H.2, H.3 | `models/case.ts` | Add `statusChangedAt` to the case model? | A: yes. Update `DATABASE.md` and `models.ts` in the same commit. | 2026-11-19 |
+| D4 | 2026-11-19 | H.6 | `components/staff/alert-banner.tsx` | Mute button for the critical-alert sound? | A: banner stays, "Sound off" always visible, session-only, resets at sign-in. Add a note under FR-ALR in `REQUIREMENTS.md`. | 2026-11-19 |
+| D5 | 2026-11-19 | H.2 | `core/pipeline/score.ts` | Call `syncCaseStatus` when emergency support is auto-triggered? | A: inside the existing transaction, events published after commit. Pull before touching `score.ts` and keep it to that one line. | 2026-11-19 |
+| D6 | 2026-11-19 | H.5 | `core/privacy/retention.ts` | S2 and S3 open conversations close after 24 h idle: reset before demos, or exempt samples? | A: `--reset` before each demo. Add the reset command to the pre-presentation checklist. | 2026-11-19 |
+| D7 | 2026-11-19 | – | `API_CONTRACTS.md` §6.6 | Should police/welfare finishing a referral change what the person sees? | A: no, for now. | 2026-11-19 |
+| D8 | 2026-11-19 | H.3 / H.7 | `app/(public)/track/page.tsx` | "Try a sample" docket numbers on the public tracking page? | A: sample dockets only, and call it "sample case", not "demo". | 2026-11-19 |
