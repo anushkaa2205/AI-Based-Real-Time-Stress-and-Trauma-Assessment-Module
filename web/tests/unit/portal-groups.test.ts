@@ -1,6 +1,6 @@
 /** Grouping on the staff portals (task H.7; docs/hasini_portals.md §4.3, §4.5, §4.6). */
 import { describe, expect, it } from "vitest";
-import { groupByUrgency } from "@/components/staff/approval-inbox";
+import { groupByUrgency, isProposalOverdue } from "@/components/staff/approval-inbox";
 import { COLLAPSED_STATUSES, byDue, groupByStatus } from "@/components/staff/referral-queue";
 
 const rec = (id: string, urgency: string) => ({ id, urgency });
@@ -58,5 +58,20 @@ describe("byDue and COLLAPSED_STATUSES (police and welfare, H.7)", () => {
   });
   it("only finished groups start closed", () => {
     expect([...COLLAPSED_STATUSES].sort()).toEqual(["DECLINED", "DONE"]);
+  });
+});
+
+describe("isProposalOverdue (approvals, H.7)", () => {
+  const now = Date.parse("2026-11-20T12:00:00Z");
+  it("is overdue once the due time has passed", () => {
+    expect(isProposalOverdue("2026-11-20T11:59:59Z", now)).toBe(true);
+  });
+  it("is not overdue before or at the due time", () => {
+    expect(isProposalOverdue("2026-11-20T12:00:00Z", now)).toBe(false);
+    expect(isProposalOverdue("2026-11-21T09:00:00Z", now)).toBe(false);
+  });
+  it("no due time or an unreadable one is never overdue", () => {
+    expect(isProposalOverdue(undefined, now)).toBe(false);
+    expect(isProposalOverdue("not a date", now)).toBe(false);
   });
 });

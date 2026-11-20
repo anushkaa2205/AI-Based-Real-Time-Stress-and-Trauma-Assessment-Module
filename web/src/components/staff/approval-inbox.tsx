@@ -28,6 +28,13 @@ interface Item extends RecLike {
 const POLL_MS = 15_000;
 const PAGE = 50;
 
+/** A proposal is overdue once its due time has passed (H.7). No due time: never overdue. */
+export function isProposalOverdue(dueAt: string | undefined, now: number): boolean {
+  if (!dueAt) return false;
+  const due = new Date(dueAt).getTime();
+  return Number.isFinite(due) && due < now;
+}
+
 /**
  * Waiting proposals grouped by urgency, most urgent first (task H.7, plan §4.3). Empty groups are
  * left out; an urgency outside URGENCIES goes last, in its own group. Order inside a group is kept.
@@ -42,7 +49,7 @@ export function groupByUrgency<T extends { urgency: string }>(items: readonly T[
   return [...groups.entries()].sort(([a], [b]) => rank(a) - rank(b)).map(([urgency, list]) => ({ urgency, items: list }));
 }
 
-function List({ items, caseHref, onDone }: { items: Item[]; caseHref: string | null; onDone: (m: string) => void }) {
+function List({ items, caseHref, onDone, now }: { items: Item[]; caseHref: string | null; onDone: (m: string) => void; now: number }) {
   const e = useEnumLabel();
   const t = useTranslations("staff");
   return (
@@ -62,7 +69,14 @@ function List({ items, caseHref, onDone }: { items: Item[]; caseHref: string | n
             <strong>{e("support", r.type)}</strong>
             <span className="text-xs">{e("urgency", r.urgency)}</span>
             <span className="text-xs text-ink-3">→ {e("roles", r.responsibleRole)}</span>
-            {r.dueAt && <span className="text-xs text-ink-3">{t("approvals.due", { when: new Date(r.dueAt).toLocaleString() })}</span>}
+            {r.dueAt &&
+              (isProposalOverdue(r.dueAt, now) ? (
+                <span className="text-xs font-semibold text-danger" data-testid="approval-overdue">
+                  {t("referrals.overdueSince", { when: new Date(r.dueAt).toLocaleString() })}
+                </span>
+              ) : (
+                <span className="text-xs text-ink-3">{t("approvals.due", { when: new Date(r.dueAt).toLocaleString() })}</span>
+              ))}
           </div>
           <p className="text-xs text-ink-3">{r.reason}</p>
           {r.legalBasis && <p className="text-xs text-ink-3">{t("case.basis", { text: r.legalBasis })}</p>}
@@ -80,6 +94,7 @@ export function ApprovalInbox({ caseHref, showReviews = true }: { caseHref: stri
   /** Pages of PAGE items shown; "Load more" adds one, so no proposal is ever out of reach. */
   const [pages, setPages] = useState(1);
   const [hasMore, setHasMore] = useState(false);
+  const [now, setNow] = useState(() => Date.now());
   const t = useTranslations("staff");
   const e = useEnumLabel();
 
@@ -101,6 +116,7 @@ export function ApprovalInbox({ caseHref, showReviews = true }: { caseHref: stri
     setProposed(p.items);
     setHasMore(p.more);
     setReviews(r.items);
+    setNow(Date.now());
   }, [showReviews, pages]);
 
   useEffect(() => {
@@ -127,7 +143,7 @@ export function ApprovalInbox({ caseHref, showReviews = true }: { caseHref: stri
       {showReviews && reviews.length > 0 && (
         <section className="flex flex-col gap-2">
           <h2 className="section-title">{t("approvals.reviewTitle", { n: reviews.length })}</h2>
-          <List items={reviews} caseHref={caseHref} onDone={done} />
+          <List items={reviews} caseHref={caseHref} onDone={done} now={now} />
         </section>
       )}
       <section className="flex flex-col gap-2">
@@ -145,7 +161,7 @@ export function ApprovalInbox({ caseHref, showReviews = true }: { caseHref: stri
               <h3 className="mt-1 text-sm font-semibold text-ink-2 first-letter:uppercase">
                 {e("urgency", g.urgency)} ({g.items.length})
               </h3>
-              <List items={g.items} caseHref={caseHref} onDone={done} />
+              <List items={g.items} caseHref={caseHref} onDone={done} now={now} />
             </div>
           ))
         )}

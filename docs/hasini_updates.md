@@ -99,3 +99,10 @@ Entry format:
 - **Files:** `web/src/components/staff/referral-queue.tsx`, `web/tests/unit/portal-groups.test.ts`
 - **Anushka should know:** the closed Done/Declined groups were not seen in the app, because there are no done or declined referrals in the data yet (covered by unit tests only). Cards show the same fields (rule 8).
 - **Next:** approvals overdue line.
+
+## 2026-11-20 · H.7 (Batch 1) · Approvals: red "Overdue since…" line
+- **Did:** a proposal past its due time shows the red "Overdue since …" line instead of "due …"; re-checked on every refresh. 3 unit tests. Checked as counsellor (100 of 100 demo proposals overdue) and as district officer (50 requests awaiting them).
+- **Decided:** reused the existing `staff.referrals.overdueSince` string (no new text); asked Anushka in my message whether that is OK.
+- **Files:** `web/src/components/staff/approval-inbox.tsx`, `web/tests/unit/portal-groups.test.ts`
+- **Anushka should know:** the district page shows it too (same inbox).
+- **Next:** alert count in the tab title.
