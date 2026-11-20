@@ -120,3 +120,10 @@ Entry format:
 - **Files:** `web/src/components/staff/case-queue.tsx`, `web/tests/unit/portal-groups.test.ts`
 - **Anushka should know:** first idea of my proposal list done inside my files; the rest wait for your answers.
 - **Next:** H.2 once GitHub is reachable (the network blocks it with an SSL certificate error), so I can pull before touching `score.ts`.
+
+## 2026-11-20 · Workflow · I do not merge master into my branch
+- **Did:** read your `anushka` branch log (the portal rename, and the H.0 note not to seed the shared database) and pushed my 8 commits to `hasini/portals-tracking`.
+- **Decided:** I will **not** merge `origin/master` (or any branch) into `hasini/portals-tracking`. My work stays on my branch; you review it and merge it into `master`. This is a change from `hasini_portals.md` §2.1.1 and the "Team update logs" step in `CLAUDE.md` (merge `origin/master` before every push). Instead, before every push I fetch, read your log, and run a trial merge in memory (`git merge-tree`) against `origin/master` and `origin/anushka`; if it shows a conflict, I stop and tell you, and never resolve it by guessing. The trial merge on 20 Nov against `origin/anushka`: no conflicts in the 6 files we both changed.
+- **Files:** `docs/hasini_updates.md`
+- **Anushka should know:** my branch still uses the old names (`isDemo`, `DEMO_*`, `/api/demo/track`) until you merge. Code I add that uses those names may need renaming at your merge; before H.3 or the Sample tag I will check with you first. Please send me the `.env.local` values and staff logins privately (I have not run the seed).
+- **Next:** H.2 (pull is working again); waiting on your answers about the mute button files, the D1 queue and the D6 checklist.
