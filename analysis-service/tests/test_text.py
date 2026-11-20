@@ -132,10 +132,18 @@ def test_hindi_threat_keeps_only_quotes_found_in_the_original(make_client):
 
 
 def test_previous_question_is_context_only(make_client):
-    """Task M.9: the question asked just before is passed to the model; quotes still come from the message."""
+    """Task M.9: the question asked just before is passed to the model.
+
+    Quotes still come from the message.
+    """
     llm = RecordedLLM("hindi_threat.json")
     client = make_client(llm)
-    body = post(client, "/v1/analyze/text", {"text": HINDI, "languageHint": "hi", "previousQuestion": "Are you safe right now?"}).json()
+    payload = {
+        "text": HINDI,
+        "languageHint": "hi",
+        "previousQuestion": "Are you safe right now?",
+    }
+    body = post(client, "/v1/analyze/text", payload).json()
     assert llm.last_user["previousQuestion"] == "Are you safe right now?"
     assert llm.last_user["message"] == HINDI
     for ind in body["indicators"]:

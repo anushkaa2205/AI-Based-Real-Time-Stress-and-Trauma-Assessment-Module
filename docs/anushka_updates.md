@@ -28,3 +28,10 @@ Entry format:
 - **Files:** most of `web/src`, `web/tests`, `web/scripts`, `web/messages/*.json`, every doc, `CLAUDE.md`.
 - **Hasini should know:** create your branch only after tonight's merge. In your plan the old source tag is gone, so the Sample pill is a new component (`components/staff/sample-tag.tsx`). Use `isPortal`, `PORTAL_*`, `/api/portal/track`.
 - **Next:** on the deployment: rename the two Vercel variables, run `npm run db:migrate-portal-names`, then `npm run db:indexes` and `npm run seed`.
+
+## 2026-11-20 · CI · Two long lines in the analysis-service text test
+- **Did:** wrapped the docstring and the request body in `test_previous_question_is_context_only` so `ruff check` passes (E501, over 100 characters). CI had failed on every branch at this step. No change to what the test checks.
+- **Decided:** nothing new.
+- **Files:** `analysis-service/tests/test_text.py`
+- **Hasini should know:** the red CI on your branch came from this file, not from your work; it clears once you take `master` after the next merge.
+- **Next:** check that CI passes (pytest was not run locally: no Python 3.12 environment on this laptop).
