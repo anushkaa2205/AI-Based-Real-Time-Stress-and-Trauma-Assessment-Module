@@ -106,3 +106,10 @@ Entry format:
 - **Files:** `web/src/components/staff/approval-inbox.tsx`, `web/tests/unit/portal-groups.test.ts`
 - **Anushka should know:** the district page shows it too (same inbox).
 - **Next:** alert count in the tab title.
+
+## 2026-11-20 · H.7 (Batch 1) · Open Critical alert count in the tab title
+- **Did:** when Critical alerts are open, the tab title starts with their number, e.g. "(3) Nivara"; it is put back after page navigation and removed when none are open. Only roles that get alerts (operator, counsellor, supervisor, district officer) see it. 5 unit tests. Checked: "(50) Nivara" for counsellor across Approvals and Case queue, and for district officer; plain "Nivara" for police.
+- **Decided:** number only, no case text; Critical only.
+- **Files:** `web/src/components/staff/alert-banner.tsx`, `web/src/components/staff/alert-sound.ts`, `web/tests/unit/tab-title.test.ts` (new)
+- **Anushka should know:** the count tops out at 50 because the alert list returns 50 at a time (there are more open demo alerts than that).
+- **Next:** band filter on the queue.

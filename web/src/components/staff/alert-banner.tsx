@@ -10,7 +10,7 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRealtime } from "@/components/realtime/realtime-provider";
-import { decideBeep, readHeard, writeHeard, type HeardMap } from "@/components/staff/alert-sound";
+import { decideBeep, readHeard, titleWithCount, writeHeard, type HeardMap } from "@/components/staff/alert-sound";
 
 interface AlertItem {
   id: string;
@@ -99,6 +99,23 @@ export function AlertBanner({ channels, caseHref }: { channels: string[]; caseHr
   useRealtime(channels, (env) => {
     if (env.event.startsWith("alert.")) void load();
   });
+
+  // Open Critical count in the tab title (H.7). Page navigation resets the title, so a watch on
+  // <title> puts the count back; it only writes when the text differs, so it cannot loop.
+  const criticalCount = alerts.filter((a) => a.level === "CRITICAL").length;
+  useEffect(() => {
+    const apply = () => {
+      const want = titleWithCount(document.title, criticalCount);
+      if (document.title !== want) document.title = want;
+    };
+    apply();
+    const watch = new MutationObserver(apply);
+    watch.observe(document.head, { subtree: true, childList: true, characterData: true });
+    return () => {
+      watch.disconnect();
+      document.title = titleWithCount(document.title, 0);
+    };
+  }, [criticalCount]);
 
   async function ack(id: string) {
     setBusy(id);

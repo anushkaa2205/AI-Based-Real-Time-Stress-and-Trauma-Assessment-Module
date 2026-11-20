@@ -39,6 +39,17 @@ export function decideBeep(alerts: readonly SoundAlert[], heard: HeardMap): { be
   return { beep, heard: Object.fromEntries(ordered.slice(-HEARD_MAX)) };
 }
 
+const COUNT_PREFIX = /^\(\d+\) /;
+
+/**
+ * The tab title with the number of open Critical alerts in front, e.g. "(3) Nivara" (task H.7), so staff
+ * in another tab still notice. Idempotent: an existing count is replaced, and 0 removes it. Number only, no case text.
+ */
+export function titleWithCount(title: string, critical: number): string {
+  const base = title.replace(COUNT_PREFIX, "");
+  return critical > 0 ? `(${critical}) ${base}` : base;
+}
+
 /** Reads the memory; anything missing, blocked or malformed counts as empty. */
 export function readHeard(storage: Pick<Storage, "getItem"> | null): HeardMap {
   try {
