@@ -1,7 +1,7 @@
 /** Grouping on the staff portals (task H.7; docs/hasini_portals.md §4.3, §4.5, §4.6). */
 import { describe, expect, it } from "vitest";
 import { groupByUrgency } from "@/components/staff/approval-inbox";
-import { groupByStatus } from "@/components/staff/referral-queue";
+import { COLLAPSED_STATUSES, byDue, groupByStatus } from "@/components/staff/referral-queue";
 
 const rec = (id: string, urgency: string) => ({ id, urgency });
 
@@ -41,5 +41,22 @@ describe("groupByStatus (police and welfare, §4.5–4.6)", () => {
     const groups = groupByStatus(items);
     expect(groups.flatMap((g) => g.items.map((i) => i.id)).sort()).toEqual(["a", "b", "c", "d"]);
     expect(groups[0]?.items.map((i) => i.id)).toEqual(["a", "c"]);
+  });
+});
+
+describe("byDue and COLLAPSED_STATUSES (police and welfare, H.7)", () => {
+  const ref = (id: string, dueAt?: string) => ({ id, dueAt });
+
+  it("puts the earliest due (most overdue) first and cards with no due time last", () => {
+    const sorted = byDue([ref("late", "2026-11-20T10:00:00Z"), ref("none"), ref("early", "2026-11-14T10:00:00Z"), ref("mid", "2026-11-16T10:00:00Z")]);
+    expect(sorted.map((r) => r.id)).toEqual(["early", "mid", "late", "none"]);
+  });
+  it("keeps the original order for equal or missing due times, and does not change its input", () => {
+    const input = [ref("a"), ref("b", "bad date"), ref("c")];
+    expect(byDue(input).map((r) => r.id)).toEqual(["a", "b", "c"]);
+    expect(input.map((r) => r.id)).toEqual(["a", "b", "c"]);
+  });
+  it("only finished groups start closed", () => {
+    expect([...COLLAPSED_STATUSES].sort()).toEqual(["DECLINED", "DONE"]);
   });
 });

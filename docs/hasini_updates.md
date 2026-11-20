@@ -92,3 +92,10 @@ Entry format:
 - **Files:** `web/src/components/staff/district-cases.tsx`
 - **Anushka should know:** nothing else on the district page changed.
 - **Next:** police and welfare order.
+
+## 2026-11-20 · H.7 (Batch 1) · Police and welfare: sorted by due time, finished groups closed
+- **Did:** inside each status group, cards are sorted by due time (most overdue first, no due time last). Done and Declined groups start closed (native show/hide; the existing heading with its count is the toggle, so no new text). District lists unchanged. 3 unit tests. Checked as police: Accepted (19) now runs from the most overdue to the least; no sideways scroll.
+- **Decided:** no new strings; the browser's own `<details>` element for the closed groups.
+- **Files:** `web/src/components/staff/referral-queue.tsx`, `web/tests/unit/portal-groups.test.ts`
+- **Anushka should know:** the closed Done/Declined groups were not seen in the app, because there are no done or declined referrals in the data yet (covered by unit tests only). Cards show the same fields (rule 8).
+- **Next:** approvals overdue line.

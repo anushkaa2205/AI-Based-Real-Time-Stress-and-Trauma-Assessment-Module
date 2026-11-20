@@ -43,6 +43,18 @@ export function groupByStatus<T extends { status: string }>(items: readonly T[])
   return REFERRAL_STATUSES.map((status) => ({ status: status as string, items: items.filter((r) => r.status === status) })).filter((g) => g.items.length > 0);
 }
 
+/** Earliest due first (so the most overdue is on top); no due time goes last; ties keep their order (H.7). */
+export function byDue<T extends { dueAt?: string }>(items: readonly T[]): T[] {
+  const due = (r: T) => {
+    const ms = r.dueAt ? new Date(r.dueAt).getTime() : NaN;
+    return Number.isFinite(ms) ? ms : Infinity;
+  };
+  return [...items].sort((a, b) => due(a) - due(b));
+}
+
+/** Finished groups start closed, so the open work stays at the top (H.7). */
+export const COLLAPSED_STATUSES: readonly string[] = ["DONE", "DECLINED"];
+
 export function ReferralQueue({
   channels,
   query = "",
@@ -113,13 +125,13 @@ export function ReferralQueue({
         <div className="empty">{emptyText ?? t("empty")}</div>
       ) : (
         <div className="flex flex-col gap-4" data-testid="referrals">
-        {(grouped ? groupByStatus(items) : [{ status: "", items }]).map((g) => (
-        <div key={g.status} className="flex flex-col gap-2" data-testid={grouped ? "referral-group" : undefined} data-group={grouped ? g.status : undefined}>
-        {grouped && (
-          <h3 className="mt-1 text-sm font-semibold text-ink-2 first-letter:uppercase">
+        {(grouped ? groupByStatus(items).map((x) => ({ ...x, items: byDue(x.items) })) : [{ status: "", items }]).map((g) => {
+        const heading = (
+          <h3 className="mt-1 inline text-sm font-semibold text-ink-2 first-letter:uppercase">
             {e("referralStatus", g.status)} ({g.items.length})
           </h3>
-        )}
+        );
+        const list = (
         <ul className="flex flex-col gap-2">
           {g.items.map((r) => {
             const overdue = !!r.dueAt && OPEN.has(r.status) && new Date(r.dueAt).getTime() < now;
@@ -181,8 +193,21 @@ export function ReferralQueue({
             );
           })}
         </ul>
-        </div>
-        ))}
+        );
+        if (!grouped) return <div key="all">{list}</div>;
+        // Done and Declined start closed: the heading (with its count) is the toggle, so no new text is needed.
+        return COLLAPSED_STATUSES.includes(g.status) ? (
+          <details key={g.status} className="flex flex-col gap-2" data-testid="referral-group" data-group={g.status}>
+            <summary className="cursor-pointer">{heading}</summary>
+            <div className="mt-2">{list}</div>
+          </details>
+        ) : (
+          <div key={g.status} className="flex flex-col gap-2" data-testid="referral-group" data-group={g.status}>
+            {heading}
+            {list}
+          </div>
+        );
+        })}
         </div>
       )}
     </section>
